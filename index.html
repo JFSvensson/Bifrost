@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/main.js" defer></script>
+    <title>Bifrost - A bridge to the web</title>
+    
+</head>
+<body>
+    <div class="container">
+        <h1>Hej Fredrik! Vad vill du göra nu?</h1>
+        <div class="todo-list">
+            <h2>Att Göra</h2>
+            <ul id="todo-items">
+                <!-- To-Do Items will go here -->
+            </ul>
+            <input type="text" id="new-todo" placeholder="Lägg till en ny uppgift">
+            <button onclick="addTodo()">Lägg till</button>
+        </div>
+        <div class="search">
+            <h2>Sök</h2>
+            <form action="https://duckduckgo.com/" method="get" target="_blank">
+                <input type="text" name="q" placeholder="Sök på DuckDuckGo">
+                <button type="submit">Sök</button>
+            </form>
+        </div>
+        <div class="links">
+            <h2>Viktiga Länkar</h2>
+            <ul>
+                <li><a href="https://www.google.com" target="_blank">Google</a></li>
+                <li><a href="https://www.github.com" target="_blank">GitHub</a></li>
+                <li><a href="https://www.stackoverflow.com" target="_blank">Stack Overflow</a></li>
+                <!-- Lägg till fler länkar här -->
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
