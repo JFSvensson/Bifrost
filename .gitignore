@@ -198,4 +198,7 @@ $RECYCLE.BIN/
 private.pem
 public.pem
 
+# Private data
+data/*
+
 # End of https://www.toptal.com/developers/gitignore/api/node,linux,macos,windows,visualstudiocode
