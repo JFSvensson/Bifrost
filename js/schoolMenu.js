@@ -39,23 +39,55 @@ class SchoolMenu extends HTMLElement {
         this.shadowRoot.innerHTML = `<div>Kunde inte hämta skolmaten.</div>`;
     }
 
+    // Helper: normalize to local date (midnight)
+    toLocalDate(dLike) {
+        const d = new Date(dLike);
+        return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    }
+
+    // Helper: get today's index within the returned week (or -1 if out of range)
+    getTodayIndex(data) {
+        if (!data?.startDate || !Array.isArray(data.days)) return -1;
+        const start = this.toLocalDate(data.startDate);
+        const today = this.toLocalDate(new Date());
+        const diff = Math.floor((today - start) / 86400000);
+        return diff >= 0 && diff < data.days.length ? diff : -1;
+    }
+
+    // Fallback if startDate saknas
+    isTodayByName(dayName) {
+        const todayName = new Date().toLocaleDateString('sv-SE', { weekday: 'long' });
+        return (dayName || '').toLowerCase() === todayName.toLowerCase();
+    }
+
     renderMenu(data) {
         if (!data || !Array.isArray(data.days)) {
             this.renderError();
             return;
         }
-        let html = `<h2>Skolmat denna vecka</h2><ul>`;
-        data.days.forEach(day => {
+
+        const todayIndex = this.getTodayIndex(data);
+
+        let html = `
+            <style>
+                :host { display: block; }
+                ul { padding-left: 1em; margin: 0; }
+                li.today { color: #d00; font-weight: 600; }
+            </style>
+            <h2>Skolmat denna vecka</h2>
+            <ul>
+        `;
+
+        data.days.forEach((day, idx) => {
             const dayName = day.dayName || '';
             const meals = Array.isArray(day.meals) ? day.meals : [];
-            html += `<li><strong>${dayName}:</strong> `;
-            if (meals.length) {
-                html += meals.map(meal => meal.name).join(', ');
-            } else {
-                html += 'Ingen information';
-            }
+            const isToday = (todayIndex === idx) || (todayIndex === -1 && this.isTodayByName(dayName));
+
+            html += `<li class="${isToday ? 'today' : ''}"><strong>${dayName}:</strong> `;
+            html += meals.length ? meals.map(m => m.name).join(', ') : 'Ingen information';
             html += `</li>`;
         });
+
         html += `</ul>`;
         this.shadowRoot.innerHTML = html;
     }
