@@ -1,12 +1,14 @@
 # Bifrost Starting Page
 
-En modern startsida med att‑göra‑lista, sök, länkar samt veckans skolmat. Byggd med modulär JavaScript, Service Worker för offline-stöd och PWA-funktionalitet.
+En modern startsida med att‑göra‑lista, sök, länkar, väder, klocka samt veckans skolmat. Byggd med modulär JavaScript, Service Worker för offline-stöd och PWA-funktionalitet.
 
 ## Funktioner
 
 ✅ **Todo-lista** - Persisterande i localStorage med tangentbordsgenvägar  
 ✅ **Snabbsök** - DuckDuckGo med Ctrl+/ för fokus  
 ✅ **Snabblänkar** - Från JSON-fil med Ctrl+1-9 genvägar  
+✅ **Väderprognos** - SMHI-data med temperatur och nederbördssannolikhet  
+✅ **Klockwidget** - Aktuell tid och flera tidszoner med arbetstidsindikator  
 ✅ **Skolmat** - Veckans meny med dagens dag markerad  
 ✅ **Service Worker** - Offline-stöd och cachning  
 ✅ **PWA** - Kan installeras som app  
@@ -17,9 +19,9 @@ En modern startsida med att‑göra‑lista, sök, länkar samt veckans skolmat.
 
 ```
 Bifrost/
-├── index.html              # Huvudsida
+├── index.html              # Huvudsida med grid-layout
 ├── manifest.json           # PWA-manifest
-├── css/styles.css          # Responsiva stilar
+├── css/styles.css          # Responsiva stilar med CSS Grid
 ├── js/
 │   ├── main.js            # Huvudlogik + Service Worker
 │   ├── config.js          # Centraliserad konfiguration
@@ -28,11 +30,37 @@ Bifrost/
 │   ├── schoolMenu.js      # Skolmatskomponent
 │   ├── menuService.js     # API-service för skolmat
 │   ├── dateHelpers.js     # Datumfunktioner
+│   ├── weatherWidget.js   # Väderkomponent
+│   ├── weatherService.js  # SMHI API-service
+│   ├── clockWidget.js     # Klockkomponent
+│   ├── clockService.js    # Tidshantering och tidszoner
 │   ├── sw.js             # Service Worker
 │   └── proxy.js          # CORS-proxy för skolmat
 └── data/
     └── links.json        # Länkdata (skapas av användaren)
 ```
+
+## Komponentöversikt
+
+### 🕒 **Klockwidget**
+- **Realtidsvisning** - Uppdateras varje sekund
+- **Flera tidszoner** - Stockholm, New York, Tokyo, London
+- **Arbetstidsindikator** - Visar om det är arbetstid (08-17)
+- **Tidsskillnader** - +/- timmar från huvudtidszon
+- **Format** - 12h/24h, med/utan sekunder
+
+### 🌤️ **Väderwidget**
+- **SMHI API** - Gratis svenska väderdata
+- **Aktuellt väder** - Temperatur, luftfuktighet, vind
+- **Nederbördssannolikhet** - Procentuell chans för regn
+- **Timprognos** - Kommande 5 timmar
+- **Offline-cache** - Senaste data tillgänglig offline
+
+### 🍽️ **Skolmatswidget**
+- **Veckovy** - Hela veckans meny
+- **Dagens markering** - Aktuell dag markerad i rött
+- **Automatisk uppdatering** - Hämtar ny data varje dag
+- **Offline-stöd** - Cachad meny när internet saknas
 
 ## Snabbstart
 
@@ -88,6 +116,26 @@ todos: { maxItems: 10 }
 
 // Byta sökmotor
 search: { defaultEngine: 'https://google.com/search' }
+
+// Ändra väderplats
+weather: {
+    location: {
+        latitude: 57.7089,
+        longitude: 11.9746,
+        name: 'Göteborg'
+    }
+}
+
+// Anpassa klocka
+clock: {
+    format: '12h',           // 12h eller 24h
+    showSeconds: true,       // Visa sekunder
+    showMultipleTimezones: false,  // Endast lokal tid
+    timezones: [
+        { name: 'Stockholm', timezone: 'Europe/Stockholm' },
+        { name: 'New York', timezone: 'America/New_York' }
+    ]
+}
 ```
 
 ## Tangentbordsgenvägar
@@ -102,13 +150,15 @@ search: { defaultEngine: 'https://google.com/search' }
 
 Bifrost cachar automatiskt:
 - ✅ Statiska filer (HTML, CSS, JS)
+- ✅ Senaste väderdata (SMHI)
 - ✅ Senaste skolmatsdata
-- ✅ Länkdata
+- ✅ Länkdata och konfiguration
 
 **Offline-funktionalitet:**
 - Sidan fungerar utan internet
 - Todo-lista och länkar tillgängliga
-- Senaste hämtade skolmat visas
+- Senaste hämtade väder- och skolmatsdata visas
+- Klockan fortsätter fungera lokalt
 
 ## PWA-funktioner
 
@@ -116,8 +166,76 @@ Bifrost cachar automatiskt:
 - 🔄 Offline-stöd via Service Worker
 - ⚡ Snabb laddning tack vare cachning
 - 🎨 Anpassad ikon och färgtema
+- 🌐 Responsiv design för alla enheter
+
+## Layout & Design
+
+### 💻 **Desktop (1200px+)**
+```
+┌─────────────────────────────────┐
+│           Huvudrubrik           │
+├─────────────────┬───────────────┤
+│    TODO-LISTA   │    KLOCKA     │
+│                 ├───────────────┤
+│    SÖKFÄLT      │   LÄNKAR      │
+│                 ├───────────────┤
+│                 │    VÄDER      │
+│                 ├───────────────┤
+│                 │   SKOLMAT     │
+└─────────────────┴───────────────┘
+```
+
+### 📱 **Mobil (<768px)**
+```
+┌─────────────────┐
+│   Huvudrubrik   │
+├─────────────────┤
+│   TODO-LISTA    │
+├─────────────────┤
+│    SÖKFÄLT      │
+├─────────────────┤
+│     KLOCKA      │
+├─────────────────┤
+│     LÄNKAR      │
+├─────────────────┤
+│     VÄDER       │
+├─────────────────┤
+│    SKOLMAT      │
+└─────────────────┘
+```
 
 ## API
+
+### WeatherWidget-komponent
+```javascript
+const weather = document.querySelector('weather-widget');
+
+// Uppdatera väderdata
+await weather.loadWeather();
+
+// Ändra plats
+weather.weatherService.setLocation(57.7089, 11.9746, 'Göteborg');
+await weather.loadWeather();
+
+// Lyssna på events
+weather.addEventListener('weatherLoaded', (e) => console.log('Loaded:', e.detail));
+weather.addEventListener('weatherError', (e) => console.error('Error:', e.detail));
+```
+
+### ClockWidget-komponent
+```javascript
+const clock = document.querySelector('clock-widget');
+
+// Växla mellan enkelt/multipelt läge
+clock.toggleMultipleTimezones();
+
+// Lägg till ny tidszon
+clock.addTimezone('America/Los_Angeles', 'Los Angeles');
+
+// Hämta aktuell tid för specifik tidszon
+const timeData = clock.clockService.getCurrentTime('Europe/London');
+console.log(timeData); // { time: '14:30', date: 'måndag 13 januari 2025', ... }
+```
 
 ### SchoolMenu-komponent
 ```javascript
@@ -146,11 +264,36 @@ GET /api/school-menu?startDate=2025-01-13&endDate=2025-01-17
 GET /health
 ```
 
+### SMHI Väder API
+```bash
+# Väderdata för specifik plats (används automatiskt av WeatherService)
+GET https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geotype/point/lon/18.0686/lat/59.3293/data.json
+
+# Parametrar som används:
+# t = Temperatur (°C)
+# r = Relativ luftfuktighet (%)
+# ws = Vindhastighet (m/s)
+# pmin = Nederbörd minimum (mm/h)
+# pcat = Nederbördskategori (0-6)
+# Wsymb2 = Vädersymbol
+```
+
 ## Felsökning
+
+**Väder laddas inte:**
+- Kontrollera internetanslutning (SMHI API kräver internet)
+- Kolla nätverksflik i DevTools för CORS-fel
+- Verifiera att koordinater är korrekta i config.js
+
+**Klockan visar fel tid:**
+- Kontrollera systemtid på datorn
+- Verifiera tidszonsinställningar i config.js
+- Kolla att `Intl.DateTimeFormat` stöds i webbläsaren
 
 **Skolmat laddas inte:**
 - Kontrollera att proxyn körs: `node js/proxy.js`
 - Kolla proxyn på: http://localhost:8787/api/school-menu
+- Verifiera att rätt skolmeny-ID används
 
 **Links.json hittas inte:**
 - Skapa `data/links.json` enligt exemplet ovan
@@ -159,14 +302,19 @@ GET /health
 **Service Worker-problem:**
 - Öppna DevTools → Application → Service Workers
 - Klicka "Unregister" och ladda om sidan
+- Rensa cache: DevTools → Application → Storage → Clear storage
 
 **CORS-fel:**
 - Använd en lokal server (inte file://)
-- Kontrollera att proxyn är igång
+- Kontrollera att proxyn är igång för skolmat
 
 **Todo-listan sparas inte:**
 - Kontrollera localStorage i DevTools
 - Kolla att `todos.autoSave: true` i config.js
+
+**Responsiv design fungerar inte:**
+- Kontrollera att viewport meta-tag finns i HTML
+- Testa olika skärmstorlekar i DevTools
 
 ## Utveckling
 
@@ -174,25 +322,79 @@ GET /health
 1. Skapa ny ES6-modul i `js/`
 2. Importera i `main.js` eller `index.html`
 3. Uppdatera Service Worker's `STATIC_ASSETS`
+4. Lägg till konfiguration i `config.js`
 
-**Ändra skolmats-API:**
-1. Uppdatera `DEFAULT_ID` i `proxy.js`
-2. Eventuellt anpassa parsing i `transformToSimpleModel()`
+**Skapa ny widget:**
+```javascript
+// 1. Skapa service (js/newService.js)
+export class NewService {
+    constructor() {
+        // Använd config
+    }
+}
+
+// 2. Skapa widget (js/newWidget.js)
+import { NewService } from './newService.js';
+import { newConfig } from './config.js';
+
+class NewWidget extends HTMLElement {
+    constructor() {
+        super();
+        this.attachShadow({ mode: 'open' });
+        this.service = new NewService();
+    }
+    
+    connectedCallback() {
+        this.render();
+    }
+    
+    render() {
+        this.shadowRoot.innerHTML = `
+            <style>/* CSS */</style>
+            <div>/* HTML */</div>
+        `;
+    }
+}
+
+customElements.define('new-widget', NewWidget);
+
+// 3. Lägg till i HTML
+<new-widget></new-widget>
+
+// 4. Uppdatera config.js och sw.js
+```
+
+**Anpassa befintliga komponenter:**
+- **Väder**: Ändra `weatherConfig.location` eller lägg till nya parametrar
+- **Klocka**: Modifiera `clockConfig.timezones` eller format
+- **Skolmat**: Uppdatera `DEFAULT_ID` i `proxy.js`
+- **Layout**: Justera CSS Grid i `styles.css`
 
 **Nya konfigurationsalternativ:**
 1. Lägg till i `config.js`
-2. Använd i relevanta komponenter
+2. Använd i relevanta komponenter via import
 3. Dokumentera i `CONFIG.md`
 
 ## Teknologi
 
-- **Vanilla JavaScript** - ES6 modules, Web Components
-- **CSS Grid & Flexbox** - Responsiv layout
-- **Service Worker API** - Offline-stöd och cachning
-- **Web App Manifest** - PWA-funktionalitet
-- **localStorage** - Persisterande data
-- **Fetch API** - HTTP-anrop
-- **Node.js** - Proxy-server
+- **Vanilla JavaScript** - ES6 modules, Web Components, Shadow DOM
+- **CSS Grid & Flexbox** - Responsiv layout med mobile-first approach
+- **Service Worker API** - Offline-stöd och intelligent cachning
+- **Web App Manifest** - PWA-funktionalitet för installation
+- **localStorage** - Persisterande data för todos och preferenser
+- **Fetch API** - HTTP-anrop till SMHI, skolmat och andra API:er
+- **Intl API** - Internationalisering för datum, tid och tidszoner
+- **Node.js** - Proxy-server för CORS-hantering
+- **Custom Elements** - Återanvändbara webbkomponenter
+
+## Prestandaoptimering
+
+- **Lazy loading** - Komponenter laddas endast när de behövs
+- **Cache-first** - Service Worker prioriterar cache för snabbhet
+- **Minimal dependencies** - Inga externa bibliotek, bara vanilla JS
+- **Komprimerade assets** - Optimerade bilder och minifierad kod
+- **Responsive images** - Anpassade för olika skärmstorlekar
+- **Efficient updates** - Endast nödvändiga DOM-uppdateringar
 
 ## Licens
 
