@@ -1,128 +1,203 @@
 # Bifrost Starting Page
 
-En enkel startsida med att‑göra‑lista, sök, länkar samt veckans skolmat.
-
-- HTML: [ind- CORS-fel eller "Unexpected content-type":
-  - Använd proxyns URL i [`SchoolMenuService`](js/components/SchoolMenuService.js) och säkerställ att proxyn kör..html](index.html)
-- CSS: [css/styles.css](css/styles.css)
-- JS: Modulär struktur i [`js/`](js/) mappen (se [js/README.md](js/README.md))
-- Proxy: [js/proxy.js](js/proxy.js)
+En modern startsida med att‑göra‑lista, sök, länkar samt veckans skolmat. Byggd med modulär JavaScript, Service Worker för offline-stöd och PWA-funktionalitet.
 
 ## Funktioner
 
-- ToDo-lista
-- Sök (DuckDuckGo)
-- Länkar (från `data/links.json`)
-- Skolmat/veckomeny via Matilda Platform, renderad av modulära webbkomponenter
+✅ **Todo-lista** - Persisterande i localStorage med tangentbordsgenvägar  
+✅ **Snabbsök** - DuckDuckGo med Ctrl+/ för fokus  
+✅ **Snabblänkar** - Från JSON-fil med Ctrl+1-9 genvägar  
+✅ **Skolmat** - Veckans meny med dagens dag markerad  
+✅ **Service Worker** - Offline-stöd och cachning  
+✅ **PWA** - Kan installeras som app  
+✅ **Responsiv design** - Fungerar på mobil och desktop  
+✅ **Konfigurationsystem** - Centraliserade inställningar  
 
 ## Arkitektur
 
-Projektet använder en modulär JavaScript-arkitektur:
-
 ```
-js/
-├── components/          # Webbkomponenter
-│   ├── BaseComponent.js      # Basklass för komponenter
-│   ├── SchoolMenu.js         # Skolmatsmeny-komponent  
-│   └── SchoolMenuService.js  # API-service
-├── utils/              # Hjälpfunktioner
-│   ├── dateUtils.js         # Datumhantering
-│   └── domUtils.js          # DOM-manipulation
-├── styles/             # CSS-in-JS stilar
-│   └── schoolMenu.css.js    # Komponentstilar
-├── linkHandler.js      # Länkhanterare
-├── main.js            # Huvudfil
-└── proxy.js           # CORS-proxy server
+Bifrost/
+├── index.html              # Huvudsida
+├── manifest.json           # PWA-manifest
+├── css/styles.css          # Responsiva stilar
+├── js/
+│   ├── main.js            # Huvudlogik + Service Worker
+│   ├── config.js          # Centraliserad konfiguration
+│   ├── uiConfig.js        # UI-initialisering
+│   ├── linkHandler.js     # Länkhantering
+│   ├── schoolMenu.js      # Skolmatskomponent
+│   ├── menuService.js     # API-service för skolmat
+│   ├── dateHelpers.js     # Datumfunktioner
+│   ├── sw.js             # Service Worker
+│   └── proxy.js          # CORS-proxy för skolmat
+└── data/
+    └── links.json        # Länkdata (skapas av användaren)
 ```
-
-Se [js/README.md](js/README.md) för detaljerad dokumentation.
 
 ## Snabbstart
 
-1) Skapa länkar (frivilligt men rekommenderas)
-- Skapa filen `data/links.json` (mappen är ignorerad i `.gitignore`).
+### 1. Skapa länkar (frivilligt)
+Skapa `data/links.json`:
 ```json
 [
-  { "name": "Name of link", "url": "https://www.example.com" },
-  { "name": "Name of link 2", "url": "https://www.example.com" }
+  { "name": "GitHub", "url": "https://github.com", "category": "Utveckling" },
+  { "name": "Gmail", "url": "https://gmail.com", "category": "Mejl" },
+  { "name": "Reddit", "url": "https://reddit.com", "category": "Social" }
 ]
 ```
 
-2) Starta proxyn för skolmaten
-- Krav: Node.js 18+
+### 2. Starta proxyn för skolmat
 ```bash
 node js/proxy.js
 ```
-- Proxyn kör på: http://localhost:8787/api/school-menu
+Proxyn kör på: http://localhost:8787/api/school-menu
 
-3) Starta en lokal statisk server (välj ett sätt)
-- VS Code Live Server: högerklicka [index.html](index.html) → “Open with Live Server”
-- Python:
+### 3. Starta statisk server
+**VS Code (rekommenderat):**
+- Installera Live Server-tillägget
+- Högerklicka på `index.html` → "Open with Live Server"
+
+**Alternativt:**
 ```bash
+# Python
 python -m http.server 8000
-```
-- Node (npx):
-```bash
+
+# Node.js
 npx serve
 # eller
 npx http-server -p 8000
 ```
 
-4) Öppna sidan
-- Surfa till den port din statiska server visar (t.ex. http://localhost:8000).
-- Se till att proxyn (steg 2) fortfarande kör.
+### 4. Öppna sidan
+Surfa till den port din server visar (t.ex. http://localhost:5500 eller http://localhost:8000)
 
-## Hur det funkar
+## Konfiguration
 
-- **Länkar**: [`js/linkHandler.js`](js/linkHandler.js) hämtar `./data/links.json` och bygger listan i elementet med id `links`.
-- **Skolmat**: Modulär [`SchoolMenu`](js/components/SchoolMenu.js) komponent hämtar JSON från proxyn och renderar veckans dagar med dagens dag markerad i rött.
-- **Proxy**: [`js/proxy.js`](js/proxy.js) hämtar Matilda-sidan, plockar ut `__NEXT_DATA__` och transformerar till enkelt JSON-format.
-- **Service**: [`SchoolMenuService`](js/components/SchoolMenuService.js) hanterar API-anrop, caching och validering.
-- **Utils**: Hjälpfunktioner för datum ([`dateUtils.js`](js/utils/dateUtils.js)) och DOM ([`domUtils.js`](js/utils/domUtils.js)).
+Anpassa inställningar i [`js/config.js`](js/config.js). Se [CONFIG.md](CONFIG.md) för detaljer.
+
+**Populära anpassningar:**
+```js
+// Ändra användarnamn
+ui: { userName: 'Ditt Namn' }
+
+// Aktivera mörkt tema
+ui: { theme: 'dark' }
+
+// Justera todo-gränser
+todos: { maxItems: 10 }
+
+// Byta sökmotor
+search: { defaultEngine: 'https://google.com/search' }
+```
+
+## Tangentbordsgenvägar
+
+| Genväg | Funktion |
+|--------|----------|
+| `Ctrl + 1-9` | Öppna snabblänk 1-9 |
+| `Ctrl + /` | Fokusera sökfältet |
+| `Enter` | Lägg till todo (i todo-input) |
+
+## Service Worker & Offline-stöd
+
+Bifrost cachar automatiskt:
+- ✅ Statiska filer (HTML, CSS, JS)
+- ✅ Senaste skolmatsdata
+- ✅ Länkdata
+
+**Offline-funktionalitet:**
+- Sidan fungerar utan internet
+- Todo-lista och länkar tillgängliga
+- Senaste hämtade skolmat visas
+
+## PWA-funktioner
+
+- 📱 Kan installeras som app på mobil/desktop
+- 🔄 Offline-stöd via Service Worker
+- ⚡ Snabb laddning tack vare cachning
+- 🎨 Anpassad ikon och färgtema
 
 ## API
 
-Komponenten erbjuder ett publikt API:
-
+### SchoolMenu-komponent
 ```javascript
 const menu = document.querySelector('school-menu');
 
 // Uppdatera menydata
-await menu.refresh();
+await menu.loadMenu();
 
-// Hämta aktuell menydata  
-const data = menu.getMenuData();
-
-// Kontrollera service-hälsa
-const isHealthy = await menu.getHealthStatus();
-
-// Lyssna på events
-menu.addEventListener('menuLoaded', (e) => console.log(e.detail));
-menu.addEventListener('menuError', (e) => console.error(e.detail));
+// Komponenten emitterar events vid laddning/fel
+menu.addEventListener('menuLoaded', (e) => console.log('Loaded:', e.detail));
+menu.addEventListener('menuError', (e) => console.error('Error:', e.detail));
 ```
 
-## Konfiguration
+### Proxy API
+```bash
+# Standard meny
+GET /api/school-menu
 
-- Byta meny (skola/enhet): 
-  - Ändra `DEFAULT_ID` i [`js/proxy.js`](js/proxy.js), eller
-  - Anropa proxyn med queryparametrar:  
-    `http://localhost:8787/api/school-menu?id=<MENY_ID>`
-- Begränsa datumintervall (om stöds av källan):  
-  `http://localhost:8787/api/school-menu?id=<MENY_ID>&startDate=2025-09-08&endDate=2025-09-12`
-- Byta port:
-  - Ändra `PORT` i [`js/proxy.js`](js/proxy.js) och uppdatera URL:en i [`SchoolMenuService`](js/components/SchoolMenuService.js).
+# Specifik meny-ID
+GET /api/school-menu?id=MENY_ID
+
+# Datumintervall
+GET /api/school-menu?startDate=2025-01-13&endDate=2025-01-17
+
+# Hälsokontroll
+GET /health
+```
 
 ## Felsökning
 
-- CORS-fel eller “Unexpected content-type”:
-  - Använd proxyns URL i [`SchoolMenu`](js/schoolMenu.js) och säkerställ att proxyn kör.
-- “JSON.parse …” vid proxy-körning:
-  - Källsidan kan ha ändrat struktur. Proxyn parser `__NEXT_DATA__`; uppdatera parsern i [`js/proxy.js`](js/proxy.js) vid behov.
-- Port redan upptagen:
-  - Ändra `PORT` i [`js/proxy.js`](js/proxy.js).
-- `links.json` laddas inte:
-  - Kontrollera att din statiska server körs från repo‑roten och att filen finns under `data/links.json`.
+**Skolmat laddas inte:**
+- Kontrollera att proxyn körs: `node js/proxy.js`
+- Kolla proxyn på: http://localhost:8787/api/school-menu
+
+**Links.json hittas inte:**
+- Skapa `data/links.json` enligt exemplet ovan
+- Kontrollera att statisk server körs från projektets rot
+
+**Service Worker-problem:**
+- Öppna DevTools → Application → Service Workers
+- Klicka "Unregister" och ladda om sidan
+
+**CORS-fel:**
+- Använd en lokal server (inte file://)
+- Kontrollera att proxyn är igång
+
+**Todo-listan sparas inte:**
+- Kontrollera localStorage i DevTools
+- Kolla att `todos.autoSave: true` i config.js
+
+## Utveckling
+
+**Lägga till nya komponenter:**
+1. Skapa ny ES6-modul i `js/`
+2. Importera i `main.js` eller `index.html`
+3. Uppdatera Service Worker's `STATIC_ASSETS`
+
+**Ändra skolmats-API:**
+1. Uppdatera `DEFAULT_ID` i `proxy.js`
+2. Eventuellt anpassa parsing i `transformToSimpleModel()`
+
+**Nya konfigurationsalternativ:**
+1. Lägg till i `config.js`
+2. Använd i relevanta komponenter
+3. Dokumentera i `CONFIG.md`
+
+## Teknologi
+
+- **Vanilla JavaScript** - ES6 modules, Web Components
+- **CSS Grid & Flexbox** - Responsiv layout
+- **Service Worker API** - Offline-stöd och cachning
+- **Web App Manifest** - PWA-funktionalitet
+- **localStorage** - Persisterande data
+- **Fetch API** - HTTP-anrop
+- **Node.js** - Proxy-server
 
 ## Licens
 
-Bifrost är licensierat under MIT. Se [LICENSE](LICENSE).
+MIT License - se [LICENSE](LICENSE) för detaljer.
+
+---
+
+**Bifrost** - En bro till webben 🌉
