@@ -72,6 +72,19 @@ export const config = {
         placeholder: 'Sök på DuckDuckGo'
     },
 
+    // Weather settings
+    weather: {
+        enabled: true,
+        updateInterval: 10 * 60 * 1000, // 10 minutes
+        location: {
+            latitude: 56.5940,  // Vassmolösa
+            longitude: 16.1536,
+            name: 'Vassmolösa'
+        },
+        showForecast: true,
+        showDetails: true
+    },
+
     // Development settings
     dev: {
         debug: false,
@@ -101,5 +114,6 @@ export const {
     ui,
     serviceWorker,
     search,
+    weather,
     dev
 } = config;
