@@ -14,21 +14,37 @@
 <body>
     <div class="container">
         <h1>Hej Fredrik! Vad vill du göra nu?</h1>
-        <div class="todo-list">
-            <h2>Att Göra</h2>
-            <ul id="todo-items"></ul>
-            <input type="text" id="new-todo" placeholder="Lägg till en ny uppgift">
-            <button onclick="addTodo()">Lägg till</button>
+        
+        <div class="main-content">
+            <div class="todo-list card">
+                <h2>Att Göra</h2>
+                <ul id="todo-items"></ul>
+                <div class="todo-input">
+                    <input type="text" id="new-todo" placeholder="Lägg till en ny uppgift">
+                    <button onclick="addTodo()">Lägg till</button>
+                </div>
+            </div>
+            
+            <div class="search card">
+                <h2>Sök</h2>
+                <form action="https://duckduckgo.com/" method="get" target="_blank">
+                    <input type="text" name="q" placeholder="Sök på DuckDuckGo">
+                    <button type="submit">Sök</button>
+                </form>
+            </div>
         </div>
-        <div class="search">
-            <h2>Sök</h2>
-            <form action="https://duckduckgo.com/" method="get" target="_blank">
-                <input type="text" name="q" placeholder="Sök på DuckDuckGo">
-                <button type="submit">Sök</button>
-            </form>
+        
+        <div class="sidebar">
+            <div class="links card">
+                <h2>Snabblänkar</h2>
+                <ul id="links"></ul>
+            </div>
+            
+            <div class="card">
+                <h2>Skolmat</h2>
+                <school-menu></school-menu>
+            </div>
         </div>
-        <div id="links"></div>
-        <school-menu></school-menu>
     </div>
 </body>
 </html>
