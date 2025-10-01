@@ -7,7 +7,9 @@ const STATIC_ASSETS = [
     '/js/linkHandler.js',
     '/js/schoolMenu.js',
     '/js/menuService.js',
-    '/js/dateHelpers.js'
+    '/js/dateHelpers.js',
+    '/js/config.js',
+    '/js/uiConfig.js'
 ];
 
 // Install event - cache static assets
