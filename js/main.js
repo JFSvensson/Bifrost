@@ -37,3 +37,19 @@ document.addEventListener('keydown', (e) => {
         if (link) window.open(link.href, '_blank');
     }
 });
+
+// Service Worker registration
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/js/sw.js')
+            .then(registration => {
+                console.log('Service Worker registered successfully:', registration);
+            })
+            .catch(registrationError => {
+                console.log('Service Worker registration failed:', registrationError);
+            });
+    });
+}
+
+// Load todos when page loads
+window.addEventListener('load', loadTodos);
