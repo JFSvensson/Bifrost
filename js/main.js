@@ -29,3 +29,11 @@ function addTodoItem(todoText) {
     li.textContent = todoText;
     document.getElementById('todo-items').appendChild(li);
 }
+
+document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.key >= '1' && e.key <= '9') {
+        const links = document.querySelectorAll('#links a');
+        const link = links[parseInt(e.key) - 1];
+        if (link) window.open(link.href, '_blank');
+    }
+});
