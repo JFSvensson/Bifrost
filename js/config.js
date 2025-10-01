@@ -85,6 +85,21 @@ export const config = {
         showDetails: true
     },
 
+    // Clock settings
+    clock: {
+        enabled: true,
+        updateInterval: 1000, // 1 second
+        format: '24h', // '12h' or '24h'
+        showSeconds: false,
+        showMultipleTimezones: true,
+        timezones: [
+            { name: 'Stockholm', timezone: 'Europe/Stockholm' },
+            { name: 'New York', timezone: 'America/New_York' },
+            { name: 'Tokyo', timezone: 'Asia/Tokyo' },
+            { name: 'London', timezone: 'Europe/London' }
+        ]
+    },
+
     // Development settings
     dev: {
         debug: false,
@@ -115,5 +130,6 @@ export const {
     serviceWorker,
     search,
     weather,
+    clock,
     dev
 } = config;
