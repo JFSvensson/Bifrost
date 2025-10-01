@@ -9,7 +9,9 @@ const STATIC_ASSETS = [
     '/js/menuService.js',
     '/js/dateHelpers.js',
     '/js/config.js',
-    '/js/uiConfig.js'
+    '/js/uiConfig.js',
+    '/js/weatherWidget.js',
+    '/js/weatherService.js'
 ];
 
 // Install event - cache static assets
@@ -45,6 +47,29 @@ self.addEventListener('activate', event => {
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', event => {
     const { request } = event;
+    
+    // Handle weather API with cache fallback
+    if (request.url.includes('smhi.se')) {
+        event.respondWith(
+            fetch(request)
+                .then(response => {
+                    // Cache successful responses for 10 minutes
+                    if (response.ok) {
+                        const responseClone = response.clone();
+                        caches.open(CACHE_NAME).then(cache => {
+                            cache.put(request, responseClone);
+                        });
+                    }
+                    return response;
+                })
+                .catch(() => {
+                    // Fallback to cache if network fails
+                    console.log('Weather API failed, serving from cache');
+                    return caches.match(request);
+                })
+        );
+        return;
+    }
     
     // Handle school menu API with cache fallback
     if (request.url.includes('/api/school-menu')) {
