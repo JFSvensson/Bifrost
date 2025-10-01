@@ -1,10 +1,12 @@
+import { schoolMenu } from './config.js';
+
 /**
  * Simple service for school menu API calls
  */
 export class MenuService {
-    constructor(apiUrl = 'http://localhost:8787/api/school-menu') {
+    constructor(apiUrl = schoolMenu.apiUrl) {
         this.apiUrl = apiUrl;
-        this.timeout = 8000;
+        this.timeout = schoolMenu.timeout;
     }
 
     async fetchMenu() {
