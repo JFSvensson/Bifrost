@@ -11,7 +11,9 @@ const STATIC_ASSETS = [
     '/js/config.js',
     '/js/uiConfig.js',
     '/js/weatherWidget.js',
-    '/js/weatherService.js'
+    '/js/weatherService.js',
+    '/js/clockWidget.js',
+    '/js/clockService.js'
 ];
 
 // Install event - cache static assets
