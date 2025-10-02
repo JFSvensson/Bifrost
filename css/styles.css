@@ -95,11 +95,115 @@ body {
     background: #f8f9fa;
     border-radius: 8px;
     border-left: 4px solid #3498db;
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
 }
 
 .todo-list li:hover {
     background: #e9ecef;
+    transform: translateX(2px);
+}
+
+/* Obsidian todos styling */
+.todo-list li.obsidian {
+    border-left: 4px solid #7c3aed;
+    background: linear-gradient(90deg, #f8f9fa 0%, #f3f0ff 100%);
+}
+
+.todo-list li.bifrost {
+    border-left: 4px solid #3498db;
+}
+
+/* Priority styling */
+.todo-list li.priority-high {
+    border-left-color: #e74c3c;
+    background: linear-gradient(90deg, #fff5f5 0%, #fee2e2 100%);
+}
+
+.todo-list li.priority-medium {
+    border-left-color: #f39c12;
+    background: linear-gradient(90deg, #fffbf0 0%, #fef3c7 100%);
+}
+
+.todo-list li.priority-low {
+    border-left-color: #95a5a6;
+    opacity: 0.8;
+}
+
+/* Priority icons */
+.priority-icon {
+    font-size: 1.2rem;
+    margin-right: 0.25rem;
+}
+
+/* Todo content */
+.todo-content {
+    flex: 1;
+    font-weight: 500;
+}
+
+/* Source indicators */
+.source-icon {
+    font-size: 1rem;
+    opacity: 0.7;
+}
+
+.source-icon.obsidian {
+    color: #7c3aed;
+}
+
+/* Due dates */
+.due-date {
+    font-size: 0.8rem;
+    color: #666;
+    background: #f0f0f0;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+}
+
+/* Remove button */
+.remove-todo {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+}
+
+.remove-todo:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Sync error styling */
+.sync-error {
+    background: #fee2e2;
+    color: #dc2626;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border-left: 4px solid #dc2626;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .todo-input {
