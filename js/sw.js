@@ -13,7 +13,8 @@ const STATIC_ASSETS = [
     '/js/weatherWidget.js',
     '/js/weatherService.js',
     '/js/clockWidget.js',
-    '/js/clockService.js'
+    '/js/clockService.js',
+    '/js/obsidianTodoService.js'
 ];
 
 // Install event - cache static assets
