@@ -25,7 +25,20 @@ export const config = {
         maxItems: 20,
         storageKey: 'bifrost-todos',
         placeholder: 'Lägg till en ny uppgift',
-        autoSave: true
+        autoSave: true,
+        obsidian: {
+            enabled: true,
+            bridgeUrl: 'http://localhost:8081/obsidian/todos',
+            updateInterval: 30 * 1000, // 30 sekunder
+            syncBidirectional: false, // Bara läsa från Obsidian, inte skriva
+            showSource: true, // Visa vilken fil todo:n kommer från
+            priorityColors: {
+                high: '#e74c3c',
+                medium: '#f39c12', 
+                normal: '#3498db',
+                low: '#95a5a6'
+            }
+        }
     },
 
     // Links settings
