@@ -399,7 +399,3 @@ customElements.define('new-widget', NewWidget);
 ## Licens
 
 MIT License - se [LICENSE](LICENSE) för detaljer.
-
----
-
-**Bifrost** - En bro till webben 🌉
