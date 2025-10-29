@@ -116,19 +116,31 @@ class ObsidianBridge {
                 }
             }
 
-            // Parse completed todos (för statistik)
-            const completedPattern = /^-\s+\[x\]\s+(.+)$/i;
-            const completedMatch = line.match(completedPattern);
-            if (completedMatch) {
-                todos.push({
-                    text: completedMatch[1].trim(),
-                    completed: true,
-                    source: source,
-                    section: currentSection,
-                    completedAt: new Date(),
-                    originalLine: line,
-                    lineNumber: i + 1
-                });
+            // Parse completed todos
+            const completedPatterns = [
+                /^-\s+\[x\]\s+(.+)$/i,           // - [x] Standard done
+                /^\*\s+\[x\]\s+(.+)$/i,          // * [x] Stjärn-variant
+                /^[\d]+\.\s+\[x\]\s+(.+)$/i,     // 1. [x] Numrerad lista
+                /^>\s+\[x\]\s+(.+)$/i            // > [x] Quote-block
+            ];
+
+            for (const pattern of completedPatterns) {
+                const match = line.match(pattern);
+                if (match) {
+                    todos.push({
+                        text: match[1].trim(),
+                        completed: true,
+                        source: source,
+                        section: currentSection,
+                        priority: this.extractPriority(match[1]),
+                        tags: this.extractTags(match[1]),
+                        dueDate: this.extractDueDate(match[1]),
+                        completedAt: new Date(),
+                        originalLine: line,
+                        lineNumber: i + 1
+                    });
+                    break;
+                }
             }
         }
 
@@ -197,13 +209,17 @@ class ObsidianBridge {
         const allTodos = [];
         
         for (const [fileName, data] of this.cachedTodos) {
-            // Bara icke-klara todos som standard
-            const activeTodos = data.todos.filter(todo => !todo.completed);
-            allTodos.push(...activeTodos);
+            // Inkludera ALLA todos (både färdiga och ofärdiga)
+            allTodos.push(...data.todos);
         }
 
-        // Sortera efter prioritet och sedan alfabetiskt
+        // Sortera efter completed status (ofärdiga först), sedan prioritet, sedan alfabetiskt
         return allTodos.sort((a, b) => {
+            // Ofärdiga todos först
+            if (a.completed !== b.completed) {
+                return a.completed ? 1 : -1;
+            }
+            
             const priorityOrder = { high: 3, medium: 2, normal: 1, low: 0 };
             const aPriority = priorityOrder[a.priority] || 1;
             const bPriority = priorityOrder[b.priority] || 1;
