@@ -5,6 +5,7 @@ En modern startsida med att‑göra‑lista, sök, länkar, väder, klocka samt 
 ## Funktioner
 
 ✅ **Todo-lista** - Persisterande i localStorage med tangentbordsgenvägar  
+✅ **Obsidian-synk** - Automatisk synkronisering med Obsidian.md vault  
 ✅ **Snabbsök** - DuckDuckGo med Ctrl+/ för fokus  
 ✅ **Snabblänkar** - Från JSON-fil med Ctrl+1-9 genvägar  
 ✅ **Väderprognos** - SMHI-data med temperatur och nederbördssannolikhet  
@@ -14,16 +15,23 @@ En modern startsida med att‑göra‑lista, sök, länkar, väder, klocka samt 
 ✅ **PWA** - Kan installeras som app  
 ✅ **Responsiv design** - Fungerar på mobil och desktop  
 ✅ **Konfigurationsystem** - Centraliserade inställningar  
+✅ **Favicon** - Nordisk regnbågsbro-tema (Bifrost mythology)  
 
 ## Arkitektur
 
 ```
 Bifrost/
 ├── index.html              # Huvudsida med grid-layout
-├── manifest.json           # PWA-manifest
+├── manifest.json           # PWA-manifest med nordisk regnbågs-ikon
+├── favicon.svg             # SVG-ikon med regnbågsbro
+├── obsidianBridge.js       # Node.js bridge för Obsidian-synk
+├── example-TODO.md         # Exempel på Obsidian todo-format
+├── OBSIDIAN_SETUP.md       # Guide för Obsidian-integration
+├── FAVICON_README.md       # Guide för favicon-generering
+├── CONFIG.md               # Konfigurationsdokumentation
 ├── css/styles.css          # Responsiva stilar med CSS Grid
 ├── js/
-│   ├── main.js            # Huvudlogik + Service Worker
+│   ├── main.js            # Huvudlogik + todo-hantering
 │   ├── config.js          # Centraliserad konfiguration
 │   ├── uiConfig.js        # UI-initialisering
 │   ├── linkHandler.js     # Länkhantering
@@ -34,6 +42,7 @@ Bifrost/
 │   ├── weatherService.js  # SMHI API-service
 │   ├── clockWidget.js     # Klockkomponent
 │   ├── clockService.js    # Tidshantering och tidszoner
+│   ├── obsidianTodoService.js  # Obsidian-synkronisering
 │   ├── sw.js             # Service Worker
 │   └── proxy.js          # CORS-proxy för skolmat
 └── data/
@@ -62,6 +71,16 @@ Bifrost/
 - **Automatisk uppdatering** - Hämtar ny data varje dag
 - **Offline-stöd** - Cachad meny när internet saknas
 
+### 📝 **Obsidian-integration**
+- **Realtidssynk** - Automatisk synkronisering med Obsidian vault
+- **Prioriteter** - Stöd för high/medium/low via `[!high]`, emoji (🔥, ⚠️)
+- **Datum** - Deadlines med `@YYYY-MM-DD` format
+- **Kategorier** - Tags med `#tag` format
+- **Sektioner** - Organisera todos under rubriker
+- **Visuell distinktion** - Obsidian vs lokala todos med olika färger
+- **Auto-merge** - Kombinerar Obsidian + Bifrost todos
+- **Se guide**: [OBSIDIAN_SETUP.md](OBSIDIAN_SETUP.md)
+
 ## Snabbstart
 
 ### 1. Skapa länkar (frivilligt)
@@ -80,7 +99,15 @@ node js/proxy.js
 ```
 Proxyn kör på: http://localhost:8787/api/school-menu
 
-### 3. Starta statisk server
+### 3. (Valfritt) Starta Obsidian Bridge för todo-synk
+```bash
+# Ändra vault-sökväg i obsidianBridge.js först
+node obsidianBridge.js
+```
+Bridge kör på: http://localhost:8081/obsidian/todos  
+Se [OBSIDIAN_SETUP.md](OBSIDIAN_SETUP.md) för fullständig guide
+
+### 4. Starta statisk server
 **VS Code (rekommenderat):**
 - Installera Live Server-tillägget
 - Högerklicka på `index.html` → "Open with Live Server"
@@ -96,7 +123,7 @@ npx serve
 npx http-server -p 8000
 ```
 
-### 4. Öppna sidan
+### 5. Öppna sidan
 Surfa till den port din server visar (t.ex. http://localhost:5500 eller http://localhost:8000)
 
 ## Konfiguration
@@ -135,6 +162,16 @@ clock: {
         { name: 'Stockholm', timezone: 'Europe/Stockholm' },
         { name: 'New York', timezone: 'America/New_York' }
     ]
+}
+
+// Obsidian-integration
+todos: {
+    obsidian: {
+        enabled: true,
+        bridgeUrl: 'http://localhost:8081/obsidian/todos',
+        updateInterval: 30 * 1000, // 30 sekunder
+        showSource: true // Visa fil-källa
+    }
 }
 ```
 
@@ -205,6 +242,41 @@ Bifrost cachar automatiskt:
 ```
 
 ## API
+
+### ObsidianTodoService
+```javascript
+const obsidianService = new ObsidianTodoService();
+
+// Ladda todos från Obsidian
+const todos = await obsidianService.loadTodos();
+
+// Synka med lokala todos
+const merged = await obsidianService.syncWithLocal();
+
+// Lägg till lokal todo
+const newTodo = obsidianService.addLocalTodo('Min nya uppgift');
+
+// Ta bort lokal todo
+obsidianService.removeLocalTodo(todoId);
+
+// Hämta statistik
+const stats = await obsidianService.getStats();
+```
+
+### Obsidian Bridge API
+```bash
+# Hämta todos
+GET http://localhost:8081/obsidian/todos
+
+# Statistik
+GET http://localhost:8081/obsidian/stats
+
+# Övervakade filer
+GET http://localhost:8081/obsidian/files
+
+# Hälsokontroll
+GET http://localhost:8081/health
+```
 
 ### WeatherWidget-komponent
 ```javascript
@@ -280,6 +352,19 @@ GET https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geoty
 
 ## Felsökning
 
+**Obsidian-synk fungerar inte:**
+- Kontrollera att `node obsidianBridge.js` körs
+- Verifiera vault-sökväg i `obsidianBridge.js`
+- Kolla att TODO.md finns i vault med rätt format
+- Se konsolen för sync-meddelanden
+- Kontrollera att port 8081 inte är blockerad
+
+**Todos från Obsidian visas inte:**
+- Kontrollera format: `- [ ] Text` (mellanslag viktigt!)
+- Verifiera att bridge är igång och tillgänglig
+- Kolla `todos.obsidian.enabled: true` i config.js
+- Se Network-fliken i DevTools för API-anrop
+
 **Väder laddas inte:**
 - Kontrollera internetanslutning (SMHI API kräver internet)
 - Kolla nätverksflik i DevTools för CORS-fel
@@ -315,6 +400,19 @@ GET https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geoty
 **Responsiv design fungerar inte:**
 - Kontrollera att viewport meta-tag finns i HTML
 - Testa olika skärmstorlekar i DevTools
+
+**Favicon visas inte:**
+- Hard-refresh med Ctrl+Shift+R
+- Rensa browser-cache
+- Kontrollera att favicon.svg finns i rot-mappen
+- Kolla manifest.json för korrekta icon-paths
+
+## Dokumentation
+
+- **[CONFIG.md](CONFIG.md)** - Fullständig konfigurationsguide
+- **[OBSIDIAN_SETUP.md](OBSIDIAN_SETUP.md)** - Obsidian-integration setup
+- **[FAVICON_README.md](FAVICON_README.md)** - Favicon-generering och anpassning
+- **[example-TODO.md](example-TODO.md)** - Exempel på Obsidian todo-format
 
 ## Utveckling
 
@@ -382,10 +480,34 @@ customElements.define('new-widget', NewWidget);
 - **Service Worker API** - Offline-stöd och intelligent cachning
 - **Web App Manifest** - PWA-funktionalitet för installation
 - **localStorage** - Persisterande data för todos och preferenser
-- **Fetch API** - HTTP-anrop till SMHI, skolmat och andra API:er
+- **Fetch API** - HTTP-anrop till SMHI, Obsidian Bridge, skolmat
 - **Intl API** - Internationalisering för datum, tid och tidszoner
-- **Node.js** - Proxy-server för CORS-hantering
+- **Node.js** - Proxy-server för CORS och Obsidian Bridge
 - **Custom Elements** - Återanvändbara webbkomponenter
+- **File System Watching** - Real-time Obsidian file monitoring
+
+## Kodstruktur & Arkitektur
+
+### **Modulärt uppbyggd**
+- Varje komponent är självständig med egen service-lager
+- Konfigurationsdriven design med centraliserad config.js
+- Separation of concerns: UI, logik, data
+
+### **ES6 Modules**
+- Modern import/export syntax
+- Tree-shaking för optimal bundle size
+- Type="module" för native browser support
+
+### **Web Components Pattern**
+- Custom elements med Shadow DOM
+- Inkapsling och återanvändbarhet
+- Event-driven kommunikation
+
+### **Service Layer Pattern**
+- ObsidianTodoService - Obsidian-synkronisering
+- WeatherService - SMHI API-integration  
+- ClockService - Tidshantering
+- MenuService - Skolmats-API
 
 ## Prestandaoptimering
 
