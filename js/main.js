@@ -49,7 +49,18 @@ function renderTodos() {
     currentTodos.forEach(todo => {
         const li = document.createElement('li');
         li.className = `todo-item ${todo.source || 'bifrost'} priority-${todo.priority || 'normal'}`;
+        if (todo.completed) {
+            li.className += ' completed';
+        }
         li.dataset.todoId = todo.id;
+        
+        // Add checkbox for toggling completion
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'todo-checkbox';
+        checkbox.checked = todo.completed;
+        checkbox.onclick = () => toggleTodo(todo.id);
+        li.appendChild(checkbox);
         
         // Create todo content
         const content = document.createElement('div');
@@ -72,6 +83,14 @@ function renderTodos() {
             dueDate.className = 'due-date';
             dueDate.textContent = formatDueDate(todo.dueDate);
             li.appendChild(dueDate);
+        }
+        
+        // Add completed timestamp if completed
+        if (todo.completed && todo.completedAt) {
+            const completedTime = document.createElement('span');
+            completedTime.className = 'completed-time';
+            completedTime.textContent = `✓ ${formatCompletedTime(todo.completedAt)}`;
+            li.appendChild(completedTime);
         }
         
         // Add source indicator
@@ -121,6 +140,43 @@ function formatDueDate(date) {
     return `📅 ${dueDate.toLocaleDateString('sv-SE')}`;
 }
 
+function formatCompletedTime(date) {
+    const completed = new Date(date);
+    const now = new Date();
+    const diffMs = now - completed;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'nyss';
+    if (diffMins < 60) return `${diffMins}min sedan`;
+    if (diffHours < 24) return `${diffHours}h sedan`;
+    if (diffDays < 7) return `${diffDays}d sedan`;
+    
+    return completed.toLocaleDateString('sv-SE');
+}
+
+function toggleTodo(todoId) {
+    const todo = currentTodos.find(t => t.id === todoId);
+    if (!todo) return;
+    
+    // Obsidian todos kan inte toggles från Bifrost
+    if (todo.source === 'obsidian') {
+        alert('⚠️ Obsidian-todos måste markeras som klara i Obsidian');
+        return;
+    }
+    
+    todo.completed = !todo.completed;
+    if (todo.completed) {
+        todo.completedAt = new Date();
+    } else {
+        delete todo.completedAt;
+    }
+    
+    saveTodos();
+    renderTodos();
+}
+
 function removeTodo(todoId) {
     if (obsidianService) {
         obsidianService.removeLocalTodo(todoId);
@@ -133,13 +189,14 @@ function removeTodo(todoId) {
 }
 
 function updateTodoStatus() {
-    const obsidianCount = currentTodos.filter(t => t.source === 'obsidian').length;
-    const bifrostCount = currentTodos.filter(t => t.source === 'bifrost').length;
+    const obsidianCount = currentTodos.filter(t => t.source === 'obsidian' && !t.completed).length;
+    const bifrostCount = currentTodos.filter(t => t.source === 'bifrost' && !t.completed).length;
+    const completedCount = currentTodos.filter(t => t.completed).length;
     
     // Update title or status indicator if needed
     const statusElement = document.querySelector('.todo-status');
     if (statusElement) {
-        statusElement.textContent = `📝 ${obsidianCount} från Obsidian, 🏠 ${bifrostCount} lokala`;
+        statusElement.textContent = `📝 ${obsidianCount} från Obsidian, 🏠 ${bifrostCount} lokala, ✓ ${completedCount} klara`;
     }
 }
 
