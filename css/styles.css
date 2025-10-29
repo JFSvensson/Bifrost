@@ -164,6 +164,38 @@ body {
     border-radius: 12px;
 }
 
+/* Completed timestamp */
+.completed-time {
+    font-size: 0.75rem;
+    color: #27ae60;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+/* Checkbox styling */
+.todo-checkbox {
+    margin-right: 0.75rem;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #27ae60;
+}
+
+/* Completed todo styling */
+.todo-item.completed {
+    opacity: 0.6;
+    background: #f8f9fa;
+}
+
+.todo-item.completed .todo-content {
+    text-decoration: line-through;
+    color: #6c757d;
+}
+
+.todo-item.completed .priority-icon {
+    opacity: 0.5;
+}
+
 /* Remove button */
 .remove-todo {
     background: #e74c3c;
