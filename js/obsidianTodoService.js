@@ -50,6 +50,7 @@ export class ObsidianTodoService {
         return obsidianTodos.map(todo => ({
             text: this.formatTodoText(todo),
             completed: todo.completed,
+            completedAt: todo.completedAt ? new Date(todo.completedAt) : null,
             source: 'obsidian',
             originalSource: todo.source,
             priority: todo.priority,
@@ -113,6 +114,11 @@ export class ObsidianTodoService {
         const priorityOrder = { high: 4, medium: 3, normal: 2, low: 1 };
         
         return todos.sort((a, b) => {
+            // Ofärdiga todos först
+            if (a.completed !== b.completed) {
+                return a.completed ? 1 : -1;
+            }
+            
             // Först efter prioritet
             const aPriority = priorityOrder[a.priority] || 2;
             const bPriority = priorityOrder[b.priority] || 2;
