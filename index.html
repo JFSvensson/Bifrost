@@ -5,19 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#3498db">
+    <meta name="theme-color" content="#3498db" id="theme-color">
     
     <!-- Favicons -->
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     
+    <script type="module" src="js/themeService.js" defer></script>
     <script type="module" src="js/main.js" defer></script>
     <script src="js/linkHandler.js" defer></script>
     <script type="module" src="js/schoolMenu.js" defer></script>
     <title>Bifrost - A bridge to the web</title>
 </head>
 <body>
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+        <span class="theme-icon">🌙</span>
+    </button>
+    
     <div class="container">
         <h1>Hej Fredrik! Vad vill du göra nu?</h1>
         
