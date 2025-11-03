@@ -13,6 +13,7 @@ En modern startsida med att‑göra‑lista, sök, länkar, väder, klocka samt 
 ✅ **Skolmat** - Veckans meny med dagens dag markerad  
 ✅ **Service Worker** - Offline-stöd och cachning  
 ✅ **PWA** - Kan installeras som app  
+✅ **Mörkt tema** - Toggle mellan ljust/mörkt med Ctrl+Shift+D, auto-detection av systempreferens  
 ✅ **Responsiv design** - Fungerar på mobil och desktop  
 ✅ **Konfigurationsystem** - Centraliserade inställningar  
 ✅ **Favicon** - Nordisk regnbågsbro-tema (Bifrost mythology)  
@@ -28,12 +29,14 @@ Bifrost/
 ├── example-TODO.md         # Exempel på Obsidian todo-format
 ├── OBSIDIAN_SETUP.md       # Guide för Obsidian-integration
 ├── FAVICON_README.md       # Guide för favicon-generering
+├── DARK_THEME.md           # Guide för mörkt tema
 ├── CONFIG.md               # Konfigurationsdokumentation
 ├── css/styles.css          # Responsiva stilar med CSS Grid
 ├── js/
 │   ├── main.js            # Huvudlogik + todo-hantering
 │   ├── config.js          # Centraliserad konfiguration
 │   ├── uiConfig.js        # UI-initialisering
+│   ├── themeService.js    # Tema-hantering (ljust/mörkt)
 │   ├── linkHandler.js     # Länkhantering
 │   ├── schoolMenu.js      # Skolmatskomponent
 │   ├── menuService.js     # API-service för skolmat
@@ -135,8 +138,8 @@ Anpassa inställningar i [`js/config.js`](js/config.js). Se [CONFIG.md](CONFIG.m
 // Ändra användarnamn
 ui: { userName: 'Ditt Namn' }
 
-// Aktivera mörkt tema
-ui: { theme: 'dark' }
+// Tema-inställningar ('auto', 'light', 'dark')
+ui: { theme: 'auto' } // Följer systempreferens
 
 // Justera todo-gränser
 todos: { maxItems: 10 }
@@ -181,6 +184,7 @@ todos: {
 |--------|----------|
 | `Ctrl + 1-9` | Öppna snabblänk 1-9 |
 | `Ctrl + /` | Fokusera sökfältet |
+| `Ctrl + Shift + D` | Toggle mörkt/ljust tema |
 | `Enter` | Lägg till todo (i todo-input) |
 
 ## Service Worker & Offline-stöd
@@ -276,6 +280,25 @@ GET http://localhost:8081/obsidian/files
 
 # Hälsokontroll
 GET http://localhost:8081/health
+```
+
+### ThemeService
+```javascript
+import themeService from './js/themeService.js';
+
+// Byta tema
+themeService.setTheme('dark'); // 'light' eller 'dark'
+
+// Toggle tema
+themeService.toggleTheme();
+
+// Läs nuvarande tema
+const theme = themeService.getTheme(); // 'light' eller 'dark'
+
+// Lyssna på temaändringar
+window.addEventListener('themechange', (e) => {
+    console.log('Nytt tema:', e.detail.theme);
+});
 ```
 
 ### WeatherWidget-komponent
@@ -504,10 +527,19 @@ customElements.define('new-widget', NewWidget);
 - Event-driven kommunikation
 
 ### **Service Layer Pattern**
+- ThemeService - Tema-hantering och systempreferenser
 - ObsidianTodoService - Obsidian-synkronisering
 - WeatherService - SMHI API-integration  
 - ClockService - Tidshantering
 - MenuService - Skolmats-API
+
+## Dokumentation
+
+- [CONFIG.md](CONFIG.md) - Fullständig konfigurationsguide
+- [OBSIDIAN_SETUP.md](OBSIDIAN_SETUP.md) - Steg-för-steg Obsidian-integration
+- [DARK_THEME.md](DARK_THEME.md) - Guide för mörkt tema och anpassning
+- [FAVICON_README.md](FAVICON_README.md) - Skapa och anpassa favicon
+- [example-TODO.md](example-TODO.md) - Exempel på Obsidian todo-format
 
 ## Prestandaoptimering
 
