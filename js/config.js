@@ -59,11 +59,12 @@ export const config = {
 
     // UI settings
     ui: {
-        theme: 'light', // 'light' or 'dark'
+        theme: 'auto', // 'light', 'dark', or 'auto' (follows system preference)
         animations: true,
         compactMode: false,
         showWelcomeMessage: true,
-        userName: 'Fredrik'
+        userName: 'Fredrik',
+        themeStorageKey: 'bifrost-theme'
     },
 
     // Service Worker & PWA
