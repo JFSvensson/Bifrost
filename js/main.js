@@ -1,15 +1,20 @@
 import { todos, shortcuts, ui } from './config.js';
 import { ObsidianTodoService } from './obsidianTodoService.js';
+import { StatsService } from './statsService.js';
 import './uiConfig.js'; // Initialize UI with config values
 
 let obsidianService;
+let statsService;
 let currentTodos = [];
 
-// Initialize Obsidian service if enabled
+// Initialize services
 if (todos.obsidian && todos.obsidian.enabled) {
     obsidianService = new ObsidianTodoService();
     console.log('🔗 Obsidian integration enabled');
 }
+
+statsService = new StatsService();
+console.log('📊 Statistics tracking enabled');
 
 function addTodo() {
     const todoText = document.getElementById('new-todo').value;
@@ -24,7 +29,11 @@ function addTodo() {
     if (obsidianService) {
         // Add to local storage (Bifrost todos)
         const newTodo = obsidianService.addLocalTodo(todoText);
+        newTodo.createdAt = new Date();
         currentTodos.push(newTodo);
+        
+        // Track in stats
+        statsService.trackTodoCreated(newTodo);
     } else {
         // Legacy mode
         const newTodo = {
@@ -32,14 +41,19 @@ function addTodo() {
             completed: false,
             source: 'bifrost',
             priority: 'normal',
-            id: Date.now().toString()
+            id: Date.now().toString(),
+            createdAt: new Date()
         };
         currentTodos.push(newTodo);
         saveTodos();
+        
+        // Track in stats
+        statsService.trackTodoCreated(newTodo);
     }
 
     document.getElementById('new-todo').value = '';
     renderTodos();
+    dispatchTodosUpdated();
 }
 
 function renderTodos() {
@@ -166,15 +180,20 @@ function toggleTodo(todoId) {
         return;
     }
     
+    const wasCompleted = todo.completed;
     todo.completed = !todo.completed;
+    
     if (todo.completed) {
         todo.completedAt = new Date();
+        // Track completion in stats
+        statsService.trackTodoCompleted(todo);
     } else {
         delete todo.completedAt;
     }
     
     saveTodos();
     renderTodos();
+    dispatchTodosUpdated();
 }
 
 function removeTodo(todoId) {
@@ -207,6 +226,7 @@ async function syncWithObsidian() {
         const synced = await obsidianService.syncWithLocal();
         currentTodos = synced;
         renderTodos();
+        dispatchTodosUpdated();
         
         console.log(`✅ Synced ${synced.length} todos (${synced.filter(t => t.source === 'obsidian').length} from Obsidian)`);
     } catch (error) {
@@ -289,6 +309,13 @@ document.addEventListener('keydown', (e) => {
         }
     }
 });
+
+// Dispatch custom event when todos update
+function dispatchTodosUpdated() {
+    window.dispatchEvent(new CustomEvent('todosUpdated', {
+        detail: { todos: currentTodos }
+    }));
+}
 
 // Service Worker registration
 if ('serviceWorker' in navigator) {
