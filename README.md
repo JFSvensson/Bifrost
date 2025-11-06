@@ -6,6 +6,7 @@ En modern startsida med att‑göra‑lista, sök, länkar, väder, klocka samt 
 
 ✅ **Todo-lista** - Persisterande i localStorage med tangentbordsgenvägar  
 ✅ **Obsidian-synk** - Automatisk synkronisering med Obsidian.md vault  
+✅ **Statistik Dashboard** - Spårar produktivitet, streaks, och visar grafer  
 ✅ **Snabbsök** - DuckDuckGo med Ctrl+/ för fokus  
 ✅ **Snabblänkar** - Från JSON-fil med Ctrl+1-9 genvägar  
 ✅ **Väderprognos** - SMHI-data med temperatur och nederbördssannolikhet  
@@ -30,6 +31,7 @@ Bifrost/
 ├── OBSIDIAN_SETUP.md       # Guide för Obsidian-integration
 ├── FAVICON_README.md       # Guide för favicon-generering
 ├── DARK_THEME.md           # Guide för mörkt tema
+├── STATS_GUIDE.md          # Guide för statistik-dashboard
 ├── CONFIG.md               # Konfigurationsdokumentation
 ├── css/styles.css          # Responsiva stilar med CSS Grid
 ├── js/
@@ -37,6 +39,8 @@ Bifrost/
 │   ├── config.js          # Centraliserad konfiguration
 │   ├── uiConfig.js        # UI-initialisering
 │   ├── themeService.js    # Tema-hantering (ljust/mörkt)
+│   ├── statsService.js    # Statistik-spårning
+│   ├── statsWidget.js     # Statistik-visualisering
 │   ├── linkHandler.js     # Länkhantering
 │   ├── schoolMenu.js      # Skolmatskomponent
 │   ├── menuService.js     # API-service för skolmat
@@ -83,6 +87,16 @@ Bifrost/
 - **Visuell distinktion** - Obsidian vs lokala todos med olika färger
 - **Auto-merge** - Kombinerar Obsidian + Bifrost todos
 - **Se guide**: [OBSIDIAN_SETUP.md](OBSIDIAN_SETUP.md)
+
+### 📊 **Statistik Dashboard**
+- **Streaks** - Spårar dagar i rad med färdiga todos 🔥
+- **7-dagars graf** - Bar chart över produktivitet
+- **Veckoöversikt** - Aktivitet per veckodag
+- **Top tags** - Mest använda kategorier
+- **Completion rate** - Procentandel färdiga todos
+- **Genomsnittstid** - Hur lång tid det tar att slutföra todos
+- **Real-time uppdatering** - Statistik uppdateras live
+- **Se guide**: [STATS_GUIDE.md](STATS_GUIDE.md)
 
 ## Snabbstart
 
@@ -299,6 +313,29 @@ const theme = themeService.getTheme(); // 'light' eller 'dark'
 window.addEventListener('themechange', (e) => {
     console.log('Nytt tema:', e.detail.theme);
 });
+```
+
+### StatsService
+```javascript
+import { StatsService } from './js/statsService.js';
+
+const statsService = new StatsService();
+
+// Spåra todo-händelser
+statsService.trackTodoCreated(todo);
+statsService.trackTodoCompleted(todo);
+
+// Hämta statistik
+const stats = statsService.getFullStats(currentTodos);
+const todayStats = statsService.getTodayStats(currentTodos);
+const weeklyStats = statsService.getWeeklyStats();
+const topTags = statsService.getTopTags(5);
+const last7Days = statsService.getLast7DaysActivity();
+
+// Backup & restore
+const backup = statsService.exportStats();
+statsService.importStats(backup);
+statsService.reset(); // Återställ all statistik
 ```
 
 ### WeatherWidget-komponent
@@ -528,6 +565,7 @@ customElements.define('new-widget', NewWidget);
 
 ### **Service Layer Pattern**
 - ThemeService - Tema-hantering och systempreferenser
+- StatsService - Produktivitetsspårning och statistik
 - ObsidianTodoService - Obsidian-synkronisering
 - WeatherService - SMHI API-integration  
 - ClockService - Tidshantering
@@ -538,6 +576,7 @@ customElements.define('new-widget', NewWidget);
 - [CONFIG.md](CONFIG.md) - Fullständig konfigurationsguide
 - [OBSIDIAN_SETUP.md](OBSIDIAN_SETUP.md) - Steg-för-steg Obsidian-integration
 - [DARK_THEME.md](DARK_THEME.md) - Guide för mörkt tema och anpassning
+- [STATS_GUIDE.md](STATS_GUIDE.md) - Statistik dashboard och API-referens
 - [FAVICON_README.md](FAVICON_README.md) - Skapa och anpassa favicon
 - [example-TODO.md](example-TODO.md) - Exempel på Obsidian todo-format
 
