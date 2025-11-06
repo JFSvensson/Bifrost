@@ -1,10 +1,12 @@
 import { todos, shortcuts, ui } from './config.js';
 import { ObsidianTodoService } from './obsidianTodoService.js';
 import { StatsService } from './statsService.js';
+import { DeadlineService } from './deadlineService.js';
 import './uiConfig.js'; // Initialize UI with config values
 
 let obsidianService;
 let statsService;
+let deadlineService;
 let currentTodos = [];
 
 // Initialize services
@@ -15,6 +17,9 @@ if (todos.obsidian && todos.obsidian.enabled) {
 
 statsService = new StatsService();
 console.log('📊 Statistics tracking enabled');
+
+deadlineService = new DeadlineService();
+console.log('🔔 Deadline warnings enabled');
 
 function addTodo() {
     const todoText = document.getElementById('new-todo').value;
@@ -273,6 +278,37 @@ async function loadTodos() {
             currentTodos = JSON.parse(saved).map(todo => ({
                 ...todo,
                 source: 'bifrost',
+                priority: todo.priority || 'normal'
+            }));
+            renderTodos();
+            dispatchTodosUpdated();
+        }
+    }
+    
+    // Starta deadline monitoring
+    startDeadlineMonitoring();
+}
+
+function startDeadlineMonitoring() {
+    // Visa daglig sammanfattning vid första laddning
+    deadlineService.showDailySummary(currentTodos);
+    
+    // Starta periodisk monitoring
+    deadlineService.startMonitoring(() => currentTodos, 60000); // Check varje minut
+    
+    // Återställ notification-historik varje dag kl 00:00
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    
+    const msUntilMidnight = tomorrow - now;
+    setTimeout(() => {
+        deadlineService.resetNotificationHistory();
+        // Återställ varje dag
+        setInterval(() => deadlineService.resetNotificationHistory(), 24 * 60 * 60 * 1000);
+    }, msUntilMidnight);
+}
                 priority: todo.priority || 'normal',
                 id: todo.id || Date.now().toString()
             }));
