@@ -52,6 +52,117 @@ body {
     100% { transform: rotate(180deg); }
 }
 
+/* ===== DEADLINE TOAST NOTIFICATIONS ===== */
+.deadline-toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    max-width: 400px;
+    background: white;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    z-index: 10000;
+    animation: slideInRight 0.3s ease;
+}
+
+.deadline-toast.toast-fade-out {
+    animation: slideOutRight 0.3s ease;
+}
+
+.deadline-toast-overdue {
+    background: #fee2e2;
+    border-left: 4px solid #e74c3c;
+}
+
+.deadline-toast-today {
+    background: #fef3c7;
+    border-left: 4px solid #f39c12;
+}
+
+.deadline-toast-tomorrow {
+    background: #dbeafe;
+    border-left: 4px solid #3498db;
+}
+
+.toast-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.toast-message {
+    flex: 1;
+    font-weight: 500;
+    white-space: pre-line;
+}
+
+.toast-close {
+    background: transparent;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+    flex-shrink: 0;
+}
+
+.toast-close:hover {
+    opacity: 1;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}
+
+/* Dark theme toasts */
+.dark-theme .deadline-toast {
+    background: #2d2d44;
+    color: #e0e0e0;
+}
+
+.dark-theme .deadline-toast-overdue {
+    background: #4d2d2d;
+}
+
+.dark-theme .deadline-toast-today {
+    background: #4d3d2d;
+}
+
+.dark-theme .deadline-toast-tomorrow {
+    background: #2d3d4d;
+}
+
+/* Mobile toast positioning */
+@media (max-width: 768px) {
+    .deadline-toast {
+        bottom: 1rem;
+        right: 1rem;
+        left: 1rem;
+        max-width: none;
+    }
+}
+
 /* ===== MAIN CONTAINER ===== */
 .container {
     max-width: 1200px;
