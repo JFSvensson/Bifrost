@@ -7,6 +7,7 @@ En modern startsida med att‑göra‑lista, sök, länkar, väder, klocka samt 
 ✅ **Todo-lista** - Persisterande i localStorage med tangentbordsgenvägar  
 ✅ **Obsidian-synk** - Automatisk synkronisering med Obsidian.md vault  
 ✅ **Statistik Dashboard** - Spårar produktivitet, streaks, och visar grafer  
+✅ **Deadline Warnings** - Smarta varningar för kommande och försenade todos med notifications  
 ✅ **Snabbsök** - DuckDuckGo med Ctrl+/ för fokus  
 ✅ **Snabblänkar** - Från JSON-fil med Ctrl+1-9 genvägar  
 ✅ **Väderprognos** - SMHI-data med temperatur och nederbördssannolikhet  
@@ -32,6 +33,7 @@ Bifrost/
 ├── FAVICON_README.md       # Guide för favicon-generering
 ├── DARK_THEME.md           # Guide för mörkt tema
 ├── STATS_GUIDE.md          # Guide för statistik-dashboard
+├── DEADLINE_GUIDE.md       # Guide för deadline warnings
 ├── CONFIG.md               # Konfigurationsdokumentation
 ├── css/styles.css          # Responsiva stilar med CSS Grid
 ├── js/
@@ -41,6 +43,8 @@ Bifrost/
 │   ├── themeService.js    # Tema-hantering (ljust/mörkt)
 │   ├── statsService.js    # Statistik-spårning
 │   ├── statsWidget.js     # Statistik-visualisering
+│   ├── deadlineService.js # Deadline-analys och notifications
+│   ├── deadlineWidget.js  # Deadline-visualisering
 │   ├── linkHandler.js     # Länkhantering
 │   ├── schoolMenu.js      # Skolmatskomponent
 │   ├── menuService.js     # API-service för skolmat
@@ -97,6 +101,16 @@ Bifrost/
 - **Genomsnittstid** - Hur lång tid det tar att slutföra todos
 - **Real-time uppdatering** - Statistik uppdateras live
 - **Se guide**: [STATS_GUIDE.md](STATS_GUIDE.md)
+
+### ⚠️ **Deadline Warnings**
+- **Smart kategorisering** - Försenad, idag, imorgon, denna vecka
+- **Desktop notifications** - Automatiska notifications för urgenta todos
+- **Toast notifications** - In-app varningar med färgkodning
+- **Visuell widget** - Översikt av alla deadlines att uppmärksamma
+- **Daglig sammanfattning** - Rapport vid första laddning
+- **Färgkodade nivåer** - Röd (försenad), Orange (idag), Blå (imorgon)
+- **Automatisk monitoring** - Kontrollerar varje minut, återställs vid midnatt
+- **Se guide**: [DEADLINE_GUIDE.md](DEADLINE_GUIDE.md)
 
 ## Snabbstart
 
