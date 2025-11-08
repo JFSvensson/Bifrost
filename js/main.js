@@ -2,6 +2,7 @@ import { todos, shortcuts, ui } from './config.js';
 import { ObsidianTodoService } from './obsidianTodoService.js';
 import { StatsService } from './statsService.js';
 import { DeadlineService } from './deadlineService.js';
+import { pomodoroService } from './pomodoroService.js';
 import './uiConfig.js'; // Initialize UI with config values
 
 let obsidianService;
@@ -20,6 +21,8 @@ console.log('📊 Statistics tracking enabled');
 
 deadlineService = new DeadlineService();
 console.log('🔔 Deadline warnings enabled');
+
+console.log('⏱️ Pomodoro timer initialized');
 
 function addTodo() {
     const todoText = document.getElementById('new-todo').value;
