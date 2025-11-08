@@ -8,6 +8,7 @@ En modern startsida med att‑göra‑lista, sök, länkar, väder, klocka samt 
 ✅ **Obsidian-synk** - Automatisk synkronisering med Obsidian.md vault  
 ✅ **Statistik Dashboard** - Spårar produktivitet, streaks, och visar grafer  
 ✅ **Deadline Warnings** - Smarta varningar för kommande och försenade todos med notifications  
+✅ **Pomodoro Timer** - 25/5 min fokus/paus-intervaller med cirkulär progress och notifications  
 ✅ **Snabbsök** - DuckDuckGo med Ctrl+/ för fokus  
 ✅ **Snabblänkar** - Från JSON-fil med Ctrl+1-9 genvägar  
 ✅ **Väderprognos** - SMHI-data med temperatur och nederbördssannolikhet  
@@ -34,6 +35,7 @@ Bifrost/
 ├── DARK_THEME.md           # Guide för mörkt tema
 ├── STATS_GUIDE.md          # Guide för statistik-dashboard
 ├── DEADLINE_GUIDE.md       # Guide för deadline warnings
+├── POMODORO_GUIDE.md       # Guide för Pomodoro timer
 ├── CONFIG.md               # Konfigurationsdokumentation
 ├── css/styles.css          # Responsiva stilar med CSS Grid
 ├── js/
@@ -45,6 +47,8 @@ Bifrost/
 │   ├── statsWidget.js     # Statistik-visualisering
 │   ├── deadlineService.js # Deadline-analys och notifications
 │   ├── deadlineWidget.js  # Deadline-visualisering
+│   ├── pomodoroService.js # Pomodoro timer-logik
+│   ├── pomodoroWidget.js  # Pomodoro timer-widget
 │   ├── linkHandler.js     # Länkhantering
 │   ├── schoolMenu.js      # Skolmatskomponent
 │   ├── menuService.js     # API-service för skolmat
@@ -111,6 +115,16 @@ Bifrost/
 - **Färgkodade nivåer** - Röd (försenad), Orange (idag), Blå (imorgon)
 - **Automatisk monitoring** - Kontrollerar varje minut, återställs vid midnatt
 - **Se guide**: [DEADLINE_GUIDE.md](DEADLINE_GUIDE.md)
+
+### ⏱️ **Pomodoro Timer**
+- **25/5/15 min intervaller** - Work (25 min), short break (5 min), long break (15 min)
+- **Cirkulär progress** - Visuell SVG-indikator med smooth animation
+- **Desktop & toast notifications** - Alerts när timer är klar
+- **Session tracking** - Spårar dagens Pomodoros och fokusminuter
+- **Keyboard shortcuts** - Ctrl+Shift+P (start/pause), Ctrl+Shift+R (reset)
+- **Ljudnotifikationer** - Subtil beep när session är klar
+- **Dark theme support** - Fullt stöd för mörkt tema
+- **Se guide**: [POMODORO_GUIDE.md](POMODORO_GUIDE.md)
 
 ## Snabbstart
 
@@ -213,6 +227,8 @@ todos: {
 | `Ctrl + 1-9` | Öppna snabblänk 1-9 |
 | `Ctrl + /` | Fokusera sökfältet |
 | `Ctrl + Shift + D` | Toggle mörkt/ljust tema |
+| `Ctrl + Shift + P` | Start/Pause Pomodoro timer |
+| `Ctrl + Shift + R` | Reset Pomodoro timer |
 | `Enter` | Lägg till todo (i todo-input) |
 
 ## Service Worker & Offline-stöd
