@@ -9,6 +9,7 @@ En modern startsida med att‑göra‑lista, sök, länkar, väder, klocka samt 
 ✅ **Statistik Dashboard** - Spårar produktivitet, streaks, och visar grafer  
 ✅ **Deadline Warnings** - Smarta varningar för kommande och försenade todos med notifications  
 ✅ **Pomodoro Timer** - 25/5 min fokus/paus-intervaller med cirkulär progress och notifications  
+✅ **Google Calendar** - Synka todos med datum till Google Calendar, visa dagens händelser  
 ✅ **Snabbsök** - DuckDuckGo med Ctrl+/ för fokus  
 ✅ **Snabblänkar** - Från JSON-fil med Ctrl+1-9 genvägar  
 ✅ **Väderprognos** - SMHI-data med temperatur och nederbördssannolikhet  
@@ -36,6 +37,7 @@ Bifrost/
 ├── STATS_GUIDE.md          # Guide för statistik-dashboard
 ├── DEADLINE_GUIDE.md       # Guide för deadline warnings
 ├── POMODORO_GUIDE.md       # Guide för Pomodoro timer
+├── GOOGLE_CALENDAR_GUIDE.md # Guide för Google Calendar integration
 ├── CONFIG.md               # Konfigurationsdokumentation
 ├── css/styles.css          # Responsiva stilar med CSS Grid
 ├── js/
@@ -49,6 +51,9 @@ Bifrost/
 │   ├── deadlineWidget.js  # Deadline-visualisering
 │   ├── pomodoroService.js # Pomodoro timer-logik
 │   ├── pomodoroWidget.js  # Pomodoro timer-widget
+│   ├── googleCalendarService.js # Google Calendar API och OAuth
+│   ├── calendarWidget.js  # Calendar-visualisering
+│   ├── calendarSync.js    # Bilateral sync todos ↔ calendar
 │   ├── linkHandler.js     # Länkhantering
 │   ├── schoolMenu.js      # Skolmatskomponent
 │   ├── menuService.js     # API-service för skolmat
@@ -125,6 +130,16 @@ Bifrost/
 - **Ljudnotifikationer** - Subtil beep när session är klar
 - **Dark theme support** - Fullt stöd för mörkt tema
 - **Se guide**: [POMODORO_GUIDE.md](POMODORO_GUIDE.md)
+
+### 📅 **Google Calendar Integration**
+- **OAuth 2.0 autentisering** - Säker inloggning med Google-konto
+- **Visa dagens händelser** - Dagens calendar events i sidebar
+- **Bilateral synkronisering** - Todos med datum → Calendar events automatiskt
+- **Auto-sync** - Uppdateras var 5:e minut
+- **Event detaljer** - Titel, tid, beskrivning, plats, länk
+- **All-day & timed events** - Stöd för båda typerna
+- **Calendar widget** - Visuell display med refresh-funktion
+- **Se guide**: [GOOGLE_CALENDAR_GUIDE.md](GOOGLE_CALENDAR_GUIDE.md)
 
 ## Snabbstart
 
