@@ -312,13 +312,6 @@ function startDeadlineMonitoring() {
         setInterval(() => deadlineService.resetNotificationHistory(), 24 * 60 * 60 * 1000);
     }, msUntilMidnight);
 }
-                priority: todo.priority || 'normal',
-                id: todo.id || Date.now().toString()
-            }));
-        }
-        renderTodos();
-    }
-}
 
 // Make addTodo globally available
 window.addTodo = addTodo;
