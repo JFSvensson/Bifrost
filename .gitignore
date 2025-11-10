@@ -2,6 +2,11 @@
 # Created by https://www.toptal.com/developers/gitignore/api/node,linux,macos,windows,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=node,linux,macos,windows,visualstudiocode
 
+# Google Calendar Credentials - NEVER COMMIT!
+google-credentials.json
+.env
+.env.local
+
 ### Linux ###
 *~
 
@@ -200,5 +205,9 @@ public.pem
 
 # Private data
 data/*
+
+#  Google credentials
+google-credentials.json
+.env
 
 # End of https://www.toptal.com/developers/gitignore/api/node,linux,macos,windows,visualstudiocode
