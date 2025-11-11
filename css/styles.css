@@ -386,6 +386,20 @@ body {
     color: #7c3aed;
 }
 
+.source-icon.recurring {
+    color: #059669;
+    animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 /* Due dates */
 .due-date {
     font-size: 0.8rem;
@@ -754,6 +768,9 @@ school-menu {
     color: #9575cd;
 }
 
+.dark-theme .source-icon.recurring {
+    color: #10b981;
+}
 .dark-theme .due-date {
     background: #3a3a52;
     color: #aaa;
