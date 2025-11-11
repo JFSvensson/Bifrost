@@ -11,6 +11,16 @@ let statsService;
 let deadlineService;
 let currentTodos = [];
 
+// Quick Add widget setup
+document.addEventListener('DOMContentLoaded', () => {
+    const quickAddWidget = document.querySelector('quick-add-widget');
+    if (quickAddWidget) {
+        quickAddWidget.addEventListener('todoAdded', (e) => {
+            handleQuickAdd(e.detail);
+        });
+    }
+});
+
 // Initialize services
 if (todos.obsidian && todos.obsidian.enabled) {
     obsidianService = new ObsidianTodoService();
@@ -30,6 +40,48 @@ window.addEventListener('calendarAuthenticated', () => {
     calendarSyncService.enableSync(() => currentTodos);
     console.log('📅 Calendar sync enabled');
 });
+
+// Handle Quick Add submissions
+function handleQuickAdd(parsed) {
+    if (!parsed || !parsed.text) return;
+    
+    const todoData = {
+        text: parsed.text,
+        completed: false,
+        source: parsed.source || 'bifrost',
+        priority: parsed.priority || 'normal',
+        tags: parsed.tags || [],
+        dueDate: parsed.dueDate || null,
+        dueTime: parsed.dueTime || null,
+        id: Date.now().toString(),
+        createdAt: new Date()
+    };
+    
+    if (obsidianService) {
+        // Add via Obsidian service
+        const newTodo = obsidianService.addLocalTodo(todoData.text);
+        // Merge parsed data
+        Object.assign(newTodo, todoData);
+        currentTodos.push(newTodo);
+        
+        // Track in stats with tags
+        statsService.trackTodoCreated(newTodo);
+    } else {
+        // Legacy mode
+        currentTodos.push(todoData);
+        saveTodos();
+        
+        // Track in stats
+        statsService.trackTodoCreated(todoData);
+    }
+    
+    renderTodos();
+    dispatchTodosUpdated();
+    
+    // Show toast notification
+    showToast(`✓ Uppgift tillagd${parsed.dueDate ? ' med deadline' : ''}!`);
+}
+
 
 function addTodo() {
     const todoText = document.getElementById('new-todo').value;
@@ -320,6 +372,30 @@ function startDeadlineMonitoring() {
     }, msUntilMidnight);
 }
 
+// Toast notification helper
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    // Trigger animation
+    setTimeout(() => toast.classList.add('show'), 10);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Expose functions globally
+window.addTodo = addTodo;
+window.toggleTodo = toggleTodo;
+window.removeTodo = removeTodo;
+window.filterTodos = filterTodos;
+window.sortTodos = sortTodos;
+window.searchTodos = searchTodos;
 // Make addTodo globally available
 window.addTodo = addTodo;
 
