@@ -48,6 +48,24 @@ export class NaturalLanguageParser {
             low: /\[!low\]|🔽/i
         };
         
+        // Recurring patterns (Swedish)
+        this.recurringPatterns = {
+            // Daily
+            daily: /\b(varje dag|every day|dagligen)\b/i,
+            everyNDays: /\b(?:var|every)\s+(\d+)(?::e|nd|rd|th)?\s+dag(?:ar|s)?\b/i,
+            
+            // Weekly
+            weekly: /\b(varje vecka|every week|veckovis)\b/i,
+            everyNWeeks: /\b(?:var(?:annan)?|every)\s+(\d+)(?::e|nd|rd|th)?\s+veck(?:a|or?|s)?\b/i,
+            everyWeekday: /\b(?:varje|every)\s+(måndag|tisdag|onsdag|torsdag|fredag|lördag|söndag|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i,
+            everyWeekdays: /\b(?:varje|every)\s+((?:måndag|tisdag|onsdag|torsdag|fredag|lördag|söndag|monday|tuesday|wednesday|thursday|friday|saturday|sunday)(?:\s+och\s+|\s+and\s+|,\s*)+(?:måndag|tisdag|onsdag|torsdag|fredag|lördag|söndag|monday|tuesday|wednesday|thursday|friday|saturday|sunday))+\b/i,
+            
+            // Monthly
+            monthly: /\b(varje månad|every month|månadsvis)\b/i,
+            everyNMonths: /\b(?:var|every)\s+(\d+)(?::e|nd|rd|th)?\s+månad(?:er|s)?\b/i,
+            monthlyDay: /\b(?:varje|every)\s+(?:månad|month)\s+(?:den|the)\s+(\d{1,2})(?::e|st|nd|rd|th)?\b/i
+        };
+        
         // Tag pattern
         this.tagPattern = /#(\w+)/g;
         
@@ -70,8 +88,16 @@ export class NaturalLanguageParser {
             tags: [],
             priority: 'normal',
             source: 'bifrost',
-            rawInput: input
+            rawInput: input,
+            recurring: null  // Will be populated if recurring pattern found
         };
+        
+        // Extract and remove recurring pattern first
+        const recurring = this.extractRecurring(input);
+        if (recurring) {
+            result.recurring = recurring;
+            input = input.replace(recurring.matched, '').trim();
+        }
         
         // Extract and remove tags
         const tags = this.extractTags(input);
@@ -146,6 +172,106 @@ export class NaturalLanguageParser {
     extractSource(input) {
         const match = this.sourcePattern.exec(input);
         return match ? match[1] : null;
+    }
+    
+    /**
+     * Extract recurring pattern from input
+     */
+    extractRecurring(input) {
+        // Daily patterns
+        let match = input.match(this.recurringPatterns.daily);
+        if (match) {
+            return {
+                type: 'daily',
+                frequency: 1,
+                matched: match[0]
+            };
+        }
+        
+        match = input.match(this.recurringPatterns.everyNDays);
+        if (match) {
+            return {
+                type: 'daily',
+                frequency: parseInt(match[1]),
+                matched: match[0]
+            };
+        }
+        
+        // Weekly patterns with specific days
+        match = input.match(this.recurringPatterns.everyWeekday);
+        if (match) {
+            const dayMap = {
+                'måndag': 1, 'monday': 1,
+                'tisdag': 2, 'tuesday': 2,
+                'onsdag': 3, 'wednesday': 3,
+                'torsdag': 4, 'thursday': 4,
+                'fredag': 5, 'friday': 5,
+                'lördag': 6, 'saturday': 6,
+                'söndag': 0, 'sunday': 0
+            };
+            
+            const dayName = match[1].toLowerCase();
+            const dayOfWeek = dayMap[dayName];
+            
+            return {
+                type: 'weekly',
+                frequency: 1,
+                daysOfWeek: [dayOfWeek],
+                matched: match[0]
+            };
+        }
+        
+        // Weekly pattern (general)
+        match = input.match(this.recurringPatterns.weekly);
+        if (match) {
+            return {
+                type: 'weekly',
+                frequency: 1,
+                matched: match[0]
+            };
+        }
+        
+        match = input.match(this.recurringPatterns.everyNWeeks);
+        if (match) {
+            return {
+                type: 'weekly',
+                frequency: parseInt(match[1]),
+                matched: match[0]
+            };
+        }
+        
+        // Monthly patterns
+        match = input.match(this.recurringPatterns.monthlyDay);
+        if (match) {
+            return {
+                type: 'monthly',
+                frequency: 1,
+                dayOfMonth: parseInt(match[1]),
+                matched: match[0]
+            };
+        }
+        
+        match = input.match(this.recurringPatterns.monthly);
+        if (match) {
+            return {
+                type: 'monthly',
+                frequency: 1,
+                dayOfMonth: 1,
+                matched: match[0]
+            };
+        }
+        
+        match = input.match(this.recurringPatterns.everyNMonths);
+        if (match) {
+            return {
+                type: 'monthly',
+                frequency: parseInt(match[1]),
+                dayOfMonth: 1,
+                matched: match[0]
+            };
+        }
+        
+        return null;
     }
     
     /**
