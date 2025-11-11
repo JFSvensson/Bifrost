@@ -4,6 +4,7 @@ import { StatsService } from './statsService.js';
 import { DeadlineService } from './deadlineService.js';
 import { pomodoroService } from './pomodoroService.js';
 import { calendarSyncService } from './calendarSync.js';
+import { recurringService } from './recurringService.js';
 import './uiConfig.js'; // Initialize UI with config values
 
 let obsidianService;
@@ -19,6 +20,19 @@ document.addEventListener('DOMContentLoaded', () => {
             handleQuickAdd(e.detail);
         });
     }
+    
+    // Recurring widget setup
+    const recurringWidget = document.querySelector('recurring-widget');
+    if (recurringWidget) {
+        recurringWidget.addEventListener('toast', (e) => {
+            showToast(e.detail.message);
+        });
+    }
+    
+    // Subscribe to recurring service events
+    recurringService.subscribe((event, data) => {
+        handleRecurringEvent(event, data);
+    });
 });
 
 // Initialize services
@@ -45,6 +59,27 @@ window.addEventListener('calendarAuthenticated', () => {
 function handleQuickAdd(parsed) {
     if (!parsed || !parsed.text) return;
     
+    // Check if this is a recurring pattern
+    if (parsed.recurring) {
+        // Create recurring pattern instead of single todo
+        const pattern = {
+            text: parsed.text,
+            type: parsed.recurring.type,
+            frequency: parsed.recurring.frequency || 1,
+            daysOfWeek: parsed.recurring.daysOfWeek || [],
+            dayOfMonth: parsed.recurring.dayOfMonth || 1,
+            time: parsed.dueTime || null,
+            tags: parsed.tags || [],
+            priority: parsed.priority || 'normal',
+            source: parsed.source || 'bifrost'
+        };
+        
+        recurringService.createPattern(pattern);
+        showToast(`🔄 Återkommande uppgift skapad!`);
+        return;
+    }
+    
+    // Normal single todo
     const todoData = {
         text: parsed.text,
         completed: false,
@@ -80,6 +115,33 @@ function handleQuickAdd(parsed) {
     
     // Show toast notification
     showToast(`✓ Uppgift tillagd${parsed.dueDate ? ' med deadline' : ''}!`);
+}
+
+// Handle recurring service events
+function handleRecurringEvent(event, data) {
+    if (event === 'todoCreated' || event === 'duePatterns') {
+        // Add todos created by recurring service to the list
+        const todos = Array.isArray(data) ? data : [data.todo];
+        
+        todos.forEach(todo => {
+            currentTodos.push(todo);
+            statsService.trackTodoCreated(todo);
+        });
+        
+        renderTodos();
+        dispatchTodosUpdated();
+        saveTodos();
+    } else if (event === 'nextInstanceCreated') {
+        // Handle auto-creation on completion
+        const { nextTodo } = data;
+        currentTodos.push(nextTodo);
+        statsService.trackTodoCreated(nextTodo);
+        renderTodos();
+        dispatchTodosUpdated();
+        saveTodos();
+        
+        showToast('🔄 Nästa återkommande uppgift skapad!');
+    }
 }
 
 
@@ -183,6 +245,15 @@ function renderTodos() {
             li.appendChild(sourceIcon);
         }
         
+        // Add recurring indicator
+        if (todo.isRecurring || todo.recurringPatternId) {
+            const recurringIcon = document.createElement('span');
+            recurringIcon.className = 'source-icon recurring';
+            recurringIcon.textContent = '🔄';
+            recurringIcon.title = 'Återkommande uppgift';
+            li.appendChild(recurringIcon);
+        }
+        
         // Add remove button for Bifrost todos only
         if (todo.source === 'bifrost') {
             const removeBtn = document.createElement('button');
@@ -254,6 +325,11 @@ function toggleTodo(todoId) {
         todo.completedAt = new Date();
         // Track completion in stats
         statsService.trackTodoCompleted(todo);
+        
+        // Handle recurring todos - create next instance
+        if (todo.recurringPatternId) {
+            recurringService.onTodoCompleted(todo);
+        }
     } else {
         delete todo.completedAt;
     }
