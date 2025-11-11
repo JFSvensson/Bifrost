@@ -5,6 +5,7 @@ En modern startsida med att‑göra‑lista, sök, länkar, väder, klocka samt 
 ## Funktioner
 
 ✅ **Quick Add** - Natural language parser för snabb todo-skapning (t.ex. "Möt Anna imorgon 14:00 #arbete [!high]")  
+✅ **Recurring Todos** - Återkommande uppgifter med dagliga/veckovisa/månadsvisa mönster  
 ✅ **Todo-lista** - Persisterande i localStorage med tangentbordsgenvägar  
 ✅ **Obsidian-synk** - Automatisk synkronisering med Obsidian.md vault  
 ✅ **Statistik Dashboard** - Spårar produktivitet, streaks, och visar grafer  
@@ -48,6 +49,8 @@ Bifrost/
 │   ├── uiConfig.js        # UI-initialisering
 │   ├── naturalLanguageParser.js  # Natural language parser för Quick Add
 │   ├── quickAddWidget.js  # Quick Add UI-komponent
+│   ├── recurringService.js  # Recurring todos service
+│   ├── recurringWidget.js   # Recurring todos widget
 │   ├── themeService.js    # Tema-hantering (ljust/mörkt)
 │   ├── statsService.js    # Statistik-spårning
 │   ├── statsWidget.js     # Statistik-visualisering
@@ -640,6 +643,7 @@ customElements.define('new-widget', NewWidget);
 - MenuService - Skolmats-API
 - DeadlineService - Deadline-monitoring och varningar
 - PomodoroService - Focus timer med sessions
+- RecurringService - Pattern management och automatiskt skapande av återkommande todos
 - GoogleCalendarService - OAuth och Calendar API
 - CalendarSyncService - Bilateral todo↔calendar sync
 - NaturalLanguageParser - Quick Add parsing
@@ -664,6 +668,38 @@ customElements.define('new-widget', NewWidget);
 // Todo läggs till automatiskt och:
 // ✅ Synkas till Google Calendar (om datum finns)
 // ✅ Läggs till i statistik (med tag)
+// ✅ Visas med deadline-varning (om nära inlämning)
+// ✅ Integreras med Pomodoro-timer
+```
+
+## Exempel: Skapa återkommande todo
+
+```javascript
+// Skriv i Quick Add:
+"Träna varje måndag 18:00 #gym [!medium]"
+
+// Bifrost skapar ett mönster:
+{
+    text: "Träna",
+    type: "weekly",
+    daysOfWeek: [1], // måndag
+    time: "18:00",
+    tags: ["gym"],
+    priority: "medium",
+    nextDue: "2024-12-23 18:00"
+}
+
+// Systemet:
+// ✅ Skapar automatiskt ny todo varje måndag 18:00
+// ✅ När du checkar av en träning → nästa måndag skapas direkt
+// ✅ Spåras i statistik (#gym-kategori)
+// ✅ Integreras med Calendar (återkommande event)
+
+// Andra exempel:
+"Betala hyra varje månad den 1:a #ekonomi [!high]"
+"Läsa bok varannan dag 20:00 #utveckling"
+"Teammöte varje fredag 09:00 #arbete"
+```
 // ✅ Monitoras för deadline warnings
 // ✅ Kan kopplas till Pomodoro session
 ```
@@ -678,6 +714,7 @@ customElements.define('new-widget', NewWidget);
 - [POMODORO_GUIDE.md](POMODORO_GUIDE.md) - Pomodoro timer och fokusläge
 - [GOOGLE_CALENDAR_GUIDE.md](GOOGLE_CALENDAR_GUIDE.md) - Google Calendar integration
 - [QUICK_ADD_GUIDE.md](QUICK_ADD_GUIDE.md) - Natural language parser för todos
+- [RECURRING_GUIDE.md](RECURRING_GUIDE.md) - Återkommande uppgifter och automatisering
 - [FAVICON_README.md](FAVICON_README.md) - Skapa och anpassa favicon
 - [example-TODO.md](example-TODO.md) - Exempel på Obsidian todo-format
 
