@@ -4,6 +4,7 @@ En modern startsida med att‑göra‑lista, sök, länkar, väder, klocka samt 
 
 ## Funktioner
 
+✅ **Quick Add** - Natural language parser för snabb todo-skapning (t.ex. "Möt Anna imorgon 14:00 #arbete [!high]")  
 ✅ **Todo-lista** - Persisterande i localStorage med tangentbordsgenvägar  
 ✅ **Obsidian-synk** - Automatisk synkronisering med Obsidian.md vault  
 ✅ **Statistik Dashboard** - Spårar produktivitet, streaks, och visar grafer  
@@ -38,12 +39,15 @@ Bifrost/
 ├── DEADLINE_GUIDE.md       # Guide för deadline warnings
 ├── POMODORO_GUIDE.md       # Guide för Pomodoro timer
 ├── GOOGLE_CALENDAR_GUIDE.md # Guide för Google Calendar integration
+├── QUICK_ADD_GUIDE.md      # Guide för Quick Add natural language parser
 ├── CONFIG.md               # Konfigurationsdokumentation
 ├── css/styles.css          # Responsiva stilar med CSS Grid
 ├── js/
 │   ├── main.js            # Huvudlogik + todo-hantering
 │   ├── config.js          # Centraliserad konfiguration
 │   ├── uiConfig.js        # UI-initialisering
+│   ├── naturalLanguageParser.js  # Natural language parser för Quick Add
+│   ├── quickAddWidget.js  # Quick Add UI-komponent
 │   ├── themeService.js    # Tema-hantering (ljust/mörkt)
 │   ├── statsService.js    # Statistik-spårning
 │   ├── statsWidget.js     # Statistik-visualisering
@@ -100,6 +104,17 @@ Bifrost/
 - **Visuell distinktion** - Obsidian vs lokala todos med olika färger
 - **Auto-merge** - Kombinerar Obsidian + Bifrost todos
 - **Se guide**: [OBSIDIAN_SETUP.md](OBSIDIAN_SETUP.md)
+
+### ⚡ **Quick Add**
+- **Natural language parsing** - Skriv "Möt Anna imorgon 14:00 #arbete [!high]"
+- **Smart date extraction** - Svenskstöd (idag/imorgon/fredag), absoluta datum (YYYY-MM-DD)
+- **Tag extraction** - Automatisk #tag-parsing
+- **Priority detection** - [!high], [!medium], [!low] eller emoji (🔥⚠️🔽)
+- **Time parsing** - HH:MM, kl. 14, 2pm format
+- **Live preview** - Se parsed elements medan du skriver
+- **Keyboard shortcuts** - Ctrl+K för fokus, Enter för submit
+- **Suggestions** - Autocomplete för datum och prioriteter
+- **Se guide**: [QUICK_ADD_GUIDE.md](QUICK_ADD_GUIDE.md)
 
 ### 📊 **Statistik Dashboard**
 - **Streaks** - Spårar dagar i rad med färdiga todos 🔥
@@ -239,12 +254,14 @@ todos: {
 
 | Genväg | Funktion |
 |--------|----------|
+| `Ctrl + K` | Fokusera Quick Add input |
 | `Ctrl + 1-9` | Öppna snabblänk 1-9 |
 | `Ctrl + /` | Fokusera sökfältet |
 | `Ctrl + Shift + D` | Toggle mörkt/ljust tema |
 | `Ctrl + Shift + P` | Start/Pause Pomodoro timer |
 | `Ctrl + Shift + R` | Reset Pomodoro timer |
-| `Enter` | Lägg till todo (i todo-input) |
+| `Enter` | Submit Quick Add / Lägg till todo |
+| `Escape` | Clear Quick Add input |
 
 ## Service Worker & Offline-stöd
 
@@ -516,6 +533,12 @@ GET https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geoty
 
 - **[CONFIG.md](CONFIG.md)** - Fullständig konfigurationsguide
 - **[OBSIDIAN_SETUP.md](OBSIDIAN_SETUP.md)** - Obsidian-integration setup
+- **[DARK_THEME.md](DARK_THEME.md)** - Guide för mörkt tema och anpassning
+- **[STATS_GUIDE.md](STATS_GUIDE.md)** - Statistik dashboard och API-referens
+- **[DEADLINE_GUIDE.md](DEADLINE_GUIDE.md)** - Deadline warnings och notifications
+- **[POMODORO_GUIDE.md](POMODORO_GUIDE.md)** - Pomodoro timer och fokusläge
+- **[GOOGLE_CALENDAR_GUIDE.md](GOOGLE_CALENDAR_GUIDE.md)** - Google Calendar integration
+- **[QUICK_ADD_GUIDE.md](QUICK_ADD_GUIDE.md)** - Natural language parser för todos
 - **[FAVICON_README.md](FAVICON_README.md)** - Favicon-generering och anpassning
 - **[example-TODO.md](example-TODO.md)** - Exempel på Obsidian todo-format
 
@@ -615,6 +638,35 @@ customElements.define('new-widget', NewWidget);
 - WeatherService - SMHI API-integration  
 - ClockService - Tidshantering
 - MenuService - Skolmats-API
+- DeadlineService - Deadline-monitoring och varningar
+- PomodoroService - Focus timer med sessions
+- GoogleCalendarService - OAuth och Calendar API
+- CalendarSyncService - Bilateral todo↔calendar sync
+- NaturalLanguageParser - Quick Add parsing
+
+## Exempel: Skapa todo med Quick Add
+
+```javascript
+// Tryck Ctrl+K för att fokusera Quick Add input
+// Skriv naturligt:
+"Möt Anna imorgon 14:00 #arbete [!high]"
+
+// Bifrost parsar automatiskt:
+{
+    text: "Möt Anna",
+    dueDate: "2024-12-19", // imorgon
+    dueTime: "14:00",
+    tags: ["arbete"],
+    priority: "high",
+    source: "bifrost"
+}
+
+// Todo läggs till automatiskt och:
+// ✅ Synkas till Google Calendar (om datum finns)
+// ✅ Läggs till i statistik (med tag)
+// ✅ Monitoras för deadline warnings
+// ✅ Kan kopplas till Pomodoro session
+```
 
 ## Dokumentation
 
@@ -622,6 +674,10 @@ customElements.define('new-widget', NewWidget);
 - [OBSIDIAN_SETUP.md](OBSIDIAN_SETUP.md) - Steg-för-steg Obsidian-integration
 - [DARK_THEME.md](DARK_THEME.md) - Guide för mörkt tema och anpassning
 - [STATS_GUIDE.md](STATS_GUIDE.md) - Statistik dashboard och API-referens
+- [DEADLINE_GUIDE.md](DEADLINE_GUIDE.md) - Deadline warnings och notifications
+- [POMODORO_GUIDE.md](POMODORO_GUIDE.md) - Pomodoro timer och fokusläge
+- [GOOGLE_CALENDAR_GUIDE.md](GOOGLE_CALENDAR_GUIDE.md) - Google Calendar integration
+- [QUICK_ADD_GUIDE.md](QUICK_ADD_GUIDE.md) - Natural language parser för todos
 - [FAVICON_README.md](FAVICON_README.md) - Skapa och anpassa favicon
 - [example-TODO.md](example-TODO.md) - Exempel på Obsidian todo-format
 
