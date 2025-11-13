@@ -66,6 +66,21 @@ export class NaturalLanguageParser {
             monthlyDay: /\b(?:varje|every)\s+(?:månad|month)\s+(?:den|the)\s+(\d{1,2})(?::e|st|nd|rd|th)?\b/i
         };
         
+        // Reminder patterns (Swedish/English)
+        this.reminderPatterns = {
+            // "påminn mig om X" / "remind me in X"
+            remindInTime: /\b(?:påminn|remind)(?:\s+mig)?\s+(?:om|in)\s+(\d+)\s*(min(?:uter)?|h(?:our)?|tim(?:mar)?|dag(?:ar)?|d(?:ay)?s?)\b/i,
+            
+            // "påminn X innan" / "remind X before"
+            remindBefore: /\b(?:påminn|remind)(?:\s+mig)?\s+(\d+)\s*(min(?:uter)?|h(?:our)?|tim(?:mar)?|dag(?:ar)?|d(?:ay)?s?)\s+(?:innan|före|before)\b/i,
+            
+            // "påminn mig imorgon 09:00" / "remind me tomorrow 09:00"
+            remindAtTime: /\b(?:påminn|remind)(?:\s+mig)?\s+(?:imorgon|tomorrow|idag|today)\s+(?:kl\.?\s*)?(\d{1,2}):?(\d{2})?\b/i,
+            
+            // "snooze +10min" / "snooze 10min"
+            snooze: /\b(snooze|snooza)\s*\+?(\d+)\s*(min|h|tim|hour|hours)\b/i
+        };
+        
         // Tag pattern
         this.tagPattern = /#(\w+)/g;
         
@@ -89,7 +104,8 @@ export class NaturalLanguageParser {
             priority: 'normal',
             source: 'bifrost',
             rawInput: input,
-            recurring: null  // Will be populated if recurring pattern found
+            recurring: null,  // Will be populated if recurring pattern found
+            reminder: null    // Will be populated if reminder pattern found
         };
         
         // Extract and remove recurring pattern first
@@ -97,6 +113,13 @@ export class NaturalLanguageParser {
         if (recurring) {
             result.recurring = recurring;
             input = input.replace(recurring.matched, '').trim();
+        }
+        
+        // Extract and remove reminder pattern
+        const reminder = this.extractReminder(input);
+        if (reminder) {
+            result.reminder = reminder;
+            input = input.replace(reminder.matched, '').trim();
         }
         
         // Extract and remove tags
@@ -272,6 +295,105 @@ export class NaturalLanguageParser {
         }
         
         return null;
+    }
+    
+    /**
+     * Extract reminder pattern from input
+     * Returns {type, offset, when, matched} or null
+     */
+    extractReminder(input) {
+        // "påminn mig om 1h" / "remind me in 30min"
+        let match = input.match(this.reminderPatterns.remindInTime);
+        if (match) {
+            const value = parseInt(match[1]);
+            const unit = match[2].toLowerCase();
+            
+            return {
+                type: 'in-time',
+                offset: this.normalizeTimeUnit(value, unit),
+                offsetDisplay: `${value}${this.getShortUnit(unit)}`,
+                matched: match[0]
+            };
+        }
+        
+        // "påminn 1h innan" / "remind 1h before"
+        match = input.match(this.reminderPatterns.remindBefore);
+        if (match) {
+            const value = parseInt(match[1]);
+            const unit = match[2].toLowerCase();
+            
+            return {
+                type: 'before-deadline',
+                offset: this.normalizeTimeUnit(value, unit),
+                offsetDisplay: `${value}${this.getShortUnit(unit)} innan`,
+                matched: match[0]
+            };
+        }
+        
+        // "påminn mig imorgon 09:00"
+        match = input.match(this.reminderPatterns.remindAtTime);
+        if (match) {
+            const dayKeyword = match[0].match(/imorgon|tomorrow|idag|today/i)[0].toLowerCase();
+            const hours = parseInt(match[1]);
+            const minutes = match[2] ? parseInt(match[2]) : 0;
+            
+            return {
+                type: 'at-time',
+                when: dayKeyword.includes('imorgon') || dayKeyword.includes('tomorrow') ? 'tomorrow' : 'today',
+                time: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`,
+                matched: match[0]
+            };
+        }
+        
+        // "snooze +10min"
+        match = input.match(this.reminderPatterns.snooze);
+        if (match) {
+            const value = parseInt(match[2]);
+            const unit = match[3].toLowerCase();
+            
+            return {
+                type: 'snooze',
+                offset: this.normalizeTimeUnit(value, unit),
+                preset: `+${value}${this.getShortUnit(unit)}`,
+                matched: match[0]
+            };
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Normalize time unit to milliseconds
+     */
+    normalizeTimeUnit(value, unit) {
+        const unitLower = unit.toLowerCase();
+        
+        if (unitLower.startsWith('min')) {
+            return value + 'min';
+        } else if (unitLower.startsWith('h') || unitLower.startsWith('tim')) {
+            return value + 'h';
+        } else if (unitLower.startsWith('dag') || unitLower.startsWith('d')) {
+            return value + 'd';
+        }
+        
+        return value + 'h'; // fallback
+    }
+    
+    /**
+     * Get short unit representation
+     */
+    getShortUnit(unit) {
+        const unitLower = unit.toLowerCase();
+        
+        if (unitLower.startsWith('min')) {
+            return 'min';
+        } else if (unitLower.startsWith('h') || unitLower.startsWith('tim')) {
+            return 'h';
+        } else if (unitLower.startsWith('dag') || unitLower.startsWith('d')) {
+            return 'd';
+        }
+        
+        return 'h';
     }
     
     /**
