@@ -6,6 +6,7 @@ En modern startsida med att‑göra‑lista, sök, länkar, väder, klocka samt 
 
 ✅ **Quick Add** - Natural language parser för snabb todo-skapning (t.ex. "Möt Anna imorgon 14:00 #arbete [!high]")  
 ✅ **Recurring Todos** - Återkommande uppgifter med dagliga/veckovisa/månadsvisa mönster  
+✅ **Reminders & Snooze** - Schemalagda påminnelser med desktop notifications och snooze-funktionalitet  
 ✅ **Todo-lista** - Persisterande i localStorage med tangentbordsgenvägar  
 ✅ **Obsidian-synk** - Automatisk synkronisering med Obsidian.md vault  
 ✅ **Statistik Dashboard** - Spårar produktivitet, streaks, och visar grafer  
@@ -51,6 +52,8 @@ Bifrost/
 │   ├── quickAddWidget.js  # Quick Add UI-komponent
 │   ├── recurringService.js  # Recurring todos service
 │   ├── recurringWidget.js   # Recurring todos widget
+│   ├── reminderService.js   # Reminders & snooze service
+│   ├── reminderWidget.js    # Reminders widget
 │   ├── themeService.js    # Tema-hantering (ljust/mörkt)
 │   ├── statsService.js    # Statistik-spårning
 │   ├── statsWidget.js     # Statistik-visualisering
@@ -644,6 +647,7 @@ customElements.define('new-widget', NewWidget);
 - DeadlineService - Deadline-monitoring och varningar
 - PomodoroService - Focus timer med sessions
 - RecurringService - Pattern management och automatiskt skapande av återkommande todos
+- ReminderService - Schemalagda påminnelser, snooze och desktop notifications
 - GoogleCalendarService - OAuth och Calendar API
 - CalendarSyncService - Bilateral todo↔calendar sync
 - NaturalLanguageParser - Quick Add parsing
@@ -700,6 +704,54 @@ customElements.define('new-widget', NewWidget);
 "Läsa bok varannan dag 20:00 #utveckling"
 "Teammöte varje fredag 09:00 #arbete"
 ```
+
+## Exempel: Påminnelser & Snooze
+
+```javascript
+// Tidsbaserad påminnelse:
+"Köp mjölk påminn mig om 30min #inköp"
+
+// Bifrost skapar:
+{
+    text: "Köp mjölk",
+    remindAt: new Date(now + 30 * 60 * 1000),
+    type: "manual"
+}
+
+// Deadline-relativ påminnelse:
+"Projektredovisning 2024-12-20 14:00 påminn 1h innan [!high]"
+
+// Bifrost skapar:
+{
+    text: "Projektredovisning",
+    dueDate: "2024-12-20",
+    dueTime: "14:00",
+    reminder: {
+        remindAt: "2024-12-20 13:00", // 1h innan deadline
+        type: "deadline-relative"
+    }
+}
+
+// När påminnelse triggas:
+// ✅ Desktop notification (om tillåten)
+// ✅ Fallback till in-app toast
+// ✅ Todo highlightas med blink-animation
+// ✅ Snooze-knapp för att skjuta upp
+
+// Snooze-funktionalitet:
+// Klicka 💤-knappen → välj preset:
+// • 10 minuter
+// • 30 minuter  
+// • 1 timme
+// • 3 timmar
+// • Imorgon 09:00
+// • 1 dag
+
+// Andra exempel:
+"Ring tandläkaren påminn om 1h #hälsa"
+"Påminn mig imorgon 09:00 #morgonrutin"
+"Standup-möte varje dag 09:00 påminn 10min innan #arbete"
+```
 // ✅ Monitoras för deadline warnings
 // ✅ Kan kopplas till Pomodoro session
 ```
@@ -715,6 +767,7 @@ customElements.define('new-widget', NewWidget);
 - [GOOGLE_CALENDAR_GUIDE.md](GOOGLE_CALENDAR_GUIDE.md) - Google Calendar integration
 - [QUICK_ADD_GUIDE.md](QUICK_ADD_GUIDE.md) - Natural language parser för todos
 - [RECURRING_GUIDE.md](RECURRING_GUIDE.md) - Återkommande uppgifter och automatisering
+- [REMINDER_GUIDE.md](REMINDER_GUIDE.md) - Påminnelser, snooze och notifications
 - [FAVICON_README.md](FAVICON_README.md) - Skapa och anpassa favicon
 - [example-TODO.md](example-TODO.md) - Exempel på Obsidian todo-format
 
