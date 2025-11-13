@@ -5,6 +5,7 @@ import { DeadlineService } from './deadlineService.js';
 import { pomodoroService } from './pomodoroService.js';
 import { calendarSyncService } from './calendarSync.js';
 import { recurringService } from './recurringService.js';
+import reminderService from './reminderService.js';
 import './uiConfig.js'; // Initialize UI with config values
 
 let obsidianService;
@@ -29,9 +30,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
+    // Reminder widget setup
+    const reminderWidget = document.querySelector('reminder-widget');
+    if (reminderWidget) {
+        reminderWidget.addEventListener('show-toast', (e) => {
+            showToast(e.detail.message);
+        });
+    }
+    
     // Subscribe to recurring service events
     recurringService.subscribe((event, data) => {
         handleRecurringEvent(event, data);
+    });
+    
+    // Subscribe to reminder service events
+    reminderService.subscribe('reminderTriggered', (reminder) => {
+        handleReminderTriggered(reminder);
+    });
+    
+    reminderService.subscribe('todoSnoozed', () => {
+        renderTodos(); // Update snooze indicators
     });
 });
 
@@ -110,11 +128,51 @@ function handleQuickAdd(parsed) {
         statsService.trackTodoCreated(todoData);
     }
     
+    // Handle reminder creation if reminder pattern found
+    if (parsed.reminder) {
+        createReminderFromParsed(todoData, parsed.reminder);
+    }
+    
     renderTodos();
     dispatchTodosUpdated();
     
     // Show toast notification
-    showToast(`✓ Uppgift tillagd${parsed.dueDate ? ' med deadline' : ''}!`);
+    const reminderMsg = parsed.reminder ? ' med påminnelse' : '';
+    showToast(`✓ Uppgift tillagd${parsed.dueDate ? ' med deadline' : ''}${reminderMsg}!`);
+}
+
+function createReminderFromParsed(todo, reminderData) {
+    let remindAt;
+    
+    if (reminderData.type === 'in-time') {
+        // "påminn mig om 1h" - create reminder X time from now
+        const offset = reminderService.parseTimeOffset(reminderData.offset);
+        remindAt = new Date(Date.now() + offset);
+    } else if (reminderData.type === 'before-deadline' && todo.dueDate) {
+        // "påminn 1h innan" - create reminder X before deadline
+        reminderService.createDeadlineReminder(todo, reminderData.offset);
+        return;
+    } else if (reminderData.type === 'at-time') {
+        // "påminn mig imorgon 09:00"
+        remindAt = new Date();
+        if (reminderData.when === 'tomorrow') {
+            remindAt.setDate(remindAt.getDate() + 1);
+        }
+        const [hours, minutes] = reminderData.time.split(':');
+        remindAt.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+    } else {
+        console.warn('Could not create reminder - invalid data:', reminderData);
+        return;
+    }
+    
+    reminderService.createReminder({
+        todoId: todo.id,
+        text: todo.text,
+        remindAt,
+        type: 'manual',
+        priority: todo.priority,
+        tags: todo.tags
+    });
 }
 
 // Handle recurring service events
@@ -141,6 +199,25 @@ function handleRecurringEvent(event, data) {
         saveTodos();
         
         showToast('🔄 Nästa återkommande uppgift skapad!');
+    }
+}
+
+function handleReminderTriggered(reminder) {
+    // Find the corresponding todo
+    const todo = currentTodos.find(t => t.id === reminder.todoId);
+    if (!todo) return;
+    
+    // Show toast notification as fallback (browser notifications handled by service)
+    const message = `🔔 Påminnelse: ${reminder.text}`;
+    showToast(message, 'reminder');
+    
+    // Highlight the todo briefly
+    const todoElement = document.querySelector(`[data-todo-id="${reminder.todoId}"]`);
+    if (todoElement) {
+        todoElement.classList.add('reminder-highlight');
+        setTimeout(() => {
+            todoElement.classList.remove('reminder-highlight');
+        }, 3000);
     }
 }
 
@@ -254,6 +331,30 @@ function renderTodos() {
             li.appendChild(recurringIcon);
         }
         
+        // Add snoozed indicator if todo has active reminder
+        const snoozedReminder = reminderService?.getSnoozedReminder(todo.id);
+        if (snoozedReminder) {
+            const snoozedIcon = document.createElement('span');
+            snoozedIcon.className = 'source-icon snoozed';
+            snoozedIcon.textContent = '💤';
+            const timeUntil = formatTimeUntilReminder(snoozedReminder.remindAt);
+            snoozedIcon.title = `Snoozad - påminnelse ${timeUntil}`;
+            li.appendChild(snoozedIcon);
+        }
+        
+        // Add snooze button for incomplete todos (only for Bifrost todos)
+        if (!todo.completed && todo.source === 'bifrost') {
+            const snoozeBtn = document.createElement('button');
+            snoozeBtn.className = 'snooze-todo';
+            snoozeBtn.textContent = '💤';
+            snoozeBtn.title = 'Snooze';
+            snoozeBtn.onclick = (e) => {
+                e.stopPropagation();
+                showSnoozeDropdown(snoozeBtn, todo);
+            };
+            li.appendChild(snoozeBtn);
+        }
+        
         // Add remove button for Bifrost todos only
         if (todo.source === 'bifrost') {
             const removeBtn = document.createElement('button');
@@ -306,6 +407,108 @@ function formatCompletedTime(date) {
     if (diffDays < 7) return `${diffDays}d sedan`;
     
     return completed.toLocaleDateString('sv-SE');
+}
+
+function formatTimeUntilReminder(date) {
+    const reminder = new Date(date);
+    const now = new Date();
+    const diffMs = reminder - now;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    
+    if (diffMins < 0) return 'nu';
+    if (diffMins < 60) return `om ${diffMins}min`;
+    if (diffHours < 24) return `om ${diffHours}h`;
+    
+    const isToday = reminder.toDateString() === now.toDateString();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const isTomorrow = reminder.toDateString() === tomorrow.toDateString();
+    
+    const timeStr = reminder.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+    
+    if (isToday) return `idag ${timeStr}`;
+    if (isTomorrow) return `imorgon ${timeStr}`;
+    
+    return reminder.toLocaleDateString('sv-SE');
+}
+
+// Snooze dropdown functionality
+let activeSnoozeDropdown = null;
+
+function showSnoozeDropdown(button, todo) {
+    // Close any existing dropdown
+    if (activeSnoozeDropdown) {
+        activeSnoozeDropdown.remove();
+        if (activeSnoozeDropdown.targetButton === button) {
+            activeSnoozeDropdown = null;
+            return;
+        }
+    }
+    
+    // Create dropdown
+    const dropdown = document.createElement('div');
+    dropdown.className = 'snooze-dropdown';
+    dropdown.targetButton = button;
+    
+    const presets = [
+        { label: '10 minuter', value: '10min' },
+        { label: '30 minuter', value: '30min' },
+        { label: '1 timme', value: '1h' },
+        { label: '3 timmar', value: '3h' },
+        { label: 'Imorgon 09:00', value: 'tomorrow9am' },
+        { label: '1 dag', value: '1day' }
+    ];
+    
+    presets.forEach(preset => {
+        const option = document.createElement('button');
+        option.className = 'snooze-option';
+        option.textContent = preset.label;
+        option.onclick = (e) => {
+            e.stopPropagation();
+            snoozeTodo(todo, preset.value);
+            dropdown.remove();
+            activeSnoozeDropdown = null;
+        };
+        dropdown.appendChild(option);
+    });
+    
+    // Position dropdown
+    const rect = button.getBoundingClientRect();
+    dropdown.style.position = 'fixed';
+    dropdown.style.top = `${rect.bottom + 5}px`;
+    dropdown.style.left = `${rect.left}px`;
+    
+    document.body.appendChild(dropdown);
+    activeSnoozeDropdown = dropdown;
+    
+    // Close on outside click
+    setTimeout(() => {
+        document.addEventListener('click', closeSnoozeDropdown);
+    }, 0);
+}
+
+function closeSnoozeDropdown() {
+    if (activeSnoozeDropdown) {
+        activeSnoozeDropdown.remove();
+        activeSnoozeDropdown = null;
+    }
+    document.removeEventListener('click', closeSnoozeDropdown);
+}
+
+function snoozeTodo(todo, preset) {
+    try {
+        const reminder = reminderService.snoozeTodo(todo.id, preset, todo);
+        
+        const timeDisplay = formatTimeUntilReminder(reminder.remindAt);
+        showToast(`💤 Snoozad - påminnelse ${timeDisplay}`);
+        
+        // Re-render to show snoozed indicator
+        renderTodos();
+    } catch (error) {
+        console.error('Snooze error:', error);
+        showToast('⚠️ Kunde inte snooze todo');
+    }
 }
 
 function toggleTodo(todoId) {
