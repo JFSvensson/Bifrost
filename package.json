@@ -1,0 +1,25 @@
+{
+  "name": "bifrost",
+  "version": "1.0.0",
+  "description": "Modern todo app with Obsidian sync, reminders, and more",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint js/**/*.js *.js",
+    "lint:fix": "eslint js/**/*.js *.js --fix",
+    "format": "prettier --write \"**/*.{js,css,html,md}\"",
+    "format:check": "prettier --check \"**/*.{js,css,html,md}\""
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.15.0",
+    "eslint": "^9.15.0",
+    "prettier": "^3.3.3"
+  },
+  "keywords": [
+    "todo",
+    "productivity",
+    "pwa",
+    "obsidian"
+  ],
+  "author": "",
+  "license": "MIT"
+}
