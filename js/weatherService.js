@@ -1,10 +1,14 @@
 import { weather as weatherConfig } from './config.js';
+import errorHandler, { ErrorCode } from './errorHandler.js';
 
 /**
  * Weather service using SMHI API
  * Free, no API key required
  */
 export class WeatherService {
+    /**
+     * Create weather service
+     */
     constructor() {
         // Use config values with fallbacks
         this.latitude = weatherConfig.location.latitude;
@@ -14,6 +18,14 @@ export class WeatherService {
         this.updateInterval = weatherConfig.updateInterval;
     }
 
+    /**
+     * Get current weather data from SMHI
+     * @returns {Promise<Object>} Weather data
+     * @property {Object} current - Current weather
+     * @property {Array<Object>} forecast - Today's forecast
+     * @property {string} location - Location name
+     * @property {Date} lastUpdated - Last update time
+     */
     async getCurrentWeather() {
         try {
             // SMHI Weather API endpoint
@@ -37,11 +49,21 @@ export class WeatherService {
                 clearTimeout(timeoutId);
             }
         } catch (error) {
-            console.error('Weather fetch failed:', error);
+            errorHandler.handle(error, {
+                code: ErrorCode.API_ERROR,
+                context: 'Fetching weather data',
+                showToast: false
+            });
             throw new Error('Kunde inte hämta väderdata');
         }
     }
 
+    /**
+     * Parse SMHI API response
+     * @param {Object} data - SMHI API response
+     * @returns {Object} Parsed weather data
+     * @private
+     */
     parseWeatherData(data) {
         if (!data.timeSeries || data.timeSeries.length === 0) {
             throw new Error('Ingen väderdata tillgänglig');
@@ -73,6 +95,12 @@ export class WeatherService {
         };
     }
 
+    /**
+     * Parse single time series entry
+     * @param {Object} entry - Time series entry
+     * @returns {Object} Parsed weather parameters
+     * @private
+     */
     parseTimeSeriesEntry(entry) {
         const params = entry.parameters;
 
@@ -89,11 +117,23 @@ export class WeatherService {
         };
     }
 
+    /**
+     * Extract parameter value from SMHI data
+     * @param {Array<Object>} params - Parameters array
+     * @param {string} name - Parameter name
+     * @returns {number|null} Parameter value
+     * @private
+     */
     getParameter(params, name) {
         const param = params.find(p => p.name === name);
         return param ? param.values[0] : null;
     }
 
+    /**
+     * Get precipitation probability from category
+     * @param {number} category - SMHI precipitation category (0-6)
+     * @returns {number} Probability percentage
+     */
     getPrecipitationProbability(category) {
         // SMHI precipitation category to probability mapping
         const probabilities = {
@@ -109,6 +149,11 @@ export class WeatherService {
         return probabilities[category] || 0;
     }
 
+    /**
+     * Get emoji icon for weather symbol code
+     * @param {number} symbolCode - SMHI weather symbol code
+     * @returns {string} Weather emoji
+     */
     getWeatherIcon(symbolCode) {
         const icons = {
             1: '☀️', // Clear sky
@@ -143,6 +188,12 @@ export class WeatherService {
         return icons[symbolCode] || '🌡️';
     }
 
+    /**
+     * Set location for weather data
+     * @param {number} lat - Latitude
+     * @param {number} lon - Longitude
+     * @param {string} [name=null] - Location name
+     */
     setLocation(lat, lon, name = null) {
         this.latitude = lat;
         this.longitude = lon;
@@ -151,7 +202,13 @@ export class WeatherService {
         }
     }
 
-    // Get current location settings
+    /**
+     * Get current location settings
+     * @returns {Object} Location data
+     * @property {number} latitude - Latitude
+     * @property {number} longitude - Longitude
+     * @property {string} name - Location name
+     */
     getLocation() {
         return {
             latitude: this.latitude,
