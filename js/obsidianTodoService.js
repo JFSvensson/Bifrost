@@ -1,9 +1,14 @@
 import { todos as todoConfig } from './config.js';
+import stateManager from './stateManager.js';
+import errorHandler, { ErrorCode } from './errorHandler.js';
 
 /**
  * Service for syncing todos with Obsidian via bridge
  */
 export class ObsidianTodoService {
+    /**
+     * Create Obsidian todo service
+     */
     constructor() {
         this.bridgeUrl = todoConfig.obsidian.bridgeUrl;
         this.updateInterval = todoConfig.obsidian.updateInterval;
@@ -13,6 +18,11 @@ export class ObsidianTodoService {
         this.lastSync = null;
     }
 
+    /**
+     * Load todos from Obsidian bridge
+     * @returns {Promise<Array<Object>>} Processed todos from Obsidian
+     * @throws {Error} If fetch fails or times out
+     */
     async loadTodos() {
         try {
             const controller = new AbortController();
@@ -38,14 +48,28 @@ export class ObsidianTodoService {
             }
         } catch (error) {
             if (error.name === 'AbortError') {
-                throw new Error('Obsidian bridge timeout - kontrollera att bridge körs');
+                const err = new Error('Obsidian bridge timeout - kontrollera att bridge körs');
+                errorHandler.handle(err, {
+                    code: ErrorCode.API_ERROR,
+                    context: 'Obsidian bridge connection'
+                });
+                throw err;
             }
 
-            console.error('Obsidian sync failed:', error);
+            errorHandler.handle(error, {
+                code: ErrorCode.API_ERROR,
+                context: 'Syncing with Obsidian'
+            });
             throw new Error(`Kunde inte synka med Obsidian: ${error.message}`);
         }
     }
 
+    /**
+     * Process raw Obsidian todos into app format
+     * @param {Array<Object>} obsidianTodos - Raw todos from Obsidian
+     * @returns {Array<Object>} Processed todos
+     * @private
+     */
     processObsidianTodos(obsidianTodos) {
         return obsidianTodos.map(todo => ({
             text: this.formatTodoText(todo),
@@ -62,6 +86,12 @@ export class ObsidianTodoService {
         }));
     }
 
+    /**
+     * Format todo text with optional metadata
+     * @param {Object} todo - Todo to format
+     * @returns {string} Formatted text
+     * @private
+     */
     formatTodoText(todo) {
         let text = todo.text;
 
@@ -85,11 +115,21 @@ export class ObsidianTodoService {
         return text;
     }
 
+    /**
+     * Generate unique ID for Obsidian todo
+     * @param {Object} todo - Todo object
+     * @returns {string} Unique ID
+     * @private
+     */
     generateTodoId(todo) {
         // Skapa unikt ID baserat på fil + rad
         return `obsidian-${todo.source}-${todo.lineNumber}`;
     }
 
+    /**
+     * Sync Obsidian todos with local todos
+     * @returns {Promise<Array<Object>>} Merged and sorted todos
+     */
     async syncWithLocal() {
         try {
             const obsidianTodos = await this.loadTodos();
@@ -105,11 +145,20 @@ export class ObsidianTodoService {
             return this.sortTodos(merged);
 
         } catch (error) {
-            console.warn('Obsidian sync failed, using local todos only:', error.message);
+            errorHandler.warning(
+                'OBSIDIAN_SYNC_FAILED',
+                'Obsidian sync failed, using local todos only',
+                { error: error.message }
+            );
             return this.getLocalTodos();
         }
     }
 
+    /**
+     * Sort todos by completion status, priority, source, and text
+     * @param {Array<Object>} todos - Todos to sort
+     * @returns {Array<Object>} Sorted todos
+     */
     sortTodos(todos) {
         const priorityOrder = { high: 4, medium: 3, normal: 2, low: 1 };
 
@@ -138,17 +187,32 @@ export class ObsidianTodoService {
         });
     }
 
+    /**
+     * Get local Bifrost todos from storage
+     * @returns {Array<Object>} Local todos
+     */
     getLocalTodos() {
-        const saved = localStorage.getItem(todoConfig.storageKey);
-        const todos = saved ? JSON.parse(saved) : [];
-
-        return todos.map(todo => ({
-            ...todo,
-            source: todo.source || 'bifrost',
-            priority: todo.priority || 'normal'
-        }));
+        try {
+            const todos = stateManager.get('todos') || [];
+            return todos.map(todo => ({
+                ...todo,
+                source: todo.source || 'bifrost',
+                priority: todo.priority || 'normal'
+            }));
+        } catch (error) {
+            errorHandler.handle(error, {
+                code: ErrorCode.STORAGE_ERROR,
+                context: 'Loading local todos'
+            });
+            return [];
+        }
     }
 
+    /**
+     * Add a new local todo
+     * @param {string} text - Todo text
+     * @returns {Object} Created todo
+     */
     addLocalTodo(text) {
         const todos = this.getLocalTodos();
         const newTodo = {
@@ -161,19 +225,28 @@ export class ObsidianTodoService {
         };
 
         todos.push(newTodo);
-        localStorage.setItem(todoConfig.storageKey, JSON.stringify(todos));
+        stateManager.set('todos', todos);
 
         return newTodo;
     }
 
+    /**
+     * Remove a local todo
+     * @param {string} todoId - Todo ID to remove
+     * @returns {Array<Object>} Remaining todos
+     */
     removeLocalTodo(todoId) {
         const todos = this.getLocalTodos();
         const filtered = todos.filter(todo => todo.id !== todoId);
-        localStorage.setItem(todoConfig.storageKey, JSON.stringify(filtered));
+        stateManager.set('todos', filtered);
 
         return filtered;
     }
 
+    /**
+     * Get Obsidian statistics
+     * @returns {Promise<Object|null>} Stats or null
+     */
     async getStats() {
         try {
             const response = await fetch(this.bridgeUrl.replace('/todos', '/stats'));
@@ -181,15 +254,28 @@ export class ObsidianTodoService {
                 return await response.json();
             }
         } catch (error) {
-            console.warn('Could not load Obsidian stats:', error);
+            errorHandler.warning(
+                'OBSIDIAN_STATS_FAILED',
+                'Could not load Obsidian stats',
+                { error: error.message }
+            );
         }
         return null;
     }
 
+    /**
+     * Get color for priority level
+     * @param {string} priority - Priority level
+     * @returns {string} Color code
+     */
     getPriorityColor(priority) {
         return this.priorityColors[priority] || this.priorityColors.normal;
     }
 
+    /**
+     * Check if Obsidian bridge is online
+     * @returns {boolean} True if recently synced
+     */
     isOnline() {
         return this.lastSync && (Date.now() - this.lastSync.getTime()) < this.updateInterval * 2;
     }
