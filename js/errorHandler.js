@@ -428,28 +428,10 @@ class ErrorHandler {
     /**
      * Hämtar statistik över fel
      *
-     * @returns {Object} Statistik-objekt
+     * @returns {Object.<string, number>} Error counts per code
      */
     getStats() {
-        return {
-            totalErrors: this.errorHistory.length,
-            errorCounts: { ...this.errorCounts },
-            byLevel: this._countByLevel(),
-            recentErrors: this.errorHistory.slice(-10)
-        };
-    }
-
-    /**
-     * Räknar fel per level
-     *
-     * @private
-     * @returns {Object.<string, number>} Antal per level
-     */
-    _countByLevel() {
-        return this.errorHistory.reduce((acc, error) => {
-            acc[error.level] = (acc[error.level] || 0) + 1;
-            return acc;
-        }, {});
+        return { ...this.errorCounts };
     }
 
     /**
@@ -459,6 +441,14 @@ class ErrorHandler {
      */
     clearHistory() {
         this.errorHistory = [];
+    }
+
+    /**
+     * Rensar statistik
+     *
+     * @returns {void}
+     */
+    clearStats() {
         this.errorCounts = {};
     }
 
@@ -474,6 +464,39 @@ class ErrorHandler {
         } else {
             console.warn('Invalid log level:', level);
         }
+    }
+
+    /**
+     * Sätter toast-funktionen för att visa meddelanden
+     *
+     * @param {Function} toastFn - Funktion som tar emot errorInfo-objekt
+     * @returns {void}
+     */
+    setToastFunction(toastFn) {
+        if (typeof toastFn === 'function') {
+            this.toastFunction = toastFn;
+        }
+    }
+
+    /**
+     * Ger recovery suggestions baserat på felkod
+     *
+     * @param {string} code - Felkod
+     * @returns {string} Recovery suggestion
+     */
+    getRecoverySuggestion(code) {
+        const suggestions = {
+            [ErrorCode.STORAGE_ERROR]: 'Try clearing browser data or use a different browser.',
+            [ErrorCode.STORAGE_QUOTA_EXCEEDED]: 'Storage is full. Clear old data to free up space.',
+            [ErrorCode.API_ERROR]: 'Check your network connection and try again.',
+            [ErrorCode.API_TIMEOUT]: 'Request timed out. Please retry the operation.',
+            [ErrorCode.API_UNAUTHORIZED]: 'Authorization failed. Please sign in again.',
+            [ErrorCode.VALIDATION_ERROR]: 'Please check your input and try again.',
+            [ErrorCode.SERVICE_INIT_FAILED]: 'Service failed to initialize. Reload the page.',
+            [ErrorCode.NETWORK_ERROR]: 'Check your internet connection and try again.'
+        };
+
+        return suggestions[code] || 'An error occurred. Please try again or contact support.';
     }
 }
 
