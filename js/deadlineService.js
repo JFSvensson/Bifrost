@@ -3,6 +3,10 @@
  * Visar notifications och färgkodning baserat på hur nära deadline
  */
 
+import eventBus from './eventBus.js';
+import stateManager from './stateManager.js';
+import errorHandler, { ErrorCode } from './errorHandler.js';
+
 export class DeadlineService {
     constructor() {
         this.warningLevels = {
@@ -40,10 +44,98 @@ export class DeadlineService {
 
         this.notificationShown = new Set();
         this.checkInterval = null;
+        this._init();
+    }
+
+    /**
+     * Initialize deadline service
+     * @private
+     */
+    _init() {
+        // Register schema for notification tracking
+        stateManager.registerSchema('deadlineNotifications', {
+            version: 1,
+            validate: (data) => {
+                return Array.isArray(data.shown) && typeof data.lastReset === 'string';
+            },
+            migrate: (oldData) => oldData,
+            default: { shown: [], lastReset: new Date().toISOString() }
+        });
+
+        // Load notification history
+        this.loadNotificationHistory();
+
+        // Subscribe to todo events
+        eventBus.on('todo:added', this._onTodoChanged.bind(this));
+        eventBus.on('todo:updated', this._onTodoChanged.bind(this));
+        eventBus.on('todo:completed', this._onTodoChanged.bind(this));
+    }
+
+    /**
+     * Load notification history from storage
+     * @private
+     */
+    loadNotificationHistory() {
+        try {
+            const data = stateManager.get('deadlineNotifications');
+            this.notificationShown = new Set(data.shown || []);
+            
+            // Reset if it's a new day
+            const lastReset = new Date(data.lastReset);
+            const now = new Date();
+            if (lastReset.toDateString() !== now.toDateString()) {
+                this.resetNotificationHistory();
+            }
+        } catch (error) {
+            errorHandler.handle(error, {
+                code: ErrorCode.STORAGE_ERROR,
+                context: 'Loading deadline notification history'
+            });
+        }
+    }
+
+    /**
+     * Save notification history to storage
+     * @private
+     */
+    saveNotificationHistory() {
+        try {
+            stateManager.set('deadlineNotifications', {
+                shown: Array.from(this.notificationShown),
+                lastReset: new Date().toISOString()
+            });
+        } catch (error) {
+            errorHandler.handle(error, {
+                code: ErrorCode.STORAGE_ERROR,
+                context: 'Saving deadline notification history'
+            });
+        }
+    }
+
+    /**
+     * Handle todo changes
+     * @private
+     * @param {Object} data - Event data
+     */
+    _onTodoChanged(data) {
+        if (data?.todo) {
+            const analysis = this.analyzeTodo(data.todo);
+            if (analysis && analysis.priority >= 2) {
+                eventBus.emit('deadline:urgent', { todo: data.todo, analysis });
+            }
+        }
     }
 
     /**
      * Analysera en todo och returnera dess deadline-status
+     * @param {Object} todo - Todo to analyze
+     * @returns {Object|null} Deadline analysis or null if no due date
+     * @property {string} level - Warning level (overdue/today/tomorrow/thisWeek/future)
+     * @property {number} daysUntil - Days until due date (negative if overdue)
+     * @property {string} color - Color code for display
+     * @property {string} icon - Icon for display
+     * @property {string} label - Swedish label
+     * @property {number} priority - Priority level (0-4)
      */
     analyzeTodo(todo) {
         if (!todo.dueDate) {
@@ -57,7 +149,7 @@ export class DeadlineService {
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate());
 
-        const diffTime = dueDay - today;
+        const diffTime = dueDay.getTime() - today.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         let level;
@@ -82,6 +174,13 @@ export class DeadlineService {
 
     /**
      * Analysera alla todos och returnera de som behöver varningar
+     * @param {Array<Object>} todos - Todos to analyze
+     * @returns {Object} Warnings grouped by level
+     * @property {Array<Object>} overdue - Overdue todos
+     * @property {Array<Object>} today - Todos due today
+     * @property {Array<Object>} tomorrow - Todos due tomorrow
+     * @property {Array<Object>} thisWeek - Todos due this week
+     * @property {Array<Object>} future - Future todos
      */
     analyzeAllTodos(todos) {
         const warnings = {
@@ -109,6 +208,8 @@ export class DeadlineService {
 
     /**
      * Hämta todos som behöver akuta varningar (försenad, idag, imorgon)
+     * @param {Array<Object>} todos - Todos to check
+     * @returns {Array<Object>} Urgent todos sorted by priority
      */
     getUrgentTodos(todos) {
         const warnings = this.analyzeAllTodos(todos);
@@ -121,6 +222,7 @@ export class DeadlineService {
 
     /**
      * Visa desktop notification för urgent todos
+     * @param {Array<Object>} todos - Todos to check for notifications
      */
     async showNotifications(todos) {
         if (!('Notification' in window)) {
@@ -160,11 +262,17 @@ export class DeadlineService {
             };
 
             this.notificationShown.add(notificationKey);
+            this.saveNotificationHistory();
+            eventBus.emit('deadline:notificationShown', { todo, level: todo.deadline.level });
         });
     }
 
     /**
      * Visa in-app toast notification
+     * @param {string} message - Message to display
+     * @param {string} [level='info'] - Warning level
+     * @param {number} [duration=5000] - Display duration in ms
+     * @returns {HTMLElement} Toast element
      */
     showToast(message, level = 'info', duration = 5000) {
         const toast = document.createElement('div');
@@ -190,6 +298,7 @@ export class DeadlineService {
 
     /**
      * Visa daglig sammanfattning av deadlines
+     * @param {Array<Object>} todos - Todos to summarize
      */
     showDailySummary(todos) {
         const warnings = this.analyzeAllTodos(todos);
@@ -213,11 +322,14 @@ export class DeadlineService {
 
         if (message) {
             this.showToast(message.trim(), warnings.overdue.length > 0 ? 'overdue' : 'today', 8000);
+            eventBus.emit('deadline:summaryShown', { warnings, urgent });
         }
     }
 
     /**
      * Starta periodisk koll av deadlines
+     * @param {Function} getTodosCallback - Callback to get current todos
+     * @param {number} [interval=60000] - Check interval in ms (default: 1 minute)
      */
     startMonitoring(getTodosCallback, interval = 60000) {
         // Initial check
@@ -251,10 +363,14 @@ export class DeadlineService {
      */
     resetNotificationHistory() {
         this.notificationShown.clear();
+        this.saveNotificationHistory();
+        eventBus.emit('deadline:historyReset', null);
     }
 
     /**
      * Formattera deadline för visning
+     * @param {string|Date} dueDate - Due date to format
+     * @returns {string} Formatted deadline string with icon
      */
     formatDeadline(dueDate) {
         const analysis = this.analyzeTodo({ dueDate });
@@ -280,6 +396,8 @@ export class DeadlineService {
 
     /**
      * Hämta CSS-klass för deadline-level
+     * @param {Object} todo - Todo to get class for
+     * @returns {string} CSS class name
      */
     getDeadlineClass(todo) {
         const analysis = this.analyzeTodo(todo);
@@ -288,6 +406,8 @@ export class DeadlineService {
 
     /**
      * Sortera todos med deadlines först
+     * @param {Array<Object>} todos - Todos to sort
+     * @returns {Array<Object>} Sorted todos (urgent first)
      */
     sortByDeadline(todos) {
         return todos.sort((a, b) => {
@@ -305,12 +425,20 @@ export class DeadlineService {
             }
 
             // Inom samma priority-level, sortera efter datum
-            return new Date(a.dueDate) - new Date(b.dueDate);
+            return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
         });
     }
 
     /**
      * Hämta statistik för deadlines
+     * @param {Array<Object>} todos - Todos to analyze
+     * @returns {Object} Statistics object
+     * @property {number} overdue - Overdue count
+     * @property {number} today - Due today count
+     * @property {number} tomorrow - Due tomorrow count
+     * @property {number} thisWeek - Due this week count
+     * @property {number} total - Total todos with deadlines
+     * @property {number} urgent - Total urgent todos
      */
     getDeadlineStats(todos) {
         const warnings = this.analyzeAllTodos(todos);
