@@ -3,78 +3,145 @@
  * Manages recurring todo patterns and automatic creation of next instances
  */
 
+import eventBus from './eventBus.js';
+import stateManager from './stateManager.js';
+import errorHandler, { ErrorCode } from './errorHandler.js';
+
 export class RecurringService {
     constructor() {
+        this.storageKey = 'recurringPatterns';
+        this._init();
+    }
+
+    /**
+     * Initialize service
+     * @private
+     */
+    _init() {
+        // Register schema
+        stateManager.registerSchema(this.storageKey, {
+            version: 1,
+            validate: (data) => Array.isArray(data),
+            default: []
+        });
+
         this.recurringPatterns = this.loadPatterns();
-        this.listeners = [];
 
         // Check for due recurring todos every hour
         this.startMonitoring();
     }
 
     /**
-     * Load recurring patterns from localStorage
+     * Load recurring patterns from storage
+     * @returns {Array<Object>} Array of recurring patterns
      */
     loadPatterns() {
-        const saved = localStorage.getItem('recurringPatterns');
-        if (saved) {
-            try {
-                return JSON.parse(saved).map(pattern => ({
-                    ...pattern,
-                    createdAt: new Date(pattern.createdAt),
-                    lastCreated: pattern.lastCreated ? new Date(pattern.lastCreated) : null,
-                    nextDue: pattern.nextDue ? new Date(pattern.nextDue) : null
-                }));
-            } catch (e) {
-                console.error('Failed to load recurring patterns:', e);
-                return [];
-            }
+        try {
+            const patterns = stateManager.get(this.storageKey, []);
+            return patterns.map(pattern => ({
+                ...pattern,
+                createdAt: new Date(pattern.createdAt),
+                lastCreated: pattern.lastCreated ? new Date(pattern.lastCreated) : null,
+                nextDue: pattern.nextDue ? new Date(pattern.nextDue) : null
+            }));
+        } catch (error) {
+            errorHandler.handle(error, {
+                code: ErrorCode.STORAGE_PARSE_ERROR,
+                context: 'Loading recurring patterns',
+                showToast: false
+            });
+            return [];
         }
-        return [];
     }
 
     /**
-     * Save recurring patterns to localStorage
+     * Save recurring patterns to storage
+     * @returns {void}
      */
     savePatterns() {
-        localStorage.setItem('recurringPatterns', JSON.stringify(this.recurringPatterns));
+        try {
+            stateManager.set(this.storageKey, this.recurringPatterns);
+        } catch (error) {
+            errorHandler.handle(error, {
+                code: ErrorCode.STORAGE_ERROR,
+                context: 'Saving recurring patterns',
+                showToast: true
+            });
+        }
     }
 
     /**
      * Create a new recurring pattern
+     * @param {Object} pattern - Pattern configuration
+     * @param {string} pattern.text - Todo text template
+     * @param {string} pattern.type - Pattern type: 'daily', 'weekly', 'monthly', 'custom'
+     * @param {number} [pattern.frequency=1] - Repeat every N days/weeks/months
+     * @param {Array<number>} [pattern.daysOfWeek] - For weekly: [0-6] (Sunday=0)
+     * @param {number} [pattern.dayOfMonth] - For monthly: 1-31
+     * @param {string} [pattern.time] - Optional HH:MM
+     * @param {Array<string>} [pattern.tags] - Tags for created todos
+     * @param {string} [pattern.priority] - Priority level
+     * @param {string} [pattern.source] - Source identifier
+     * @returns {Object} Created pattern
      */
     createPattern(pattern) {
-        const newPattern = {
-            id: Date.now().toString(),
-            text: pattern.text,
-            type: pattern.type, // 'daily', 'weekly', 'monthly', 'custom'
-            frequency: pattern.frequency || 1, // Every N days/weeks/months
-            daysOfWeek: pattern.daysOfWeek || [], // For weekly: [0-6] (Sunday=0)
-            dayOfMonth: pattern.dayOfMonth || 1, // For monthly: 1-31
-            time: pattern.time || null, // Optional HH:MM
-            tags: pattern.tags || [],
-            priority: pattern.priority || 'normal',
-            active: true,
-            createdAt: new Date(),
-            lastCreated: null,
-            nextDue: this.calculateNextOccurrence(pattern),
-            source: pattern.source || 'bifrost',
-            completionCount: 0
-        };
+        try {
+            // Validate required fields
+            errorHandler.validateRequired(
+                pattern,
+                ['text', 'type'],
+                'RecurringService.createPattern'
+            );
 
-        this.recurringPatterns.push(newPattern);
-        this.savePatterns();
-        this.notifyListeners('patternCreated', newPattern);
+            const newPattern = {
+                id: Date.now().toString(),
+                text: pattern.text,
+                type: pattern.type,
+                frequency: pattern.frequency || 1,
+                daysOfWeek: pattern.daysOfWeek || [],
+                dayOfMonth: pattern.dayOfMonth || 1,
+                time: pattern.time || null,
+                tags: pattern.tags || [],
+                priority: pattern.priority || 'normal',
+                active: true,
+                createdAt: new Date(),
+                lastCreated: null,
+                nextDue: this.calculateNextOccurrence(pattern),
+                source: pattern.source || 'bifrost',
+                completionCount: 0
+            };
 
-        return newPattern;
+            this.recurringPatterns.push(newPattern);
+            this.savePatterns();
+            eventBus.emit('recurring:patternCreated', newPattern);
+
+            return newPattern;
+        } catch (error) {
+            errorHandler.handle(error, {
+                code: ErrorCode.VALIDATION_ERROR,
+                context: 'Creating recurring pattern',
+                showToast: true
+            });
+            throw error;
+        }
     }
 
     /**
      * Update existing recurring pattern
+     * @param {string} patternId - Pattern ID
+     * @param {Object} updates - Fields to update
+     * @returns {Object|null} Updated pattern or null
      */
     updatePattern(patternId, updates) {
         const pattern = this.recurringPatterns.find(p => p.id === patternId);
-        if (!pattern) {return null;}
+        if (!pattern) {
+            errorHandler.warning(
+                'PATTERN_NOT_FOUND',
+                `Pattern ${patternId} not found`,
+                { patternId }
+            );
+            return null;
+        }
 
         Object.assign(pattern, updates);
 
@@ -84,28 +151,34 @@ export class RecurringService {
         }
 
         this.savePatterns();
-        this.notifyListeners('patternUpdated', pattern);
+        eventBus.emit('recurring:patternUpdated', pattern);
 
         return pattern;
     }
 
     /**
      * Delete recurring pattern
+     * @param {string} patternId - Pattern ID
+     * @returns {boolean} True if deleted
      */
     deletePattern(patternId) {
         const index = this.recurringPatterns.findIndex(p => p.id === patternId);
-        if (index === -1) {return false;}
+        if (index === -1) {
+            return false;
+        }
 
         const pattern = this.recurringPatterns[index];
         this.recurringPatterns.splice(index, 1);
         this.savePatterns();
-        this.notifyListeners('patternDeleted', pattern);
+        eventBus.emit('recurring:patternDeleted', pattern);
 
         return true;
     }
 
     /**
      * Pause recurring pattern
+     * @param {string} patternId - Pattern ID
+     * @returns {Object|null} Updated pattern or null
      */
     pausePattern(patternId) {
         return this.updatePattern(patternId, { active: false });
@@ -113,6 +186,8 @@ export class RecurringService {
 
     /**
      * Resume recurring pattern
+     * @param {string} patternId - Pattern ID
+     * @returns {Object|null} Updated pattern or null
      */
     resumePattern(patternId) {
         const pattern = this.updatePattern(patternId, { active: true });
@@ -125,6 +200,9 @@ export class RecurringService {
 
     /**
      * Calculate next occurrence date based on pattern
+     * @param {Object} pattern - Recurring pattern
+     * @param {Date} [fromDate=null] - Base date for calculation
+     * @returns {Date} Next occurrence date
      */
     calculateNextOccurrence(pattern, fromDate = null) {
         const baseDate = fromDate || new Date();
@@ -174,6 +252,10 @@ export class RecurringService {
 
     /**
      * Get next occurrence of specific weekday(s)
+     * @param {Date} fromDate - Base date
+     * @param {Array<number>} daysOfWeek - Array of days (0-6, Sunday=0)
+     * @param {number} [weeksInterval=1] - Week interval
+     * @returns {Date} Next weekday occurrence
      */
     getNextWeekday(fromDate, daysOfWeek, weeksInterval = 1) {
         const sortedDays = [...daysOfWeek].sort((a, b) => a - b);
@@ -199,6 +281,8 @@ export class RecurringService {
 
     /**
      * Get days in month
+     * @param {Date} date - Date to check
+     * @returns {number} Number of days in month
      */
     getDaysInMonth(date) {
         return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -206,6 +290,8 @@ export class RecurringService {
 
     /**
      * Create todo instance from recurring pattern
+     * @param {Object} pattern - Recurring pattern
+     * @returns {Object} Created todo object
      */
     createTodoFromPattern(pattern) {
         const todo = {
@@ -228,13 +314,14 @@ export class RecurringService {
         pattern.nextDue = this.calculateNextOccurrence(pattern, pattern.nextDue);
         this.savePatterns();
 
-        this.notifyListeners('todoCreated', { pattern, todo });
+        eventBus.emit('recurring:todoCreated', { pattern, todo });
 
         return todo;
     }
 
     /**
      * Check if any recurring patterns are due and create todos
+     * @returns {Array<Object>} Array of created todos
      */
     checkDuePatterns() {
         const now = new Date();
@@ -250,7 +337,7 @@ export class RecurringService {
         }
 
         if (dueTodos.length > 0) {
-            this.notifyListeners('duePatterns', dueTodos);
+            eventBus.emit('recurring:duePatterns', dueTodos);
         }
 
         return dueTodos;
@@ -258,6 +345,8 @@ export class RecurringService {
 
     /**
      * Handle todo completion - if it's from recurring pattern, create next instance
+     * @param {Object} todo - Completed todo
+     * @returns {Object|undefined} Next todo instance or undefined
      */
     onTodoCompleted(todo) {
         if (!todo.recurringPatternId) {return;}
@@ -267,13 +356,14 @@ export class RecurringService {
 
         // Auto-create next instance if pattern is still active
         const nextTodo = this.createTodoFromPattern(pattern);
-        this.notifyListeners('nextInstanceCreated', { completedTodo: todo, nextTodo, pattern });
+        eventBus.emit('recurring:nextInstanceCreated', { completedTodo: todo, nextTodo, pattern });
 
         return nextTodo;
     }
 
     /**
      * Start monitoring for due recurring patterns
+     * @param {number} [interval=3600000] - Check interval in ms (default: 1 hour)
      */
     startMonitoring(interval = 60 * 60 * 1000) { // Default: 1 hour
         // Check immediately
@@ -297,6 +387,7 @@ export class RecurringService {
 
     /**
      * Get all active recurring patterns
+     * @returns {Array<Object>} Active patterns
      */
     getActivePatterns() {
         return this.recurringPatterns.filter(p => p.active);
@@ -304,6 +395,7 @@ export class RecurringService {
 
     /**
      * Get all recurring patterns (active + paused)
+     * @returns {Array<Object>} All patterns
      */
     getAllPatterns() {
         return [...this.recurringPatterns];
@@ -311,6 +403,8 @@ export class RecurringService {
 
     /**
      * Get pattern by ID
+     * @param {string} patternId - Pattern ID
+     * @returns {Object|undefined} Pattern or undefined
      */
     getPattern(patternId) {
         return this.recurringPatterns.find(p => p.id === patternId);
@@ -318,13 +412,17 @@ export class RecurringService {
 
     /**
      * Get patterns by type
+     * @param {string} type - Pattern type
+     * @returns {Array<Object>} Matching patterns
      */
     getPatternsByType(type) {
         return this.recurringPatterns.filter(p => p.type === type);
     }
 
     /**
-     * Get upcoming recurring todos (next 7 days)
+     * Get upcoming recurring todos (next N days)
+     * @param {number} [days=7] - Number of days to look ahead
+     * @returns {Array<Object>} Upcoming patterns sorted by due date
      */
     getUpcomingRecurring(days = 7) {
         const now = new Date();
@@ -338,6 +436,8 @@ export class RecurringService {
 
     /**
      * Format date as YYYY-MM-DD
+     * @param {Date} date - Date to format
+     * @returns {string|null} Formatted date or null
      */
     formatDate(date) {
         if (!date) {return null;}
@@ -350,6 +450,8 @@ export class RecurringService {
 
     /**
      * Get human-readable description of pattern
+     * @param {Object} pattern - Recurring pattern
+     * @returns {string} Swedish description
      */
     getPatternDescription(pattern) {
         let desc = '';
@@ -407,6 +509,15 @@ export class RecurringService {
 
     /**
      * Get statistics about recurring patterns
+     * @returns {Object} Stats object with pattern counts and metrics
+     * @property {number} total - Total number of patterns
+     * @property {number} active - Active patterns
+     * @property {number} paused - Paused patterns
+     * @property {number} daily - Daily patterns
+     * @property {number} weekly - Weekly patterns
+     * @property {number} monthly - Monthly patterns
+     * @property {number} totalCompletions - Total completions across all patterns
+     * @property {number} upcoming - Upcoming patterns in next 7 days
      */
     getStats() {
         return {
@@ -422,38 +533,12 @@ export class RecurringService {
     }
 
     /**
-     * Subscribe to recurring service events
-     */
-    subscribe(callback) {
-        this.listeners.push(callback);
-        return () => {
-            const index = this.listeners.indexOf(callback);
-            if (index > -1) {
-                this.listeners.splice(index, 1);
-            }
-        };
-    }
-
-    /**
-     * Notify all listeners
-     */
-    notifyListeners(event, data) {
-        this.listeners.forEach(callback => {
-            try {
-                callback(event, data);
-            } catch (e) {
-                console.error('Error in recurring service listener:', e);
-            }
-        });
-    }
-
-    /**
      * Clear all recurring patterns (for testing/reset)
      */
     clearAll() {
         this.recurringPatterns = [];
         this.savePatterns();
-        this.notifyListeners('cleared', null);
+        eventBus.emit('recurring:cleared', null);
     }
 }
 
