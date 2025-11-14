@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "module": "ES6",
+    "target": "ES6",
+    "moduleResolution": "node",
+    "checkJs": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "/js/*": ["js/*"],
+      "/css/*": ["css/*"],
+      "/data/*": ["data/*"]
+    }
+  },
+  "include": [
+    "js/**/*",
+    "*.js"
+  ],
+  "exclude": [
+    "node_modules",
+    "js/sw.js"
+  ]
+}
