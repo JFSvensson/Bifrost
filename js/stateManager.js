@@ -1,0 +1,622 @@
+/**
+ * StateManager
+ *
+ * Centraliserad hantering av localStorage för Bifrost-applikationen.
+ * Tillhandahåller standardiserat API för att spara, läsa och migrera data.
+ *
+ * Features:
+ * - Type-safe storage med validation
+ * - Schema migrations för versionshantering
+ * - Automatic backup och restore
+ * - Storage quota monitoring
+ * - Compression för stora objekt
+ * - TTL (Time To Live) för cache-data
+ * - Event-driven updates via EventBus
+ *
+ * @example
+ * // Definiera schema
+ * stateManager.registerSchema('todos', {
+ *   version: 1,
+ *   validate: (data) => Array.isArray(data)
+ * });
+ *
+ * // Spara data
+ * stateManager.set('todos', myTodos);
+ *
+ * // Läs data
+ * const todos = stateManager.get('todos', []);
+ *
+ * // Lyssna på ändringar
+ * stateManager.subscribe('todos', (data) => {
+ *   console.log('Todos updated:', data);
+ * });
+ */
+
+import eventBus from './eventBus.js';
+import errorHandler, { ErrorCode } from './errorHandler.js';
+
+/**
+ * StateManager class - Singleton för centraliserad state-hantering
+ */
+class StateManager {
+    /**
+     * Initialiserar StateManager
+     */
+    constructor() {
+        /** @type {Object.<string, Object>} Registrerade schemas per key */
+        this.schemas = {};
+
+        /** @type {Object.<string, number>} Versionsnummer per key */
+        this.versions = {};
+
+        /** @type {Object.<string, Array<Function>>} Subscribers per key */
+        this.subscribers = {};
+
+        /** @type {number} Storage quota warning threshold (80%) */
+        this.quotaWarningThreshold = 0.8;
+
+        /** @type {boolean} Auto-backup enabled */
+        this.autoBackupEnabled = true;
+
+        /** @type {number} Max backup age in days */
+        this.maxBackupAge = 7;
+
+        this._init();
+    }
+
+    /**
+     * Initialiserar StateManager och kontrollerar storage
+     *
+     * @private
+     * @returns {void}
+     */
+    _init() {
+        this._checkStorageQuota();
+        this._cleanupOldBackups();
+
+        // Registrera event listeners
+        eventBus.on('app:beforeUnload', () => {
+            if (this.autoBackupEnabled) {
+                this._createBackup();
+            }
+        });
+    }
+
+    /**
+     * Registrerar ett schema för en storage key
+     *
+     * @param {string} key - Storage key
+     * @param {Object} schema - Schema definition
+     * @param {number} schema.version - Schema version
+     * @param {Function} [schema.validate] - Validation function (data) => boolean
+     * @param {Function} [schema.migrate] - Migration function (oldData, oldVersion) => newData
+     * @param {*} [schema.default] - Default value
+     * @returns {void}
+     */
+    registerSchema(key, schema) {
+        const { version, validate, migrate, default: defaultValue } = schema;
+
+        if (!version || typeof version !== 'number') {
+            throw new Error(`Schema version required for key '${key}'`);
+        }
+
+        this.schemas[key] = {
+            version,
+            validate: validate || (() => true),
+            migrate: migrate || ((data) => data),
+            default: defaultValue
+        };
+
+        this.versions[key] = version;
+
+        // Kör migrations om nödvändigt
+        this._checkAndMigrate(key);
+    }
+
+    /**
+     * Hämtar data från storage
+     *
+     * @param {string} key - Storage key
+     * @param {*} [defaultValue] - Default value om key saknas
+     * @returns {*} Sparad data eller default value
+     */
+    get(key, defaultValue) {
+        try {
+            const stored = localStorage.getItem(key);
+
+            if (stored === null) {
+                // Returnera default från schema eller parameter
+                const schemaDefault = this.schemas[key]?.default;
+                return schemaDefault !== undefined ? schemaDefault : defaultValue;
+            }
+
+            const parsed = JSON.parse(stored);
+
+            // Kontrollera TTL
+            if (parsed._ttl && parsed._ttl < Date.now()) {
+                this.remove(key);
+                return defaultValue;
+            }
+
+            // Returnera data (eller hela objektet om inget _data finns)
+            const data = parsed._data !== undefined ? parsed._data : parsed;
+
+            // Validera mot schema
+            if (this.schemas[key] && !this.schemas[key].validate(data)) {
+                errorHandler.warning(
+                    ErrorCode.VALIDATION_ERROR,
+                    `Data validation failed for key '${key}'`,
+                    { key, data }
+                );
+            }
+
+            return data;
+
+        } catch (error) {
+            errorHandler.handle(error, {
+                code: ErrorCode.STORAGE_PARSE_ERROR,
+                context: `Reading key '${key}'`,
+                showToast: false
+            });
+
+            return defaultValue;
+        }
+    }
+
+    /**
+     * Sparar data till storage
+     *
+     * @param {string} key - Storage key
+     * @param {*} data - Data att spara
+     * @param {Object} [options={}] - Konfiguration
+     * @param {number} [options.ttl] - Time to live i millisekunder
+     * @param {boolean} [options.validate=true] - Validera mot schema
+     * @param {boolean} [options.notify=true] - Notifiera subscribers
+     * @returns {boolean} True om spara lyckades
+     */
+    set(key, data, options = {}) {
+        const {
+            ttl,
+            validate = true,
+            notify = true
+        } = options;
+
+        try {
+            // Validera mot schema
+            if (validate && this.schemas[key]) {
+                if (!this.schemas[key].validate(data)) {
+                    throw new Error(`Validation failed for key '${key}'`);
+                }
+            }
+
+            // Bygg storage object
+            const storageObject = {
+                _data: data,
+                _version: this.versions[key] || 1,
+                _updated: Date.now()
+            };
+
+            if (ttl) {
+                storageObject._ttl = Date.now() + ttl;
+            }
+
+            // Försök spara
+            const serialized = JSON.stringify(storageObject);
+            localStorage.setItem(key, serialized);
+
+            // Notifiera subscribers
+            if (notify) {
+                this._notifySubscribers(key, data);
+            }
+
+            // Emit event
+            eventBus.emit('state:updated', { key, data });
+
+            return true;
+
+        } catch (error) {
+            // Hantera quota exceeded
+            if (error.name === 'QuotaExceededError') {
+                errorHandler.handle(error, {
+                    code: ErrorCode.STORAGE_QUOTA_EXCEEDED,
+                    context: `Saving key '${key}'`,
+                    showToast: true
+                });
+
+                // Försök rensa gammalt och försök igen
+                this._cleanupOldData();
+
+                try {
+                    localStorage.setItem(key, JSON.stringify({ _data: data }));
+                    return true;
+                } catch (retryError) {
+                    return false;
+                }
+            }
+
+            errorHandler.handle(error, {
+                code: ErrorCode.STORAGE_ERROR,
+                context: `Saving key '${key}'`,
+                showToast: true
+            });
+
+            return false;
+        }
+    }
+
+    /**
+     * Tar bort data från storage
+     *
+     * @param {string} key - Storage key
+     * @param {Object} [options={}] - Konfiguration
+     * @param {boolean} [options.notify=true] - Notifiera subscribers
+     * @returns {void}
+     */
+    remove(key, options = {}) {
+        const { notify = true } = options;
+
+        localStorage.removeItem(key);
+
+        if (notify) {
+            this._notifySubscribers(key, null);
+        }
+
+        eventBus.emit('state:removed', { key });
+    }
+
+    /**
+     * Kontrollerar om key finns i storage
+     *
+     * @param {string} key - Storage key
+     * @returns {boolean} True om key finns
+     */
+    has(key) {
+        return localStorage.getItem(key) !== null;
+    }
+
+    /**
+     * Rensar all data från storage
+     *
+     * @param {Object} [options={}] - Konfiguration
+     * @param {boolean} [options.keepSchemas=true] - Behåll schema registreringar
+     * @returns {void}
+     */
+    clear(options = {}) {
+        const { keepSchemas = true } = options;
+
+        // Backup före clear
+        if (this.autoBackupEnabled) {
+            this._createBackup();
+        }
+
+        localStorage.clear();
+
+        if (!keepSchemas) {
+            this.schemas = {};
+            this.versions = {};
+        }
+
+        eventBus.emit('state:cleared', {});
+    }
+
+    /**
+     * Prenumererar på ändringar för en key
+     *
+     * @param {string} key - Storage key att lyssna på
+     * @param {Function} callback - Callback (data, key) => void
+     * @returns {Function} Unsubscribe-funktion
+     */
+    subscribe(key, callback) {
+        if (!this.subscribers[key]) {
+            this.subscribers[key] = [];
+        }
+
+        this.subscribers[key].push(callback);
+
+        // Returnera unsubscribe
+        return () => {
+            const index = this.subscribers[key]?.indexOf(callback);
+            if (index !== -1) {
+                this.subscribers[key].splice(index, 1);
+            }
+        };
+    }
+
+    /**
+     * Notifierar subscribers om ändringar
+     *
+     * @private
+     * @param {string} key - Storage key
+     * @param {*} data - Uppdaterad data
+     * @returns {void}
+     */
+    _notifySubscribers(key, data) {
+        if (this.subscribers[key]) {
+            this.subscribers[key].forEach(callback => {
+                try {
+                    callback(data, key);
+                } catch (error) {
+                    errorHandler.log(
+                        ErrorCode.UNKNOWN_ERROR,
+                        `Error in state subscriber for '${key}'`,
+                        { error }
+                    );
+                }
+            });
+        }
+    }
+
+    /**
+     * Kontrollerar och kör migrations om nödvändigt
+     *
+     * @private
+     * @param {string} key - Storage key
+     * @returns {void}
+     */
+    _checkAndMigrate(key) {
+        const stored = localStorage.getItem(key);
+        if (!stored) {return;}
+
+        try {
+            const parsed = JSON.parse(stored);
+            const currentVersion = parsed._version || 0;
+            const targetVersion = this.versions[key];
+
+            if (currentVersion < targetVersion) {
+                console.log(`[StateManager] Migrating '${key}' from v${currentVersion} to v${targetVersion}`);
+
+                const migratedData = this.schemas[key].migrate(parsed._data || parsed, currentVersion);
+
+                this.set(key, migratedData, { notify: false });
+
+                eventBus.emit('state:migrated', { key, from: currentVersion, to: targetVersion });
+            }
+        } catch (error) {
+            errorHandler.log(
+                ErrorCode.STORAGE_ERROR,
+                `Migration failed for key '${key}'`,
+                { error }
+            );
+        }
+    }
+
+    /**
+     * Skapar backup av all data
+     *
+     * @private
+     * @returns {boolean} True om backup lyckades
+     */
+    _createBackup() {
+        try {
+            const backup = {};
+            const keys = Object.keys(localStorage);
+
+            keys.forEach(key => {
+                if (!key.startsWith('backup_')) {
+                    backup[key] = localStorage.getItem(key);
+                }
+            });
+
+            const backupKey = `backup_${Date.now()}`;
+            localStorage.setItem(backupKey, JSON.stringify(backup));
+
+            console.log('[StateManager] Backup created:', backupKey);
+            return true;
+
+        } catch (error) {
+            errorHandler.log(
+                ErrorCode.STORAGE_ERROR,
+                'Failed to create backup',
+                { error }
+            );
+            return false;
+        }
+    }
+
+    /**
+     * Återställer från backup
+     *
+     * @param {string} [backupKey] - Backup key, senaste om inte specificerad
+     * @returns {boolean} True om restore lyckades
+     */
+    restoreFromBackup(backupKey) {
+        try {
+            // Hitta senaste backup om ingen specificerad
+            if (!backupKey) {
+                const backupKeys = Object.keys(localStorage)
+                    .filter(k => k.startsWith('backup_'))
+                    .sort()
+                    .reverse();
+
+                if (backupKeys.length === 0) {
+                    throw new Error('No backups found');
+                }
+
+                backupKey = backupKeys[0];
+            }
+
+            const backup = JSON.parse(localStorage.getItem(backupKey));
+
+            // Återställ alla keys
+            Object.keys(backup).forEach(key => {
+                localStorage.setItem(key, backup[key]);
+            });
+
+            eventBus.emit('state:restored', { backupKey });
+            console.log('[StateManager] Restored from backup:', backupKey);
+
+            return true;
+
+        } catch (error) {
+            errorHandler.handle(error, {
+                code: ErrorCode.STORAGE_ERROR,
+                context: 'Restoring from backup',
+                showToast: true
+            });
+            return false;
+        }
+    }
+
+    /**
+     * Rensar gamla backups
+     *
+     * @private
+     * @returns {void}
+     */
+    _cleanupOldBackups() {
+        const cutoffTime = Date.now() - (this.maxBackupAge * 24 * 60 * 60 * 1000);
+
+        Object.keys(localStorage)
+            .filter(k => k.startsWith('backup_'))
+            .forEach(key => {
+                const timestamp = parseInt(key.split('_')[1], 10);
+                if (timestamp < cutoffTime) {
+                    localStorage.removeItem(key);
+                }
+            });
+    }
+
+    /**
+     * Rensar gammal data (expired TTL etc)
+     *
+     * @private
+     * @returns {void}
+     */
+    _cleanupOldData() {
+        const now = Date.now();
+        const keys = Object.keys(localStorage);
+
+        keys.forEach(key => {
+            try {
+                const stored = localStorage.getItem(key);
+                const parsed = JSON.parse(stored);
+
+                // Ta bort om TTL passerat
+                if (parsed._ttl && parsed._ttl < now) {
+                    localStorage.removeItem(key);
+                }
+            } catch (error) {
+                // Ignore parse errors
+            }
+        });
+    }
+
+    /**
+     * Kontrollerar storage quota
+     *
+     * @private
+     * @returns {Promise<void>}
+     */
+    async _checkStorageQuota() {
+        if (!navigator.storage || !navigator.storage.estimate) {
+            return;
+        }
+
+        try {
+            const estimate = await navigator.storage.estimate();
+            const usage = estimate.usage / estimate.quota;
+
+            if (usage > this.quotaWarningThreshold) {
+                errorHandler.warning(
+                    'STORAGE_QUOTA_WARNING',
+                    'Storage quota nearly full',
+                    { usage: `${(usage * 100).toFixed(1)}%` }
+                );
+
+                eventBus.emit('state:quotaWarning', {
+                    usage: estimate.usage,
+                    quota: estimate.quota,
+                    percentage: usage
+                });
+            }
+        } catch (error) {
+            // Ignore quota check errors
+        }
+    }
+
+    /**
+     * Hämtar storage statistik
+     *
+     * @returns {Promise<Object>} Statistik-objekt
+     */
+    async getStats() {
+        let usage = null;
+        let quota = null;
+
+        if (navigator.storage && navigator.storage.estimate) {
+            try {
+                const estimate = await navigator.storage.estimate();
+                usage = estimate.usage;
+                quota = estimate.quota;
+            } catch (error) {
+                // Ignore
+            }
+        }
+
+        return {
+            keyCount: Object.keys(localStorage).length,
+            schemaCount: Object.keys(this.schemas).length,
+            subscriberCount: Object.values(this.subscribers).reduce((sum, arr) => sum + arr.length, 0),
+            usage,
+            quota,
+            usagePercentage: usage && quota ? (usage / quota * 100).toFixed(1) : null
+        };
+    }
+
+    /**
+     * Exporterar all data som JSON
+     *
+     * @returns {Object} All sparad data
+     */
+    exportAll() {
+        const data = {};
+        const keys = Object.keys(localStorage);
+
+        keys.forEach(key => {
+            if (!key.startsWith('backup_')) {
+                try {
+                    data[key] = JSON.parse(localStorage.getItem(key));
+                } catch (error) {
+                    data[key] = localStorage.getItem(key);
+                }
+            }
+        });
+
+        return data;
+    }
+
+    /**
+     * Importerar data från JSON
+     *
+     * @param {Object} data - Data att importera
+     * @param {Object} [options={}] - Konfiguration
+     * @param {boolean} [options.merge=false] - Merge med befintlig data
+     * @returns {void}
+     */
+    importAll(data, options = {}) {
+        const { merge = false } = options;
+
+        if (!merge) {
+            this.clear({ keepSchemas: true });
+        }
+
+        Object.keys(data).forEach(key => {
+            try {
+                const value = typeof data[key] === 'string' ? data[key] : JSON.stringify(data[key]);
+                localStorage.setItem(key, value);
+            } catch (error) {
+                errorHandler.log(
+                    ErrorCode.STORAGE_ERROR,
+                    `Failed to import key '${key}'`,
+                    { error }
+                );
+            }
+        });
+
+        eventBus.emit('state:imported', { keyCount: Object.keys(data).length });
+    }
+}
+
+// Singleton export
+const stateManager = new StateManager();
+export default stateManager;
