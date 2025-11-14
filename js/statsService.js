@@ -4,24 +4,86 @@
  */
 
 import { todos as todoConfig } from './config.js';
+import eventBus from './eventBus.js';
+import stateManager from './stateManager.js';
+import errorHandler, { ErrorCode } from './errorHandler.js';
 
 export class StatsService {
     constructor() {
-        this.storageKey = 'bifrost-stats';
-        this.statsHistoryKey = 'bifrost-stats-history';
-        this.init();
+        this._init();
     }
 
-    init() {
-        // Ladda eller initiera statistik
-        const saved = localStorage.getItem(this.storageKey);
-        this.stats = saved ? JSON.parse(saved) : this.getDefaultStats();
+    /**
+     * Initialize stats service
+     * @private
+     */
+    _init() {
+        // Register schemas
+        stateManager.registerSchema('stats', {
+            version: 1,
+            validate: (data) => {
+                return typeof data.totalCompleted === 'number' &&
+                       typeof data.totalCreated === 'number';
+            },
+            migrate: (oldData) => oldData,
+            default: this.getDefaultStats()
+        });
 
-        // Ladda historik (för grafer)
-        const history = localStorage.getItem(this.statsHistoryKey);
-        this.history = history ? JSON.parse(history) : [];
+        stateManager.registerSchema('statsHistory', {
+            version: 1,
+            validate: (data) => Array.isArray(data),
+            migrate: (oldData) => oldData,
+            default: []
+        });
+
+        // Load stats
+        this.loadStats();
+
+        // Subscribe to todo events
+        eventBus.on('todo:added', (data) => this.trackTodoCreated(data.todo));
+        eventBus.on('todo:completed', (data) => this.trackTodoCompleted(data.todo));
     }
 
+    /**
+     * Load stats from storage
+     * @private
+     */
+    loadStats() {
+        try {
+            this.stats = stateManager.get('stats');
+            this.history = stateManager.get('statsHistory');
+        } catch (error) {
+            errorHandler.handle(error, {
+                code: ErrorCode.STORAGE_ERROR,
+                context: 'Loading stats data'
+            });
+            this.stats = this.getDefaultStats();
+            this.history = [];
+        }
+    }
+
+    /**
+     * Save stats to storage
+     * @private
+     */
+    saveStats() {
+        try {
+            stateManager.set('stats', this.stats);
+            stateManager.set('statsHistory', this.history);
+            eventBus.emit('stats:updated', { stats: this.stats });
+        } catch (error) {
+            errorHandler.handle(error, {
+                code: ErrorCode.STORAGE_ERROR,
+                context: 'Saving stats data',
+                showToast: true
+            });
+        }
+    }
+
+    /**
+     * Get default stats structure
+     * @returns {Object} Default stats object
+     */
     getDefaultStats() {
         return {
             totalCompleted: 0,
@@ -46,6 +108,10 @@ export class StatsService {
         };
     }
 
+    /**
+     * Get empty weekly stats structure
+     * @returns {Object} Weekly stats object with all days initialized to 0
+     */
     getEmptyWeeklyStats() {
         const days = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag', 'Söndag'];
         return days.reduce((acc, day) => {
@@ -54,7 +120,10 @@ export class StatsService {
         }, {});
     }
 
-    // Spåra när en todo skapas
+    /**
+     * Track when a todo is created
+     * @param {Object} todo - Created todo
+     */
     trackTodoCreated(todo) {
         const today = new Date().toDateString();
 
@@ -89,10 +158,13 @@ export class StatsService {
             });
         }
 
-        this.save();
+        this.saveStats();
     }
 
-    // Spåra när en todo markeras som klar
+    /**
+     * Track when a todo is completed
+     * @param {Object} todo - Completed todo
+     */
     trackTodoCompleted(todo) {
         const today = new Date().toDateString();
 
@@ -134,7 +206,7 @@ export class StatsService {
         if (todo.createdAt && todo.completedAt) {
             const created = new Date(todo.createdAt);
             const completed = new Date(todo.completedAt);
-            const timeInHours = (completed - created) / (1000 * 60 * 60);
+            const timeInHours = (completed.getTime() - created.getTime()) / (1000 * 60 * 60);
 
             // Update running average
             const totalTodos = this.stats.totalCompleted;
@@ -146,9 +218,13 @@ export class StatsService {
         // Spara i historik för grafer
         this.saveToHistory(today);
 
-        this.save();
+        this.saveStats();
     }
 
+    /**
+     * Update completion streak
+     * @param {string} today - Today's date string
+     */
     updateStreak(today) {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
@@ -169,6 +245,10 @@ export class StatsService {
         }
     }
 
+    /**
+     * Save completion to history for graphs
+     * @param {string} date - Date string
+     */
     saveToHistory(date) {
         // Hitta eller skapa dagens entry
         let entry = this.history.find(h => h.date === date);
@@ -185,15 +265,24 @@ export class StatsService {
             this.history = this.history.slice(-30);
         }
 
-        localStorage.setItem(this.statsHistoryKey, JSON.stringify(this.history));
+        stateManager.set('statsHistory', this.history);
     }
 
+    /**
+     * Get Swedish day name from date
+     * @param {Date} date - Date object
+     * @returns {string} Swedish day name
+     */
     getDayName(date) {
         const days = ['Söndag', 'Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag'];
         return days[date.getDay()];
     }
 
-    // Hämta dagens statistik
+    /**
+     * Get today's statistics
+     * @param {Array<Object>} todos - All todos
+     * @returns {Object} Today's stats (created, completed, remaining)
+     */
     getTodayStats(todos) {
         const today = new Date().toDateString();
         const todayTodos = todos.filter(t => {
@@ -217,12 +306,19 @@ export class StatsService {
         };
     }
 
-    // Hämta veckans statistik
+    /**
+     * Get weekly statistics
+     * @returns {Object} Weekly stats by day name
+     */
     getWeeklyStats() {
         return this.stats.weeklyStats;
     }
 
-    // Hämta mest använda tags
+    /**
+     * Get most used tags
+     * @param {number} [limit=5] - Number of tags to return
+     * @returns {Array<Object>} Top tags with stats
+     */
     getTopTags(limit = 5) {
         return Object.entries(this.stats.tagStats)
             .sort((a, b) => b[1].count - a[1].count)
@@ -235,7 +331,10 @@ export class StatsService {
             }));
     }
 
-    // Hämta senaste 7 dagarnas aktivitet för graf
+    /**
+     * Get last 7 days activity for graphs
+     * @returns {Array<Object>} Activity data for each day
+     */
     getLast7DaysActivity() {
         const result = [];
         const today = new Date();
@@ -256,7 +355,11 @@ export class StatsService {
         return result;
     }
 
-    // Hämta fullständig statistik
+    /**
+     * Get complete statistics
+     * @param {Array<Object>} currentTodos - Current todos list
+     * @returns {Object} Full stats object with all metrics
+     */
     getFullStats(currentTodos) {
         const todayStats = this.getTodayStats(currentTodos);
 
@@ -273,17 +376,19 @@ export class StatsService {
         };
     }
 
-    // Återställ veckostatistik (körs varje måndag)
+    /**
+     * Reset weekly statistics (run every Monday)
+     */
     resetWeeklyStats() {
         this.stats.weeklyStats = this.getEmptyWeeklyStats();
-        this.save();
+        this.saveStats();
+        eventBus.emit('stats:weeklyReset', null);
     }
 
-    save() {
-        localStorage.setItem(this.storageKey, JSON.stringify(this.stats));
-    }
-
-    // Exportera statistik (för backup)
+    /**
+     * Export statistics for backup
+     * @returns {Object} Exported stats data
+     */
     exportStats() {
         return {
             stats: this.stats,
@@ -292,19 +397,24 @@ export class StatsService {
         };
     }
 
-    // Importera statistik (från backup)
+    /**
+     * Import statistics from backup
+     * @param {Object} data - Exported stats data
+     */
     importStats(data) {
         if (data.stats) {this.stats = data.stats;}
         if (data.history) {this.history = data.history;}
-        this.save();
-        localStorage.setItem(this.statsHistoryKey, JSON.stringify(this.history));
+        this.saveStats();
+        eventBus.emit('stats:imported', { stats: this.stats });
     }
 
-    // Återställ all statistik
+    /**
+     * Reset all statistics
+     */
     reset() {
         this.stats = this.getDefaultStats();
         this.history = [];
-        this.save();
-        localStorage.removeItem(this.statsHistoryKey);
+        this.saveStats();
+        eventBus.emit('stats:reset', null);
     }
 }
