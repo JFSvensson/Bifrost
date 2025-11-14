@@ -4,6 +4,9 @@ import { clock as clockConfig } from './config.js';
  * Clock service for time and timezone management
  */
 export class ClockService {
+    /**
+     * Create clock service
+     */
     constructor() {
         this.timezones = clockConfig.timezones;
         this.format = clockConfig.format;
@@ -11,6 +14,15 @@ export class ClockService {
         this.showSeconds = clockConfig.showSeconds;
     }
 
+    /**
+     * Get current time for timezone
+     * @param {string} [timezone='Europe/Stockholm'] - IANA timezone identifier
+     * @returns {Object} Time information
+     * @property {string} time - Formatted time
+     * @property {string} date - Formatted date
+     * @property {string} timezone - Timezone identifier
+     * @property {number} timestamp - Unix timestamp
+     */
     getCurrentTime(timezone = 'Europe/Stockholm') {
         const now = new Date();
 
@@ -22,6 +34,10 @@ export class ClockService {
         };
     }
 
+    /**
+     * Get current time for all configured timezones
+     * @returns {Array<Object>} Array of timezone data
+     */
     getAllTimezones() {
         return this.timezones.map(tz => ({
             ...tz,
@@ -29,7 +45,14 @@ export class ClockService {
         }));
     }
 
+    /**
+     * Format time for timezone
+     * @param {Date} date - Date to format
+     * @param {string} timezone - IANA timezone identifier
+     * @returns {string} Formatted time string
+     */
     formatTime(date, timezone) {
+        /** @type {Intl.DateTimeFormatOptions} */
         const options = {
             timeZone: timezone,
             hour: '2-digit',
@@ -44,6 +67,12 @@ export class ClockService {
         return date.toLocaleTimeString('sv-SE', options);
     }
 
+    /**
+     * Format date for timezone
+     * @param {Date} date - Date to format
+     * @param {string} timezone - IANA timezone identifier
+     * @returns {string} Formatted date string
+     */
     formatDate(date, timezone) {
         return date.toLocaleDateString('sv-SE', {
             timeZone: timezone,
@@ -54,21 +83,37 @@ export class ClockService {
         });
     }
 
+    /**
+     * Get display name for timezone
+     * @param {string} timezone - IANA timezone identifier
+     * @returns {string} Human-readable timezone name
+     */
     getTimezoneName(timezone) {
         const tz = this.timezones.find(t => t.timezone === timezone);
         return tz ? tz.name : timezone;
     }
 
+    /**
+     * Check if current time is within working hours (8-17)
+     * @param {string} [timezone='Europe/Stockholm'] - IANA timezone identifier
+     * @returns {boolean} True if within working hours
+     */
     isWorkingHours(timezone = 'Europe/Stockholm') {
         const now = new Date();
         const hour = parseInt(this.formatTime(now, timezone).split(':')[0]);
         return hour >= 8 && hour < 17;
     }
 
+    /**
+     * Get time difference between two timezones in hours
+     * @param {string} fromTimezone - Source timezone
+     * @param {string} toTimezone - Target timezone
+     * @returns {number} Hour difference
+     */
     getTimeDifference(fromTimezone, toTimezone) {
         const now = new Date();
         const fromTime = new Date(now.toLocaleString('en-US', { timeZone: fromTimezone }));
         const toTime = new Date(now.toLocaleString('en-US', { timeZone: toTimezone }));
-        return Math.round((toTime - fromTime) / (1000 * 60 * 60));
+        return Math.round((toTime.getTime() - fromTime.getTime()) / (1000 * 60 * 60));
     }
 }
