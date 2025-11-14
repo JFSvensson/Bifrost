@@ -23,7 +23,7 @@ class WeatherWidget extends HTMLElement {
 
     async loadWeather() {
         this.render('loading');
-        
+
         try {
             const data = await this.weatherService.getCurrentWeather();
             this.render('weather', data);
@@ -45,7 +45,7 @@ class WeatherWidget extends HTMLElement {
 
     getHTML(state, data) {
         const styles = this.getStyles();
-        
+
         switch (state) {
             case 'loading':
                 return `${styles}<div class="message">Laddar väder...</div>`;
@@ -65,7 +65,7 @@ class WeatherWidget extends HTMLElement {
         const humidity = Math.round(current.humidity);
         const wind = Math.round(current.windSpeed);
         const precipProbability = this.weatherService.getPrecipitationProbability(current.precipitationCategory);
-        
+
         // Get next few hours for mini forecast
         const nextHours = data.forecast.slice(1, 6);
         const hourlyForecast = nextHours.map(hour => {
@@ -73,7 +73,7 @@ class WeatherWidget extends HTMLElement {
             const hourTemp = Math.round(hour.temperature);
             const hourIcon = this.weatherService.getWeatherIcon(hour.weatherSymbol);
             const hourPrecip = this.weatherService.getPrecipitationProbability(hour.precipitationCategory);
-            
+
             return `
                 <div class="hour-forecast">
                     <div class="hour-time">${time}:00</div>
@@ -127,10 +127,10 @@ class WeatherWidget extends HTMLElement {
                 </div>
                 
                 <div class="last-updated">
-                    Uppdaterat: ${data.lastUpdated.toLocaleTimeString('sv-SE', { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                    })}
+                    Uppdaterat: ${data.lastUpdated.toLocaleTimeString('sv-SE', {
+        hour: '2-digit',
+        minute: '2-digit'
+    })}
                 </div>
             </div>
         `;

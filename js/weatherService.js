@@ -18,7 +18,7 @@ export class WeatherService {
         try {
             // SMHI Weather API endpoint
             const url = `https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geotype/point/lon/${this.longitude}/lat/${this.latitude}/data.json`;
-            
+
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
@@ -49,7 +49,7 @@ export class WeatherService {
 
         const now = new Date();
         const currentHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours());
-        
+
         // Find current weather (closest to current hour)
         const current = data.timeSeries.find(ts => {
             const tsDate = new Date(ts.validTime);
@@ -59,7 +59,7 @@ export class WeatherService {
         // Get today's forecast (next 24 hours)
         const endOfDay = new Date(currentHour);
         endOfDay.setHours(23, 59, 59);
-        
+
         const todayForecast = data.timeSeries.filter(ts => {
             const tsDate = new Date(ts.validTime);
             return tsDate <= endOfDay;
@@ -75,7 +75,7 @@ export class WeatherService {
 
     parseTimeSeriesEntry(entry) {
         const params = entry.parameters;
-        
+
         return {
             time: new Date(entry.validTime),
             temperature: this.getParameter(params, 't'), // Temperature (°C)
@@ -97,15 +97,15 @@ export class WeatherService {
     getPrecipitationProbability(category) {
         // SMHI precipitation category to probability mapping
         const probabilities = {
-            0: 0,   // No precipitation
-            1: 10,  // Very light precipitation
-            2: 25,  // Light precipitation  
-            3: 50,  // Moderate precipitation
-            4: 75,  // Heavy precipitation
-            5: 90,  // Very heavy precipitation
-            6: 95   // Extreme precipitation
+            0: 0, // No precipitation
+            1: 10, // Very light precipitation
+            2: 25, // Light precipitation
+            3: 50, // Moderate precipitation
+            4: 75, // Heavy precipitation
+            5: 90, // Very heavy precipitation
+            6: 95 // Extreme precipitation
         };
-        
+
         return probabilities[category] || 0;
     }
 
@@ -139,7 +139,7 @@ export class WeatherService {
             26: '❄️', // Moderate snowfall
             27: '❄️' // Heavy snowfall
         };
-        
+
         return icons[symbolCode] || '🌡️';
     }
 

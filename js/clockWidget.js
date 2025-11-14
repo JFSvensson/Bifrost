@@ -44,7 +44,7 @@ class ClockWidget extends HTMLElement {
 
     getHTML(mode, data) {
         const styles = this.getStyles();
-        
+
         switch (mode) {
             case 'single':
                 return `${styles}${this.getSingleClockHTML(data)}`;
@@ -69,10 +69,10 @@ class ClockWidget extends HTMLElement {
                     
                     <div class="timezone-info">
                         <div class="timezone-name">${this.clockService.getTimezoneName(timeData.timezone)}</div>
-                        ${isWorkingHours ? 
-                            '<div class="status working">🕒 Arbetstid</div>' : 
-                            '<div class="status off">🌙 Ledigt</div>'
-                        }
+                        ${isWorkingHours ?
+        '<div class="status working">🕒 Arbetstid</div>' :
+        '<div class="status off">🌙 Ledigt</div>'
+}
                     </div>
                 </div>
             </div>
@@ -95,8 +95,8 @@ class ClockWidget extends HTMLElement {
 
         const otherClocksHTML = otherTimezones.map(tz => {
             const timeDiff = this.clockService.getTimeDifference('Europe/Stockholm', tz.timezone);
-            const diffText = timeDiff === 0 ? '' : 
-                            timeDiff > 0 ? `+${timeDiff}h` : `${timeDiff}h`;
+            const diffText = timeDiff === 0 ? '' :
+                timeDiff > 0 ? `+${timeDiff}h` : `${timeDiff}h`;
             const isWorking = this.clockService.isWorkingHours(tz.timezone);
 
             return `

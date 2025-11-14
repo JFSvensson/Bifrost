@@ -10,7 +10,7 @@ class ObsidianBridge {
         this.port = config.port || 8080;
         this.cachedTodos = new Map();
         this.watchedFiles = new Set();
-        
+
         console.log(`🔍 Watching Obsidian vault: ${this.vaultPath}`);
     }
 
@@ -18,7 +18,7 @@ class ObsidianBridge {
     initializeWatchers() {
         this.todoFiles.forEach(fileName => {
             const fullPath = path.join(this.vaultPath, fileName);
-            
+
             if (fs.existsSync(fullPath)) {
                 this.watchFile(fullPath, fileName);
                 this.loadTodosFromFile(fullPath, fileName);
@@ -34,15 +34,15 @@ class ObsidianBridge {
 
     // Övervaka specifik fil för ändringar
     watchFile(filePath, fileName) {
-        if (this.watchedFiles.has(filePath)) return;
-        
+        if (this.watchedFiles.has(filePath)) {return;}
+
         console.log(`👀 Övervakar: ${fileName}`);
         this.watchedFiles.add(filePath);
 
         // fs.watchFile är mer tillförlitlig än fs.watch för text-filer
-        fs.watchFile(filePath, { 
-            interval: 1000,  // Kolla varje sekund
-            persistent: true 
+        fs.watchFile(filePath, {
+            interval: 1000, // Kolla varje sekund
+            persistent: true
         }, (curr, prev) => {
             // Bara reagera på ändringar, inte när filen läses
             if (curr.mtime > prev.mtime) {
@@ -60,13 +60,13 @@ class ObsidianBridge {
         try {
             const content = fs.readFileSync(filePath, 'utf8');
             const todos = this.parseMarkdownTodos(content, fileName);
-            
+
             this.cachedTodos.set(fileName, {
                 todos: todos,
                 lastUpdated: new Date(),
                 filePath: filePath
             });
-            
+
             console.log(`✅ Laddade ${todos.length} todos från ${fileName}`);
         } catch (error) {
             console.error(`❌ Fel vid läsning av ${fileName}:`, error.message);
@@ -81,7 +81,7 @@ class ObsidianBridge {
 
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim();
-            
+
             // Upptäck sektioner (# Rubriker)
             const sectionMatch = line.match(/^#+\s+(.+)$/);
             if (sectionMatch) {
@@ -91,11 +91,11 @@ class ObsidianBridge {
 
             // Parse olika todo-format
             const patterns = [
-                /^-\s+\[\s\]\s+(.+)$/,           // - [ ] Standard todo
-                /^-\s+\[\s\]\s+(.+)$/,           // - [ ] Med extra space  
-                /^\*\s+\[\s\]\s+(.+)$/,          // * [ ] Stjärn-variant
-                /^[\d]+\.\s+\[\s\]\s+(.+)$/,     // 1. [ ] Numrerad lista
-                /^>\s+\[\s\]\s+(.+)$/            // > [ ] Quote-block todo
+                /^-\s+\[\s\]\s+(.+)$/, // - [ ] Standard todo
+                /^-\s+\[\s\]\s+(.+)$/, // - [ ] Med extra space
+                /^\*\s+\[\s\]\s+(.+)$/, // * [ ] Stjärn-variant
+                /^[\d]+\.\s+\[\s\]\s+(.+)$/, // 1. [ ] Numrerad lista
+                /^>\s+\[\s\]\s+(.+)$/ // > [ ] Quote-block todo
             ];
 
             for (const pattern of patterns) {
@@ -118,10 +118,10 @@ class ObsidianBridge {
 
             // Parse completed todos
             const completedPatterns = [
-                /^-\s+\[x\]\s+(.+)$/i,           // - [x] Standard done
-                /^\*\s+\[x\]\s+(.+)$/i,          // * [x] Stjärn-variant
-                /^[\d]+\.\s+\[x\]\s+(.+)$/i,     // 1. [x] Numrerad lista
-                /^>\s+\[x\]\s+(.+)$/i            // > [x] Quote-block
+                /^-\s+\[x\]\s+(.+)$/i, // - [x] Standard done
+                /^\*\s+\[x\]\s+(.+)$/i, // * [x] Stjärn-variant
+                /^[\d]+\.\s+\[x\]\s+(.+)$/i, // 1. [x] Numrerad lista
+                /^>\s+\[x\]\s+(.+)$/i // > [x] Quote-block
             ];
 
             for (const pattern of completedPatterns) {
@@ -150,12 +150,12 @@ class ObsidianBridge {
     // Extrahera prioritet från todo-text
     extractPriority(text) {
         const priorityMatch = text.match(/\[!(high|medium|low)\]/i);
-        if (priorityMatch) return priorityMatch[1].toLowerCase();
-        
+        if (priorityMatch) {return priorityMatch[1].toLowerCase();}
+
         // Eller använd emoji-system
-        if (text.includes('🔥') || text.includes('❗')) return 'high';
-        if (text.includes('⚠️') || text.includes('📌')) return 'medium';
-        
+        if (text.includes('🔥') || text.includes('❗')) {return 'high';}
+        if (text.includes('⚠️') || text.includes('📌')) {return 'medium';}
+
         return 'normal';
     }
 
@@ -184,7 +184,7 @@ class ObsidianBridge {
         fs.watch(this.vaultPath, { recursive: false }, (eventType, fileName) => {
             if (eventType === 'rename' && fileName && fileName.endsWith('.md')) {
                 const fullPath = path.join(this.vaultPath, fileName);
-                
+
                 // Om ny fil som kan innehålla todos
                 if (fs.existsSync(fullPath) && this.shouldWatchFile(fileName)) {
                     console.log(`🆕 Ny potentiell todo-fil: ${fileName}`);
@@ -200,14 +200,14 @@ class ObsidianBridge {
     shouldWatchFile(fileName) {
         const todoKeywords = ['todo', 'task', 'checklist', 'action'];
         const lowerName = fileName.toLowerCase();
-        
+
         return todoKeywords.some(keyword => lowerName.includes(keyword));
     }
 
     // Samla alla todos från alla filer
     getAllTodos() {
         const allTodos = [];
-        
+
         for (const [fileName, data] of this.cachedTodos) {
             // Inkludera ALLA todos (både färdiga och ofärdiga)
             allTodos.push(...data.todos);
@@ -219,15 +219,15 @@ class ObsidianBridge {
             if (a.completed !== b.completed) {
                 return a.completed ? 1 : -1;
             }
-            
+
             const priorityOrder = { high: 3, medium: 2, normal: 1, low: 0 };
             const aPriority = priorityOrder[a.priority] || 1;
             const bPriority = priorityOrder[b.priority] || 1;
-            
+
             if (aPriority !== bPriority) {
                 return bPriority - aPriority; // Hög prioritet först
             }
-            
+
             return a.text.localeCompare(b.text);
         });
     }
@@ -236,12 +236,12 @@ class ObsidianBridge {
     startServer() {
         const server = http.createServer((req, res) => {
             const url = new URL(req.url, `http://localhost:${this.port}`);
-            
+
             // CORS headers
             res.setHeader('Access-Control-Allow-Origin', '*');
             res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
             res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-            
+
             if (req.method === 'OPTIONS') {
                 res.writeHead(200);
                 res.end();
@@ -297,8 +297,8 @@ class ObsidianBridge {
 
             case '/health':
                 res.writeHead(200);
-                res.end(JSON.stringify({ 
-                    status: 'healthy', 
+                res.end(JSON.stringify({
+                    status: 'healthy',
                     uptime: process.uptime(),
                     watchingFiles: this.watchedFiles.size
                 }));
@@ -319,14 +319,14 @@ class ObsidianBridge {
         for (const [fileName, data] of this.cachedTodos) {
             const active = data.todos.filter(t => !t.completed).length;
             const completed = data.todos.filter(t => t.completed).length;
-            
+
             fileStats[fileName] = {
                 active: active,
                 completed: completed,
                 total: active + completed,
                 lastUpdated: data.lastUpdated
             };
-            
+
             totalTodos += active;
             completedTodos += completed;
         }
@@ -353,7 +353,7 @@ console.log('📄 Todo files:', config.todoFiles);
 // Kontrollera att vault-sökvägen finns
 if (!fs.existsSync(config.vaultPath)) {
     console.error(`❌ Obsidian vault hittades inte: ${config.vaultPath}`);
-    console.log(`💡 Ändra 'vaultPath' i obsidianBridge.js till din Obsidian vault`);
+    console.log('💡 Ändra \'vaultPath\' i obsidianBridge.js till din Obsidian vault');
     process.exit(1);
 }
 

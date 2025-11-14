@@ -13,7 +13,7 @@ export class ClockService {
 
     getCurrentTime(timezone = 'Europe/Stockholm') {
         const now = new Date();
-        
+
         return {
             time: this.formatTime(now, timezone),
             date: this.formatDate(now, timezone),

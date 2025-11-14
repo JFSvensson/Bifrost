@@ -14,7 +14,7 @@ class SchoolMenu extends HTMLElement {
 
     async loadMenu() {
         this.render('loading');
-        
+
         try {
             const data = await this.menuService.fetchMenu();
             this.render('menu', data);
@@ -30,7 +30,7 @@ class SchoolMenu extends HTMLElement {
 
     getHTML(state, data) {
         const styles = this.getStyles();
-        
+
         switch (state) {
             case 'loading':
                 return `${styles}<div class="message">Laddar skolmat...</div>`;
@@ -47,7 +47,7 @@ class SchoolMenu extends HTMLElement {
         const items = data.days.map((day, index) => {
             const todayClass = isToday(day.dayName, index, data) ? 'today' : '';
             const meals = this.formatMeals(day.meals);
-            
+
             return `
                 <li class="day ${todayClass}">
                     <strong>${day.dayName || 'Okänd dag'}:</strong>
@@ -68,7 +68,7 @@ class SchoolMenu extends HTMLElement {
         if (!Array.isArray(meals) || meals.length === 0) {
             return 'Ingen information';
         }
-        
+
         return meals
             .map(meal => meal.name)
             .filter(name => name?.trim())

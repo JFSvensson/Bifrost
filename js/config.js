@@ -34,7 +34,7 @@ export const config = {
             showSource: true, // Visa vilken fil todo:n kommer från
             priorityColors: {
                 high: '#e74c3c',
-                medium: '#f39c12', 
+                medium: '#f39c12',
                 normal: '#3498db',
                 low: '#95a5a6'
             }
@@ -91,7 +91,7 @@ export const config = {
         enabled: true,
         updateInterval: 10 * 60 * 1000, // 10 minutes
         location: {
-            latitude: 56.5940,  // Vassmolösa
+            latitude: 56.5940, // Vassmolösa
             longitude: 16.1536,
             name: 'Vassmolösa'
         },

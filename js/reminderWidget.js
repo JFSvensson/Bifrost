@@ -1,8 +1,8 @@
 /**
  * ReminderWidget - Custom Element
- * 
+ *
  * Visar aktiva påminnelser med countdown-timers, snooze-knappar och statistik.
- * 
+ *
  * Features:
  * - Lista med kommande påminnelser (sorterad efter tid)
  * - Live countdown till varje påminnelse
@@ -11,7 +11,7 @@
  * - Notification permission request
  * - Statistik (aktiva, snoozed, kommande 24h)
  * - Dark theme support
- * 
+ *
  * @example
  * <reminder-widget></reminder-widget>
  */
@@ -24,12 +24,12 @@ class ReminderWidget extends HTMLElement {
         this.attachShadow({ mode: 'open' });
         this.updateInterval = null;
     }
-    
+
     connectedCallback() {
         this.render();
         this.setupEventListeners();
         this.startLiveUpdates();
-        
+
         // Subscribe till reminderService events
         reminderService.subscribe('reminderCreated', () => this.updateReminders());
         reminderService.subscribe('todoSnoozed', () => this.updateReminders());
@@ -37,16 +37,16 @@ class ReminderWidget extends HTMLElement {
         reminderService.subscribe('remindersChecked', () => this.updateReminders());
         reminderService.subscribe('notificationPermissionChanged', () => this.updatePermissionUI());
     }
-    
+
     disconnectedCallback() {
         this.stopLiveUpdates();
     }
-    
+
     render() {
         const stats = reminderService.getStats();
         const reminders = reminderService.getActiveReminders();
         const permission = reminderService.notificationPermission;
-        
+
         this.shadowRoot.innerHTML = `
             <style>
                 :host {
@@ -390,19 +390,19 @@ class ReminderWidget extends HTMLElement {
                 </div>
                 
                 <div class="reminders-list">
-                    ${reminders.length > 0 
-                        ? reminders.map(r => this.renderReminderCard(r)).join('') 
-                        : this.renderEmptyState()}
+                    ${reminders.length > 0
+        ? reminders.map(r => this.renderReminderCard(r)).join('')
+        : this.renderEmptyState()}
                 </div>
             </div>
         `;
     }
-    
+
     renderPermissionBanner(permission) {
         if (permission === 'granted') {
             return '';
         }
-        
+
         if (permission === 'denied') {
             return `
                 <div class="permission-banner denied">
@@ -414,7 +414,7 @@ class ReminderWidget extends HTMLElement {
                 </div>
             `;
         }
-        
+
         return `
             <div class="permission-banner">
                 <span>🔔</span>
@@ -427,15 +427,15 @@ class ReminderWidget extends HTMLElement {
             </div>
         `;
     }
-    
+
     renderReminderCard(reminder) {
         const timeUntil = this.calculateTimeUntil(reminder.remindAt);
         const isUrgent = timeUntil.totalMinutes <= 10;
         const isSoon = timeUntil.totalMinutes <= 60 && !isUrgent;
-        
+
         const cardClass = reminder.type === 'snoozed' ? 'snoozed' : (isUrgent ? 'urgent' : '');
         const countdownClass = isUrgent ? 'urgent' : (isSoon ? 'soon' : '');
-        
+
         return `
             <div class="reminder-card ${cardClass}" data-reminder-id="${reminder.id}">
                 <div class="reminder-header">
@@ -466,7 +466,7 @@ class ReminderWidget extends HTMLElement {
             </div>
         `;
     }
-    
+
     renderEmptyState() {
         return `
             <div class="empty-state">
@@ -476,14 +476,14 @@ class ReminderWidget extends HTMLElement {
             </div>
         `;
     }
-    
+
     calculateTimeUntil(date) {
         const now = new Date();
         const diff = date - now;
         const totalMinutes = Math.floor(diff / (1000 * 60));
         const totalHours = Math.floor(diff / (1000 * 60 * 60));
         const totalDays = Math.floor(diff / (1000 * 60 * 60 * 24));
-        
+
         let display;
         if (totalMinutes < 0) {
             display = 'Nu!';
@@ -497,33 +497,33 @@ class ReminderWidget extends HTMLElement {
         } else {
             display = `${totalDays} dag${totalDays !== 1 ? 'ar' : ''}`;
         }
-        
+
         return { totalMinutes, totalHours, totalDays, display };
     }
-    
+
     formatDateTime(date) {
         const now = new Date();
         const isToday = date.toDateString() === now.toDateString();
         const tomorrow = new Date(now);
         tomorrow.setDate(tomorrow.getDate() + 1);
         const isTomorrow = date.toDateString() === tomorrow.toDateString();
-        
+
         const timeStr = date.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
-        
+
         if (isToday) {
             return `Idag ${timeStr}`;
         } else if (isTomorrow) {
             return `Imorgon ${timeStr}`;
         } else {
-            return date.toLocaleString('sv-SE', { 
-                month: 'short', 
-                day: 'numeric', 
-                hour: '2-digit', 
-                minute: '2-digit' 
+            return date.toLocaleString('sv-SE', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
             });
         }
     }
-    
+
     getTypeLabel(type) {
         const labels = {
             'manual': 'Manuell',
@@ -532,13 +532,13 @@ class ReminderWidget extends HTMLElement {
         };
         return labels[type] || type;
     }
-    
+
     escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
-    
+
     setupEventListeners() {
         // Permission button
         const permBtn = this.shadowRoot.getElementById('requestPermissionBtn');
@@ -547,28 +547,28 @@ class ReminderWidget extends HTMLElement {
                 await reminderService.requestNotificationPermission();
             });
         }
-        
+
         // Action buttons
         this.shadowRoot.addEventListener('click', (e) => {
             const actionBtn = e.target.closest('.action-btn');
-            if (!actionBtn) return;
-            
+            if (!actionBtn) {return;}
+
             const card = actionBtn.closest('.reminder-card');
             const reminderId = card?.dataset.reminderId;
-            if (!reminderId) return;
-            
+            if (!reminderId) {return;}
+
             const action = actionBtn.dataset.action;
-            
+
             if (action === 'cancel') {
                 this.handleCancelReminder(reminderId);
             }
         });
     }
-    
+
     handleCancelReminder(reminderId) {
         if (confirm('Vill du avbryta denna påminnelse?')) {
             reminderService.cancelReminder(reminderId);
-            
+
             // Toast
             this.dispatchEvent(new CustomEvent('show-toast', {
                 bubbles: true,
@@ -580,50 +580,50 @@ class ReminderWidget extends HTMLElement {
             }));
         }
     }
-    
+
     updateReminders() {
         this.render();
         this.setupEventListeners();
     }
-    
+
     updatePermissionUI() {
         this.render();
         this.setupEventListeners();
     }
-    
+
     startLiveUpdates() {
         // Uppdatera countdown-timers varje minut
         this.updateInterval = setInterval(() => {
             this.updateCountdowns();
         }, 60000);
     }
-    
+
     stopLiveUpdates() {
         if (this.updateInterval) {
             clearInterval(this.updateInterval);
         }
     }
-    
+
     updateCountdowns() {
         const reminders = reminderService.getActiveReminders();
-        
+
         reminders.forEach(reminder => {
             const card = this.shadowRoot.querySelector(`[data-reminder-id="${reminder.id}"]`);
-            if (!card) return;
-            
+            if (!card) {return;}
+
             const timeUntil = this.calculateTimeUntil(reminder.remindAt);
             const isUrgent = timeUntil.totalMinutes <= 10;
             const isSoon = timeUntil.totalMinutes <= 60 && !isUrgent;
-            
+
             const countdown = card.querySelector('.countdown');
             if (countdown) {
                 countdown.className = `countdown ${isUrgent ? 'urgent' : (isSoon ? 'soon' : '')}`;
                 const icon = countdown.querySelector('span:first-child');
                 const text = countdown.querySelector('span:last-child');
-                if (icon) icon.textContent = isUrgent ? '⚡' : '⏰';
-                if (text) text.textContent = timeUntil.display;
+                if (icon) {icon.textContent = isUrgent ? '⚡' : '⏰';}
+                if (text) {text.textContent = timeUntil.display;}
             }
-            
+
             // Uppdatera card class
             if (isUrgent && !card.classList.contains('urgent')) {
                 card.classList.add('urgent');

@@ -11,29 +11,29 @@ export class RecurringWidget extends HTMLElement {
         this.showEditor = false;
         this.editingPattern = null;
     }
-    
+
     connectedCallback() {
         this.render();
         this.loadPatterns();
-        
+
         // Subscribe to recurring service events
         this.unsubscribe = recurringService.subscribe((event, data) => {
             this.handleRecurringEvent(event, data);
         });
     }
-    
+
     disconnectedCallback() {
         if (this.unsubscribe) {
             this.unsubscribe();
         }
     }
-    
+
     loadPatterns() {
         this.patterns = recurringService.getAllPatterns();
         this.updatePatternsList();
         this.updateStats();
     }
-    
+
     handleRecurringEvent(event, data) {
         switch (event) {
             case 'patternCreated':
@@ -49,7 +49,7 @@ export class RecurringWidget extends HTMLElement {
                 break;
         }
     }
-    
+
     render() {
         this.shadowRoot.innerHTML = `
             <style>
@@ -465,10 +465,10 @@ export class RecurringWidget extends HTMLElement {
                 </div>
             </div>
         `;
-        
+
         this.setupEventListeners();
     }
-    
+
     setupEventListeners() {
         const addBtn = this.shadowRoot.getElementById('addPatternBtn');
         const checkBtn = this.shadowRoot.getElementById('checkNowBtn');
@@ -477,14 +477,14 @@ export class RecurringWidget extends HTMLElement {
         const form = this.shadowRoot.getElementById('patternForm');
         const typeSelect = this.shadowRoot.getElementById('patternType');
         const overlay = this.shadowRoot.getElementById('editorOverlay');
-        
+
         addBtn.addEventListener('click', () => this.openEditor());
         checkBtn.addEventListener('click', () => this.checkNow());
         closeBtn.addEventListener('click', () => this.closeEditor());
         cancelBtn.addEventListener('click', () => this.closeEditor());
         form.addEventListener('submit', (e) => this.handleSubmit(e));
         typeSelect.addEventListener('change', () => this.updateEditorVisibility());
-        
+
         // Weekday buttons
         const weekdayBtns = this.shadowRoot.querySelectorAll('.weekday-btn');
         weekdayBtns.forEach(btn => {
@@ -492,7 +492,7 @@ export class RecurringWidget extends HTMLElement {
                 btn.classList.toggle('selected');
             });
         });
-        
+
         // Close on overlay click
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) {
@@ -500,12 +500,12 @@ export class RecurringWidget extends HTMLElement {
             }
         });
     }
-    
+
     openEditor(pattern = null) {
         this.editingPattern = pattern;
         const overlay = this.shadowRoot.getElementById('editorOverlay');
         const title = this.shadowRoot.getElementById('editorTitle');
-        
+
         if (pattern) {
             title.textContent = 'Redigera återkommande uppgift';
             this.populateEditor(pattern);
@@ -513,27 +513,27 @@ export class RecurringWidget extends HTMLElement {
             title.textContent = 'Ny återkommande uppgift';
             this.resetEditor();
         }
-        
+
         overlay.classList.remove('hidden');
         this.updateEditorVisibility();
     }
-    
+
     closeEditor() {
         const overlay = this.shadowRoot.getElementById('editorOverlay');
         overlay.classList.add('hidden');
         this.editingPattern = null;
         this.resetEditor();
     }
-    
+
     resetEditor() {
         const form = this.shadowRoot.getElementById('patternForm');
         form.reset();
-        
+
         // Deselect all weekdays
         const weekdayBtns = this.shadowRoot.querySelectorAll('.weekday-btn');
         weekdayBtns.forEach(btn => btn.classList.remove('selected'));
     }
-    
+
     populateEditor(pattern) {
         this.shadowRoot.getElementById('patternText').value = pattern.text;
         this.shadowRoot.getElementById('patternType').value = pattern.type;
@@ -541,31 +541,31 @@ export class RecurringWidget extends HTMLElement {
         this.shadowRoot.getElementById('patternTime').value = pattern.time || '';
         this.shadowRoot.getElementById('patternPriority').value = pattern.priority;
         this.shadowRoot.getElementById('patternTags').value = (pattern.tags || []).join(', ');
-        
+
         if (pattern.type === 'weekly' && pattern.daysOfWeek) {
             pattern.daysOfWeek.forEach(day => {
                 const btn = this.shadowRoot.querySelector(`[data-day="${day}"]`);
-                if (btn) btn.classList.add('selected');
+                if (btn) {btn.classList.add('selected');}
             });
         }
-        
+
         if (pattern.type === 'monthly') {
             this.shadowRoot.getElementById('patternDayOfMonth').value = pattern.dayOfMonth || 1;
         }
     }
-    
+
     updateEditorVisibility() {
         const type = this.shadowRoot.getElementById('patternType').value;
         const weekdaysGroup = this.shadowRoot.getElementById('weekdaysGroup');
         const dayOfMonthGroup = this.shadowRoot.getElementById('dayOfMonthGroup');
-        
+
         weekdaysGroup.classList.toggle('hidden', type !== 'weekly');
         dayOfMonthGroup.classList.toggle('hidden', type !== 'monthly');
     }
-    
+
     handleSubmit(e) {
         e.preventDefault();
-        
+
         const text = this.shadowRoot.getElementById('patternText').value.trim();
         const type = this.shadowRoot.getElementById('patternType').value;
         const frequency = parseInt(this.shadowRoot.getElementById('patternFrequency').value);
@@ -573,7 +573,7 @@ export class RecurringWidget extends HTMLElement {
         const priority = this.shadowRoot.getElementById('patternPriority').value;
         const tagsInput = this.shadowRoot.getElementById('patternTags').value;
         const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t) : [];
-        
+
         const pattern = {
             text,
             type,
@@ -582,31 +582,31 @@ export class RecurringWidget extends HTMLElement {
             priority,
             tags
         };
-        
+
         if (type === 'weekly') {
             const selectedDays = Array.from(this.shadowRoot.querySelectorAll('.weekday-btn.selected'))
                 .map(btn => parseInt(btn.dataset.day));
             pattern.daysOfWeek = selectedDays;
         }
-        
+
         if (type === 'monthly') {
             pattern.dayOfMonth = parseInt(this.shadowRoot.getElementById('patternDayOfMonth').value);
         }
-        
+
         if (this.editingPattern) {
             recurringService.updatePattern(this.editingPattern.id, pattern);
         } else {
             recurringService.createPattern(pattern);
         }
-        
+
         this.closeEditor();
         this.showToast('✓ Mönster sparat!');
     }
-    
+
     updateStats() {
         const stats = recurringService.getStats();
         const statsRow = this.shadowRoot.getElementById('statsRow');
-        
+
         statsRow.innerHTML = `
             <div class="stat-card">
                 <div class="stat-value">${stats.active}</div>
@@ -626,10 +626,10 @@ export class RecurringWidget extends HTMLElement {
             </div>
         `;
     }
-    
+
     updatePatternsList() {
         const listEl = this.shadowRoot.getElementById('patternsList');
-        
+
         if (this.patterns.length === 0) {
             listEl.innerHTML = `
                 <div class="empty-state">
@@ -640,38 +640,38 @@ export class RecurringWidget extends HTMLElement {
             `;
             return;
         }
-        
+
         listEl.innerHTML = this.patterns.map(pattern => this.renderPattern(pattern)).join('');
-        
+
         // Add event listeners to buttons
         this.patterns.forEach(pattern => {
             const pauseBtn = this.shadowRoot.getElementById(`pause-${pattern.id}`);
             const resumeBtn = this.shadowRoot.getElementById(`resume-${pattern.id}`);
             const editBtn = this.shadowRoot.getElementById(`edit-${pattern.id}`);
             const deleteBtn = this.shadowRoot.getElementById(`delete-${pattern.id}`);
-            
-            if (pauseBtn) pauseBtn.addEventListener('click', () => this.pausePattern(pattern.id));
-            if (resumeBtn) resumeBtn.addEventListener('click', () => this.resumePattern(pattern.id));
-            if (editBtn) editBtn.addEventListener('click', () => this.openEditor(pattern));
-            if (deleteBtn) deleteBtn.addEventListener('click', () => this.deletePattern(pattern.id));
+
+            if (pauseBtn) {pauseBtn.addEventListener('click', () => this.pausePattern(pattern.id));}
+            if (resumeBtn) {resumeBtn.addEventListener('click', () => this.resumePattern(pattern.id));}
+            if (editBtn) {editBtn.addEventListener('click', () => this.openEditor(pattern));}
+            if (deleteBtn) {deleteBtn.addEventListener('click', () => this.deletePattern(pattern.id));}
         });
     }
-    
+
     renderPattern(pattern) {
-        const statusBadge = pattern.active 
+        const statusBadge = pattern.active
             ? '<span class="badge badge-active">Aktiv</span>'
             : '<span class="badge badge-paused">Pausad</span>';
-        
+
         const typeBadge = `<span class="badge badge-${pattern.type}">${this.getTypeLabel(pattern.type)}</span>`;
-        
-        const nextDueText = pattern.nextDue 
+
+        const nextDueText = pattern.nextDue
             ? this.formatDate(pattern.nextDue)
             : 'Beräknas...';
-        
+
         const lastCreatedText = pattern.lastCreated
             ? this.formatDate(pattern.lastCreated)
             : 'Aldrig';
-        
+
         return `
             <div class="pattern-card ${pattern.active ? '' : 'paused'}">
                 <div class="pattern-header">
@@ -690,17 +690,17 @@ export class RecurringWidget extends HTMLElement {
                     <span>🔢 Skapade: ${pattern.completionCount || 0}</span>
                 </div>
                 <div class="pattern-actions">
-                    ${pattern.active 
-                        ? `<button class="btn-small btn-pause" id="pause-${pattern.id}">⏸️ Pausa</button>`
-                        : `<button class="btn-small btn-resume" id="resume-${pattern.id}">▶️ Återuppta</button>`
-                    }
+                    ${pattern.active
+        ? `<button class="btn-small btn-pause" id="pause-${pattern.id}">⏸️ Pausa</button>`
+        : `<button class="btn-small btn-resume" id="resume-${pattern.id}">▶️ Återuppta</button>`
+}
                     <button class="btn-small btn-edit" id="edit-${pattern.id}">✏️ Redigera</button>
                     <button class="btn-small btn-delete" id="delete-${pattern.id}">🗑️ Ta bort</button>
                 </div>
             </div>
         `;
     }
-    
+
     getTypeLabel(type) {
         const labels = {
             daily: 'Dagligen',
@@ -710,40 +710,40 @@ export class RecurringWidget extends HTMLElement {
         };
         return labels[type] || type;
     }
-    
+
     formatDate(date) {
         const d = new Date(date);
         const now = new Date();
         const diffDays = Math.floor((d - now) / (1000 * 60 * 60 * 24));
-        
-        if (diffDays === 0) return 'Idag';
-        if (diffDays === 1) return 'Imorgon';
-        if (diffDays === -1) return 'Igår';
-        
-        return d.toLocaleDateString('sv-SE', { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric' 
+
+        if (diffDays === 0) {return 'Idag';}
+        if (diffDays === 1) {return 'Imorgon';}
+        if (diffDays === -1) {return 'Igår';}
+
+        return d.toLocaleDateString('sv-SE', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
         });
     }
-    
+
     pausePattern(id) {
         recurringService.pausePattern(id);
         this.showToast('⏸️ Mönster pausat');
     }
-    
+
     resumePattern(id) {
         recurringService.resumePattern(id);
         this.showToast('▶️ Mönster återupptaget');
     }
-    
+
     deletePattern(id) {
         if (confirm('Är du säker på att du vill ta bort detta mönster?')) {
             recurringService.deletePattern(id);
             this.showToast('🗑️ Mönster borttaget');
         }
     }
-    
+
     checkNow() {
         const dueTodos = recurringService.checkDuePatterns();
         if (dueTodos.length > 0) {
@@ -752,7 +752,7 @@ export class RecurringWidget extends HTMLElement {
             this.showToast('✓ Inga nya uppgifter att skapa just nu');
         }
     }
-    
+
     showToast(message) {
         // Dispatch event for main app to show toast
         this.dispatchEvent(new CustomEvent('toast', {

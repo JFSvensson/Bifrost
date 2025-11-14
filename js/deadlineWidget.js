@@ -14,13 +14,13 @@ class DeadlineWidget extends HTMLElement {
 
     connectedCallback() {
         this.render();
-        
+
         // Lyssna på todo-uppdateringar
         window.addEventListener('todosUpdated', (e) => {
             this.todos = e.detail.todos || [];
             this.updateWarnings();
         });
-        
+
         // Lyssna på tema-ändringar
         window.addEventListener('themechange', () => {
             this.render();
@@ -35,10 +35,10 @@ class DeadlineWidget extends HTMLElement {
         const isDark = document.body.classList.contains('dark-theme');
         const warnings = this.deadlineService.analyzeAllTodos(this.todos);
         const stats = this.deadlineService.getDeadlineStats(this.todos);
-        
+
         // Visa bara om det finns urgent deadlines
         const hasUrgent = stats.urgent > 0;
-        
+
         this.shadowRoot.innerHTML = `
             <style>
                 :host {
@@ -252,8 +252,8 @@ class DeadlineWidget extends HTMLElement {
     }
 
     renderWarningSection(level, todos, title) {
-        if (todos.length === 0) return '';
-        
+        if (todos.length === 0) {return '';}
+
         return `
             <div class="warning-section">
                 <div class="section-title">

@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
             handleQuickAdd(e.detail);
         });
     }
-    
+
     // Recurring widget setup
     const recurringWidget = document.querySelector('recurring-widget');
     if (recurringWidget) {
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast(e.detail.message);
         });
     }
-    
+
     // Reminder widget setup
     const reminderWidget = document.querySelector('reminder-widget');
     if (reminderWidget) {
@@ -37,17 +37,17 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast(e.detail.message);
         });
     }
-    
+
     // Subscribe to recurring service events
     recurringService.subscribe((event, data) => {
         handleRecurringEvent(event, data);
     });
-    
+
     // Subscribe to reminder service events
     reminderService.subscribe('reminderTriggered', (reminder) => {
         handleReminderTriggered(reminder);
     });
-    
+
     reminderService.subscribe('todoSnoozed', () => {
         renderTodos(); // Update snooze indicators
     });
@@ -75,8 +75,8 @@ window.addEventListener('calendarAuthenticated', () => {
 
 // Handle Quick Add submissions
 function handleQuickAdd(parsed) {
-    if (!parsed || !parsed.text) return;
-    
+    if (!parsed || !parsed.text) {return;}
+
     // Check if this is a recurring pattern
     if (parsed.recurring) {
         // Create recurring pattern instead of single todo
@@ -91,12 +91,12 @@ function handleQuickAdd(parsed) {
             priority: parsed.priority || 'normal',
             source: parsed.source || 'bifrost'
         };
-        
+
         recurringService.createPattern(pattern);
-        showToast(`🔄 Återkommande uppgift skapad!`);
+        showToast('🔄 Återkommande uppgift skapad!');
         return;
     }
-    
+
     // Normal single todo
     const todoData = {
         text: parsed.text,
@@ -109,33 +109,33 @@ function handleQuickAdd(parsed) {
         id: Date.now().toString(),
         createdAt: new Date()
     };
-    
+
     if (obsidianService) {
         // Add via Obsidian service
         const newTodo = obsidianService.addLocalTodo(todoData.text);
         // Merge parsed data
         Object.assign(newTodo, todoData);
         currentTodos.push(newTodo);
-        
+
         // Track in stats with tags
         statsService.trackTodoCreated(newTodo);
     } else {
         // Legacy mode
         currentTodos.push(todoData);
         saveTodos();
-        
+
         // Track in stats
         statsService.trackTodoCreated(todoData);
     }
-    
+
     // Handle reminder creation if reminder pattern found
     if (parsed.reminder) {
         createReminderFromParsed(todoData, parsed.reminder);
     }
-    
+
     renderTodos();
     dispatchTodosUpdated();
-    
+
     // Show toast notification
     const reminderMsg = parsed.reminder ? ' med påminnelse' : '';
     showToast(`✓ Uppgift tillagd${parsed.dueDate ? ' med deadline' : ''}${reminderMsg}!`);
@@ -143,7 +143,7 @@ function handleQuickAdd(parsed) {
 
 function createReminderFromParsed(todo, reminderData) {
     let remindAt;
-    
+
     if (reminderData.type === 'in-time') {
         // "påminn mig om 1h" - create reminder X time from now
         const offset = reminderService.parseTimeOffset(reminderData.offset);
@@ -164,7 +164,7 @@ function createReminderFromParsed(todo, reminderData) {
         console.warn('Could not create reminder - invalid data:', reminderData);
         return;
     }
-    
+
     reminderService.createReminder({
         todoId: todo.id,
         text: todo.text,
@@ -180,12 +180,12 @@ function handleRecurringEvent(event, data) {
     if (event === 'todoCreated' || event === 'duePatterns') {
         // Add todos created by recurring service to the list
         const todos = Array.isArray(data) ? data : [data.todo];
-        
+
         todos.forEach(todo => {
             currentTodos.push(todo);
             statsService.trackTodoCreated(todo);
         });
-        
+
         renderTodos();
         dispatchTodosUpdated();
         saveTodos();
@@ -197,7 +197,7 @@ function handleRecurringEvent(event, data) {
         renderTodos();
         dispatchTodosUpdated();
         saveTodos();
-        
+
         showToast('🔄 Nästa återkommande uppgift skapad!');
     }
 }
@@ -205,12 +205,12 @@ function handleRecurringEvent(event, data) {
 function handleReminderTriggered(reminder) {
     // Find the corresponding todo
     const todo = currentTodos.find(t => t.id === reminder.todoId);
-    if (!todo) return;
-    
+    if (!todo) {return;}
+
     // Show toast notification as fallback (browser notifications handled by service)
     const message = `🔔 Påminnelse: ${reminder.text}`;
     showToast(message, 'reminder');
-    
+
     // Highlight the todo briefly
     const todoElement = document.querySelector(`[data-todo-id="${reminder.todoId}"]`);
     if (todoElement) {
@@ -224,7 +224,7 @@ function handleReminderTriggered(reminder) {
 
 function addTodo() {
     const todoText = document.getElementById('new-todo').value;
-    if (todoText === '') return;
+    if (todoText === '') {return;}
 
     // Check max items limit
     if (currentTodos.length >= todos.maxItems) {
@@ -237,7 +237,7 @@ function addTodo() {
         const newTodo = obsidianService.addLocalTodo(todoText);
         newTodo.createdAt = new Date();
         currentTodos.push(newTodo);
-        
+
         // Track in stats
         statsService.trackTodoCreated(newTodo);
     } else {
@@ -252,7 +252,7 @@ function addTodo() {
         };
         currentTodos.push(newTodo);
         saveTodos();
-        
+
         // Track in stats
         statsService.trackTodoCreated(newTodo);
     }
@@ -273,7 +273,7 @@ function renderTodos() {
             li.className += ' completed';
         }
         li.dataset.todoId = todo.id;
-        
+
         // Add checkbox for toggling completion
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
@@ -281,12 +281,12 @@ function renderTodos() {
         checkbox.checked = todo.completed;
         checkbox.onclick = () => toggleTodo(todo.id);
         li.appendChild(checkbox);
-        
+
         // Create todo content
         const content = document.createElement('div');
         content.className = 'todo-content';
         content.textContent = todo.text;
-        
+
         // Add priority indicator
         if (todo.priority && todo.priority !== 'normal') {
             const priorityIcon = document.createElement('span');
@@ -294,9 +294,9 @@ function renderTodos() {
             priorityIcon.textContent = getPriorityIcon(todo.priority);
             li.appendChild(priorityIcon);
         }
-        
+
         li.appendChild(content);
-        
+
         // Add due date if exists
         if (todo.dueDate) {
             const dueDate = document.createElement('span');
@@ -304,7 +304,7 @@ function renderTodos() {
             dueDate.textContent = formatDueDate(todo.dueDate);
             li.appendChild(dueDate);
         }
-        
+
         // Add completed timestamp if completed
         if (todo.completed && todo.completedAt) {
             const completedTime = document.createElement('span');
@@ -312,7 +312,7 @@ function renderTodos() {
             completedTime.textContent = `✓ ${formatCompletedTime(todo.completedAt)}`;
             li.appendChild(completedTime);
         }
-        
+
         // Add source indicator
         if (todo.source === 'obsidian') {
             const sourceIcon = document.createElement('span');
@@ -321,7 +321,7 @@ function renderTodos() {
             sourceIcon.title = `Från ${todo.originalSource || 'Obsidian'}`;
             li.appendChild(sourceIcon);
         }
-        
+
         // Add recurring indicator
         if (todo.isRecurring || todo.recurringPatternId) {
             const recurringIcon = document.createElement('span');
@@ -330,7 +330,7 @@ function renderTodos() {
             recurringIcon.title = 'Återkommande uppgift';
             li.appendChild(recurringIcon);
         }
-        
+
         // Add snoozed indicator if todo has active reminder
         const snoozedReminder = reminderService?.getSnoozedReminder(todo.id);
         if (snoozedReminder) {
@@ -341,7 +341,7 @@ function renderTodos() {
             snoozedIcon.title = `Snoozad - påminnelse ${timeUntil}`;
             li.appendChild(snoozedIcon);
         }
-        
+
         // Add snooze button for incomplete todos (only for Bifrost todos)
         if (!todo.completed && todo.source === 'bifrost') {
             const snoozeBtn = document.createElement('button');
@@ -354,7 +354,7 @@ function renderTodos() {
             };
             li.appendChild(snoozeBtn);
         }
-        
+
         // Add remove button for Bifrost todos only
         if (todo.source === 'bifrost') {
             const removeBtn = document.createElement('button');
@@ -363,10 +363,10 @@ function renderTodos() {
             removeBtn.onclick = () => removeTodo(todo.id);
             li.appendChild(removeBtn);
         }
-        
+
         todoList.appendChild(li);
     });
-    
+
     // Update status
     updateTodoStatus();
 }
@@ -384,12 +384,12 @@ function formatDueDate(date) {
     const dueDate = new Date(date);
     const today = new Date();
     const diffDays = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return '📅 Idag';
-    if (diffDays === 1) return '📅 Imorgon';
-    if (diffDays < 0) return '📅 Försenad';
-    if (diffDays < 7) return `📅 ${diffDays} dagar`;
-    
+
+    if (diffDays === 0) {return '📅 Idag';}
+    if (diffDays === 1) {return '📅 Imorgon';}
+    if (diffDays < 0) {return '📅 Försenad';}
+    if (diffDays < 7) {return `📅 ${diffDays} dagar`;}
+
     return `📅 ${dueDate.toLocaleDateString('sv-SE')}`;
 }
 
@@ -400,12 +400,12 @@ function formatCompletedTime(date) {
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
-    
-    if (diffMins < 1) return 'nyss';
-    if (diffMins < 60) return `${diffMins}min sedan`;
-    if (diffHours < 24) return `${diffHours}h sedan`;
-    if (diffDays < 7) return `${diffDays}d sedan`;
-    
+
+    if (diffMins < 1) {return 'nyss';}
+    if (diffMins < 60) {return `${diffMins}min sedan`;}
+    if (diffHours < 24) {return `${diffHours}h sedan`;}
+    if (diffDays < 7) {return `${diffDays}d sedan`;}
+
     return completed.toLocaleDateString('sv-SE');
 }
 
@@ -415,21 +415,21 @@ function formatTimeUntilReminder(date) {
     const diffMs = reminder - now;
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
-    
-    if (diffMins < 0) return 'nu';
-    if (diffMins < 60) return `om ${diffMins}min`;
-    if (diffHours < 24) return `om ${diffHours}h`;
-    
+
+    if (diffMins < 0) {return 'nu';}
+    if (diffMins < 60) {return `om ${diffMins}min`;}
+    if (diffHours < 24) {return `om ${diffHours}h`;}
+
     const isToday = reminder.toDateString() === now.toDateString();
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
     const isTomorrow = reminder.toDateString() === tomorrow.toDateString();
-    
+
     const timeStr = reminder.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
-    
-    if (isToday) return `idag ${timeStr}`;
-    if (isTomorrow) return `imorgon ${timeStr}`;
-    
+
+    if (isToday) {return `idag ${timeStr}`;}
+    if (isTomorrow) {return `imorgon ${timeStr}`;}
+
     return reminder.toLocaleDateString('sv-SE');
 }
 
@@ -445,12 +445,12 @@ function showSnoozeDropdown(button, todo) {
             return;
         }
     }
-    
+
     // Create dropdown
     const dropdown = document.createElement('div');
     dropdown.className = 'snooze-dropdown';
     dropdown.targetButton = button;
-    
+
     const presets = [
         { label: '10 minuter', value: '10min' },
         { label: '30 minuter', value: '30min' },
@@ -459,7 +459,7 @@ function showSnoozeDropdown(button, todo) {
         { label: 'Imorgon 09:00', value: 'tomorrow9am' },
         { label: '1 dag', value: '1day' }
     ];
-    
+
     presets.forEach(preset => {
         const option = document.createElement('button');
         option.className = 'snooze-option';
@@ -472,16 +472,16 @@ function showSnoozeDropdown(button, todo) {
         };
         dropdown.appendChild(option);
     });
-    
+
     // Position dropdown
     const rect = button.getBoundingClientRect();
     dropdown.style.position = 'fixed';
     dropdown.style.top = `${rect.bottom + 5}px`;
     dropdown.style.left = `${rect.left}px`;
-    
+
     document.body.appendChild(dropdown);
     activeSnoozeDropdown = dropdown;
-    
+
     // Close on outside click
     setTimeout(() => {
         document.addEventListener('click', closeSnoozeDropdown);
@@ -499,10 +499,10 @@ function closeSnoozeDropdown() {
 function snoozeTodo(todo, preset) {
     try {
         const reminder = reminderService.snoozeTodo(todo.id, preset, todo);
-        
+
         const timeDisplay = formatTimeUntilReminder(reminder.remindAt);
         showToast(`💤 Snoozad - påminnelse ${timeDisplay}`);
-        
+
         // Re-render to show snoozed indicator
         renderTodos();
     } catch (error) {
@@ -513,22 +513,22 @@ function snoozeTodo(todo, preset) {
 
 function toggleTodo(todoId) {
     const todo = currentTodos.find(t => t.id === todoId);
-    if (!todo) return;
-    
+    if (!todo) {return;}
+
     // Obsidian todos kan inte toggles från Bifrost
     if (todo.source === 'obsidian') {
         alert('⚠️ Obsidian-todos måste markeras som klara i Obsidian');
         return;
     }
-    
+
     const wasCompleted = todo.completed;
     todo.completed = !todo.completed;
-    
+
     if (todo.completed) {
         todo.completedAt = new Date();
         // Track completion in stats
         statsService.trackTodoCompleted(todo);
-        
+
         // Handle recurring todos - create next instance
         if (todo.recurringPatternId) {
             recurringService.onTodoCompleted(todo);
@@ -536,7 +536,7 @@ function toggleTodo(todoId) {
     } else {
         delete todo.completedAt;
     }
-    
+
     saveTodos();
     renderTodos();
     dispatchTodosUpdated();
@@ -557,7 +557,7 @@ function updateTodoStatus() {
     const obsidianCount = currentTodos.filter(t => t.source === 'obsidian' && !t.completed).length;
     const bifrostCount = currentTodos.filter(t => t.source === 'bifrost' && !t.completed).length;
     const completedCount = currentTodos.filter(t => t.completed).length;
-    
+
     // Update title or status indicator if needed
     const statusElement = document.querySelector('.todo-status');
     if (statusElement) {
@@ -566,18 +566,18 @@ function updateTodoStatus() {
 }
 
 async function syncWithObsidian() {
-    if (!obsidianService) return;
-    
+    if (!obsidianService) {return;}
+
     try {
         const synced = await obsidianService.syncWithLocal();
         currentTodos = synced;
         renderTodos();
         dispatchTodosUpdated();
-        
+
         console.log(`✅ Synced ${synced.length} todos (${synced.filter(t => t.source === 'obsidian').length} from Obsidian)`);
     } catch (error) {
         console.error('❌ Obsidian sync failed:', error);
-        
+
         // Show error to user
         showSyncError(error.message);
     }
@@ -587,10 +587,10 @@ function showSyncError(message) {
     const errorElement = document.createElement('div');
     errorElement.className = 'sync-error';
     errorElement.textContent = `⚠️ ${message}`;
-    
+
     const todoList = document.getElementById('todo-items');
     todoList.insertBefore(errorElement, todoList.firstChild);
-    
+
     // Remove error after 5 seconds
     setTimeout(() => {
         if (errorElement.parentNode) {
@@ -609,7 +609,7 @@ async function loadTodos() {
     if (obsidianService) {
         // Load and sync with Obsidian
         await syncWithObsidian();
-        
+
         // Set up auto-sync
         setInterval(syncWithObsidian, todos.obsidian.updateInterval);
     } else {
@@ -625,7 +625,7 @@ async function loadTodos() {
             dispatchTodosUpdated();
         }
     }
-    
+
     // Starta deadline monitoring
     startDeadlineMonitoring();
 }
@@ -633,16 +633,16 @@ async function loadTodos() {
 function startDeadlineMonitoring() {
     // Visa daglig sammanfattning vid första laddning
     deadlineService.showDailySummary(currentTodos);
-    
+
     // Starta periodisk monitoring
     deadlineService.startMonitoring(() => currentTodos, 60000); // Check varje minut
-    
+
     // Återställ notification-historik varje dag kl 00:00
     const now = new Date();
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
-    
+
     const msUntilMidnight = tomorrow - now;
     setTimeout(() => {
         deadlineService.resetNotificationHistory();
@@ -657,10 +657,10 @@ function showToast(message, type = 'success') {
     toast.className = `toast toast-${type}`;
     toast.textContent = message;
     document.body.appendChild(toast);
-    
+
     // Trigger animation
     setTimeout(() => toast.classList.add('show'), 10);
-    
+
     // Remove after 3 seconds
     setTimeout(() => {
         toast.classList.remove('show');
@@ -679,22 +679,22 @@ window.searchTodos = searchTodos;
 window.addTodo = addTodo;
 
 document.addEventListener('keydown', (e) => {
-    if (!shortcuts.enabled) return;
-    
+    if (!shortcuts.enabled) {return;}
+
     // Link shortcuts (Ctrl+1-9)
     if (shortcuts.linkShortcuts && e.ctrlKey && e.key >= '1' && e.key <= '9') {
         const links = document.querySelectorAll('#links a');
         const link = links[parseInt(e.key) - 1];
-        if (link) window.open(link.href, '_blank');
+        if (link) {window.open(link.href, '_blank');}
     }
-    
+
     // Search shortcut (Ctrl+/)
     if (shortcuts.searchShortcuts && e.ctrlKey && e.key === '/') {
         e.preventDefault();
         const searchInput = document.querySelector('input[name="q"]');
-        if (searchInput) searchInput.focus();
+        if (searchInput) {searchInput.focus();}
     }
-    
+
     // Todo shortcuts
     if (shortcuts.todoShortcuts) {
         const todoInput = document.getElementById('new-todo');

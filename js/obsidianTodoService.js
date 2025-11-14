@@ -29,10 +29,10 @@ export class ObsidianTodoService {
 
                 const data = await response.json();
                 this.lastSync = new Date();
-                
+
                 console.log(`📥 Synced ${data.count} todos from Obsidian`);
                 return this.processObsidianTodos(data.todos);
-                
+
             } finally {
                 clearTimeout(timeoutId);
             }
@@ -40,7 +40,7 @@ export class ObsidianTodoService {
             if (error.name === 'AbortError') {
                 throw new Error('Obsidian bridge timeout - kontrollera att bridge körs');
             }
-            
+
             console.error('Obsidian sync failed:', error);
             throw new Error(`Kunde inte synka med Obsidian: ${error.message}`);
         }
@@ -64,24 +64,24 @@ export class ObsidianTodoService {
 
     formatTodoText(todo) {
         let text = todo.text;
-        
+
         // Ta bort prioritets-markeringar från text
         text = text.replace(/\[!(high|medium|low)\]/gi, '').trim();
-        
+
         // Ta bort datum-markeringar om de ska visas separat
         text = text.replace(/@\d{4}-\d{2}-\d{2}/g, '').trim();
-        
+
         // Lägg till källfil om inställt
         if (this.showSource && todo.source) {
             const fileName = todo.source.replace('.md', '');
             text += ` 📄${fileName}`;
         }
-        
+
         // Lägg till sektion om den finns
         if (todo.section && todo.section !== 'TODO' && todo.section !== 'Tasks') {
             text += ` 📂${todo.section}`;
         }
-        
+
         return text;
     }
 
@@ -94,16 +94,16 @@ export class ObsidianTodoService {
         try {
             const obsidianTodos = await this.loadTodos();
             const localTodos = this.getLocalTodos();
-            
+
             // Merge: Obsidian todos + lokala Bifrost todos
             const merged = [
                 ...obsidianTodos,
                 ...localTodos.filter(todo => todo.source !== 'obsidian')
             ];
-            
+
             // Sortera efter prioritet
             return this.sortTodos(merged);
-            
+
         } catch (error) {
             console.warn('Obsidian sync failed, using local todos only:', error.message);
             return this.getLocalTodos();
@@ -112,27 +112,27 @@ export class ObsidianTodoService {
 
     sortTodos(todos) {
         const priorityOrder = { high: 4, medium: 3, normal: 2, low: 1 };
-        
+
         return todos.sort((a, b) => {
             // Ofärdiga todos först
             if (a.completed !== b.completed) {
                 return a.completed ? 1 : -1;
             }
-            
+
             // Först efter prioritet
             const aPriority = priorityOrder[a.priority] || 2;
             const bPriority = priorityOrder[b.priority] || 2;
-            
+
             if (aPriority !== bPriority) {
                 return bPriority - aPriority; // Hög prioritet först
             }
-            
+
             // Sedan efter källa (Obsidian först)
             if (a.source !== b.source) {
-                if (a.source === 'obsidian') return -1;
-                if (b.source === 'obsidian') return 1;
+                if (a.source === 'obsidian') {return -1;}
+                if (b.source === 'obsidian') {return 1;}
             }
-            
+
             // Slutligen alfabetiskt
             return a.text.localeCompare(b.text);
         });
@@ -141,7 +141,7 @@ export class ObsidianTodoService {
     getLocalTodos() {
         const saved = localStorage.getItem(todoConfig.storageKey);
         const todos = saved ? JSON.parse(saved) : [];
-        
+
         return todos.map(todo => ({
             ...todo,
             source: todo.source || 'bifrost',
@@ -159,10 +159,10 @@ export class ObsidianTodoService {
             id: Date.now().toString(),
             createdAt: new Date()
         };
-        
+
         todos.push(newTodo);
         localStorage.setItem(todoConfig.storageKey, JSON.stringify(todos));
-        
+
         return newTodo;
     }
 
@@ -170,7 +170,7 @@ export class ObsidianTodoService {
         const todos = this.getLocalTodos();
         const filtered = todos.filter(todo => todo.id !== todoId);
         localStorage.setItem(todoConfig.storageKey, JSON.stringify(filtered));
-        
+
         return filtered;
     }
 

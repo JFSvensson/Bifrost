@@ -11,26 +11,26 @@ class PomodoroWidget extends HTMLElement {
         this.attachShadow({ mode: 'open' });
         this.unsubscribe = null;
     }
-    
+
     connectedCallback() {
         this.render();
         this.setupEventListeners();
-        
+
         // Subscribe to timer updates
         this.unsubscribe = pomodoroService.subscribe((state) => {
             this.updateDisplay(state);
         });
-        
+
         // Initial update
         this.updateDisplay(pomodoroService.getState());
     }
-    
+
     disconnectedCallback() {
         if (this.unsubscribe) {
             this.unsubscribe();
         }
     }
-    
+
     render() {
         this.shadowRoot.innerHTML = `
             <style>
@@ -318,44 +318,44 @@ class PomodoroWidget extends HTMLElement {
             </div>
         `;
     }
-    
+
     setupEventListeners() {
         const startBtn = this.shadowRoot.getElementById('start-btn');
         const resetBtn = this.shadowRoot.getElementById('reset-btn');
         const skipBtn = this.shadowRoot.getElementById('skip-btn');
-        
+
         startBtn.addEventListener('click', () => {
             pomodoroService.toggle();
         });
-        
+
         resetBtn.addEventListener('click', () => {
             pomodoroService.reset();
         });
-        
+
         skipBtn.addEventListener('click', () => {
             pomodoroService.skip();
         });
     }
-    
+
     updateDisplay(state) {
         // Update time display
         const timeDisplay = this.shadowRoot.getElementById('time-display');
         timeDisplay.textContent = pomodoroService.getFormattedTime();
-        
+
         // Update mode display
         const modeDisplay = this.shadowRoot.getElementById('mode-display');
         modeDisplay.textContent = pomodoroService.getModeName();
-        
+
         // Update progress circle
         const progressCircle = this.shadowRoot.getElementById('progress-circle');
         const progress = pomodoroService.getProgress();
         const circumference = 565.48;
         const offset = circumference - (progress / 100) * circumference;
         progressCircle.style.strokeDashoffset = offset;
-        
+
         // Update circle color based on mode
         progressCircle.className = `progress-bar ${state.mode === 'work' ? 'work' : 'break'}`;
-        
+
         // Update start button
         const startBtn = this.shadowRoot.getElementById('start-btn');
         if (state.isRunning) {
@@ -363,12 +363,12 @@ class PomodoroWidget extends HTMLElement {
         } else {
             startBtn.innerHTML = '<span>▶️</span><span>Start</span>';
         }
-        
+
         // Update sessions count
         const sessionsCount = this.shadowRoot.getElementById('sessions-count');
         const currentInCycle = state.sessionsCompleted % 4;
         sessionsCount.textContent = `${currentInCycle}/4`;
-        
+
         // Update stats
         const stats = pomodoroService.getTodayStats();
         this.shadowRoot.getElementById('today-sessions').textContent = stats.totalSessions;

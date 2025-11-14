@@ -37,7 +37,7 @@ export class DeadlineService {
                 priority: 0
             }
         };
-        
+
         this.notificationShown = new Set();
         this.checkInterval = null;
     }
@@ -52,11 +52,11 @@ export class DeadlineService {
 
         const now = new Date();
         const due = new Date(todo.dueDate);
-        
+
         // Nollställ tid för att jämföra endast datum
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate());
-        
+
         const diffTime = dueDay - today;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
@@ -93,8 +93,8 @@ export class DeadlineService {
         };
 
         todos.forEach(todo => {
-            if (todo.completed) return; // Skip färdiga todos
-            
+            if (todo.completed) {return;} // Skip färdiga todos
+
             const analysis = this.analyzeTodo(todo);
             if (analysis) {
                 warnings[analysis.level].push({
@@ -138,10 +138,10 @@ export class DeadlineService {
         }
 
         const urgent = this.getUrgentTodos(todos);
-        
+
         urgent.forEach(todo => {
             const notificationKey = `${todo.id}-${todo.deadline.level}`;
-            
+
             // Visa varje notification bara en gång per dag
             if (this.notificationShown.has(notificationKey)) {
                 return;
@@ -200,7 +200,7 @@ export class DeadlineService {
         }
 
         let message = '';
-        
+
         if (warnings.overdue.length > 0) {
             message += `🚨 ${warnings.overdue.length} försenade todos\n`;
         }
@@ -228,7 +228,7 @@ export class DeadlineService {
         this.checkInterval = setInterval(() => {
             const currentTodos = getTodosCallback();
             const urgent = this.getUrgentTodos(currentTodos);
-            
+
             // Visa notification om det finns nya urgenta todos
             if (urgent.length > 0) {
                 this.showNotifications(currentTodos);
@@ -258,21 +258,21 @@ export class DeadlineService {
      */
     formatDeadline(dueDate) {
         const analysis = this.analyzeTodo({ dueDate });
-        if (!analysis) return '';
+        if (!analysis) {return '';}
 
         const date = new Date(dueDate);
-        const dateStr = date.toLocaleDateString('sv-SE', { 
-            weekday: 'short', 
-            day: 'numeric', 
-            month: 'short' 
+        const dateStr = date.toLocaleDateString('sv-SE', {
+            weekday: 'short',
+            day: 'numeric',
+            month: 'short'
         });
 
         if (analysis.level === 'overdue') {
             return `🚨 Försenad (${dateStr})`;
         } else if (analysis.level === 'today') {
-            return `⚡ Idag`;
+            return '⚡ Idag';
         } else if (analysis.level === 'tomorrow') {
-            return `📅 Imorgon`;
+            return '📅 Imorgon';
         } else {
             return `📆 ${dateStr}`;
         }
@@ -295,9 +295,9 @@ export class DeadlineService {
             const bAnalysis = this.analyzeTodo(b);
 
             // Todos utan deadline kommer sist
-            if (!aAnalysis && !bAnalysis) return 0;
-            if (!aAnalysis) return 1;
-            if (!bAnalysis) return -1;
+            if (!aAnalysis && !bAnalysis) {return 0;}
+            if (!aAnalysis) {return 1;}
+            if (!bAnalysis) {return -1;}
 
             // Sortera efter priority (högre = mer urgent)
             if (aAnalysis.priority !== bAnalysis.priority) {
@@ -314,7 +314,7 @@ export class DeadlineService {
      */
     getDeadlineStats(todos) {
         const warnings = this.analyzeAllTodos(todos);
-        
+
         return {
             overdue: warnings.overdue.length,
             today: warnings.today.length,

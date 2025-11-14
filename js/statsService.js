@@ -16,7 +16,7 @@ export class StatsService {
         // Ladda eller initiera statistik
         const saved = localStorage.getItem(this.storageKey);
         this.stats = saved ? JSON.parse(saved) : this.getDefaultStats();
-        
+
         // Ladda historik (för grafer)
         const history = localStorage.getItem(this.statsHistoryKey);
         this.history = history ? JSON.parse(history) : [];
@@ -57,28 +57,28 @@ export class StatsService {
     // Spåra när en todo skapas
     trackTodoCreated(todo) {
         const today = new Date().toDateString();
-        
+
         this.stats.totalCreated++;
         this.stats.lastActivityDate = today;
-        
+
         // Priority stats
         const priority = todo.priority || 'normal';
         if (this.stats.priorityStats[priority]) {
             this.stats.priorityStats[priority].created++;
         }
-        
+
         // Source stats
         const source = todo.source || 'bifrost';
         if (this.stats.sourceStats[source]) {
             this.stats.sourceStats[source].created++;
         }
-        
+
         // Weekly stats
         const dayName = this.getDayName(new Date());
         if (this.stats.weeklyStats[dayName]) {
             this.stats.weeklyStats[dayName].created++;
         }
-        
+
         // Tag stats
         if (todo.tags && Array.isArray(todo.tags)) {
             todo.tags.forEach(tag => {
@@ -88,39 +88,39 @@ export class StatsService {
                 this.stats.tagStats[tag].count++;
             });
         }
-        
+
         this.save();
     }
 
     // Spåra när en todo markeras som klar
     trackTodoCompleted(todo) {
         const today = new Date().toDateString();
-        
+
         this.stats.totalCompleted++;
         this.stats.lastCompletionDate = today;
         this.stats.lastActivityDate = today;
-        
+
         // Update streak
         this.updateStreak(today);
-        
+
         // Priority stats
         const priority = todo.priority || 'normal';
         if (this.stats.priorityStats[priority]) {
             this.stats.priorityStats[priority].completed++;
         }
-        
+
         // Source stats
         const source = todo.source || 'bifrost';
         if (this.stats.sourceStats[source]) {
             this.stats.sourceStats[source].completed++;
         }
-        
+
         // Weekly stats
         const dayName = this.getDayName(new Date());
         if (this.stats.weeklyStats[dayName]) {
             this.stats.weeklyStats[dayName].completed++;
         }
-        
+
         // Tag stats
         if (todo.tags && Array.isArray(todo.tags)) {
             todo.tags.forEach(tag => {
@@ -129,23 +129,23 @@ export class StatsService {
                 }
             });
         }
-        
+
         // Completion time (om todo har createdAt)
         if (todo.createdAt && todo.completedAt) {
             const created = new Date(todo.createdAt);
             const completed = new Date(todo.completedAt);
             const timeInHours = (completed - created) / (1000 * 60 * 60);
-            
+
             // Update running average
             const totalTodos = this.stats.totalCompleted;
             const currentAvg = this.stats.averageCompletionTime;
-            this.stats.averageCompletionTime = 
+            this.stats.averageCompletionTime =
                 ((currentAvg * (totalTodos - 1)) + timeInHours) / totalTodos;
         }
-        
+
         // Spara i historik för grafer
         this.saveToHistory(today);
-        
+
         this.save();
     }
 
@@ -153,7 +153,7 @@ export class StatsService {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
         const yesterdayStr = yesterday.toDateString();
-        
+
         if (this.stats.lastCompletionDate === yesterdayStr) {
             // Fortsätt streak
             this.stats.currentStreak++;
@@ -162,7 +162,7 @@ export class StatsService {
             this.stats.currentStreak = 1;
         }
         // Om lastCompletionDate === today, fortsätt samma dag
-        
+
         // Update longest streak
         if (this.stats.currentStreak > this.stats.longestStreak) {
             this.stats.longestStreak = this.stats.currentStreak;
@@ -172,19 +172,19 @@ export class StatsService {
     saveToHistory(date) {
         // Hitta eller skapa dagens entry
         let entry = this.history.find(h => h.date === date);
-        
+
         if (!entry) {
             entry = { date, completed: 0 };
             this.history.push(entry);
         }
-        
+
         entry.completed++;
-        
+
         // Behåll bara senaste 30 dagarna
         if (this.history.length > 30) {
             this.history = this.history.slice(-30);
         }
-        
+
         localStorage.setItem(this.statsHistoryKey, JSON.stringify(this.history));
     }
 
@@ -202,14 +202,14 @@ export class StatsService {
             }
             return false;
         });
-        
+
         const todayCompleted = todos.filter(t => {
             if (t.completed && t.completedAt) {
                 return new Date(t.completedAt).toDateString() === today;
             }
             return false;
         });
-        
+
         return {
             created: todayTodos.length,
             completed: todayCompleted.length,
@@ -239,33 +239,33 @@ export class StatsService {
     getLast7DaysActivity() {
         const result = [];
         const today = new Date();
-        
+
         for (let i = 6; i >= 0; i--) {
             const date = new Date(today);
             date.setDate(date.getDate() - i);
             const dateStr = date.toDateString();
-            
+
             const entry = this.history.find(h => h.date === dateStr);
-            
+
             result.push({
                 date: date.toLocaleDateString('sv-SE', { weekday: 'short', day: 'numeric', month: 'short' }),
                 completed: entry ? entry.completed : 0
             });
         }
-        
+
         return result;
     }
 
     // Hämta fullständig statistik
     getFullStats(currentTodos) {
         const todayStats = this.getTodayStats(currentTodos);
-        
+
         return {
             ...this.stats,
             today: todayStats,
             topTags: this.getTopTags(),
             last7Days: this.getLast7DaysActivity(),
-            completionRate: this.stats.totalCreated > 0 
+            completionRate: this.stats.totalCreated > 0
                 ? (this.stats.totalCompleted / this.stats.totalCreated * 100).toFixed(1)
                 : 0,
             activeTodos: currentTodos.filter(t => !t.completed).length,
@@ -294,8 +294,8 @@ export class StatsService {
 
     // Importera statistik (från backup)
     importStats(data) {
-        if (data.stats) this.stats = data.stats;
-        if (data.history) this.history = data.history;
+        if (data.stats) {this.stats = data.stats;}
+        if (data.history) {this.history = data.history;}
         this.save();
         localStorage.setItem(this.statsHistoryKey, JSON.stringify(this.history));
     }

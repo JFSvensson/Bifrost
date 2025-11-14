@@ -1,8 +1,8 @@
 /**
  * ReminderService
- * 
+ *
  * Hanterar schemalagda påminnelser och snooze-funktionalitet för todos.
- * 
+ *
  * Features:
  * - Schemalagda påminnelser med exakt timestamp
  * - Snooze-presets (+10min, +1h, +1day, custom)
@@ -10,7 +10,7 @@
  * - Browser notifications (med fallback till in-app toast)
  * - Integrering med deadlineService för "påminn X innan deadline"
  * - Persistens i localStorage
- * 
+ *
  * @example
  * // Skapa påminnelse
  * reminderService.createReminder({
@@ -19,10 +19,10 @@
  *   remindAt: new Date('2024-12-19 13:00'), // 1h innan 14:00
  *   type: 'deadline-relative'
  * });
- * 
+ *
  * // Snooze en todo
  * reminderService.snoozeTodo('123', '+10min');
- * 
+ *
  * // Lyssna på påminnelser
  * reminderService.subscribe('reminderTriggered', (reminder) => {
  *   showNotification(reminder.text);
@@ -30,12 +30,16 @@
  */
 
 class ReminderService {
+    /**
+     * Initialiserar ReminderService
+     * Laddar sparade påminnelser, kontrollerar notifikationsbehörighet och startar övervakning
+     */
     constructor() {
         this.reminders = [];
         this.checkInterval = null;
         this.subscribers = {};
         this.notificationPermission = 'default';
-        
+
         // Snooze presets (i millisekunder)
         this.snoozePresets = {
             '10min': 10 * 60 * 1000,
@@ -46,14 +50,16 @@ class ReminderService {
             'tomorrow9am': null, // Special case: beräknas dynamiskt
             'nextweek': null // Special case: beräknas dynamiskt
         };
-        
+
         this.loadReminders();
         this.checkNotificationPermission();
         this.startMonitoring();
     }
-    
+
     /**
-     * Ladda påminnelser från localStorage
+     * Laddar påminnelser från localStorage och konverterar till rätt format
+     * Kör även cleanup av gamla påminnelser
+     * @returns {void}
      */
     loadReminders() {
         try {
@@ -67,7 +73,7 @@ class ReminderService {
                     createdAt: new Date(r.createdAt),
                     snoozedAt: r.snoozedAt ? new Date(r.snoozedAt) : null
                 }));
-                
+
                 // Städa gamla påminnelser (äldre än 7 dagar)
                 this.cleanupOldReminders();
             }
@@ -76,9 +82,10 @@ class ReminderService {
             this.reminders = [];
         }
     }
-    
+
     /**
-     * Spara påminnelser till localStorage
+     * Sparar alla påminnelser till localStorage
+     * @returns {void}
      */
     saveReminders() {
         try {
@@ -87,33 +94,33 @@ class ReminderService {
             console.error('Fel vid sparande av påminnelser:', error);
         }
     }
-    
+
     /**
-     * Skapa en ny påminnelse
-     * 
-     * @param {Object} reminderData
-     * @param {string} reminderData.todoId - Todo ID
-     * @param {string} reminderData.text - Påminnelsetext
-     * @param {Date} reminderData.remindAt - När påminnelsen ska triggas
-     * @param {string} [reminderData.type='manual'] - Typ: 'manual', 'deadline-relative', 'snoozed'
-     * @param {string} [reminderData.priority='medium'] - Prioritet
-     * @param {Array} [reminderData.tags=[]] - Tags från todo
-     * @returns {Object} Skapad påminnelse
+     * Skapar en ny påminnelse för en todo
+     *
+     * @param {Object} reminderData - Påminnelsedata
+     * @param {string} reminderData.todoId - ID för associerad todo
+     * @param {string} reminderData.text - Text för påminnelsen
+     * @param {Date} reminderData.remindAt - Datum/tid när påminnelsen ska triggas
+     * @param {string} [reminderData.type='manual'] - Typ av påminnelse: 'manual', 'deadline-relative', 'snoozed'
+     * @param {string} [reminderData.priority='medium'] - Prioritet: 'low', 'medium', 'high'
+     * @param {Array<string>} [reminderData.tags=[]] - Taggar från associerad todo
+     * @returns {Object} Den skapade påminnelsen
      */
-    createReminder({todoId, text, remindAt, type = 'manual', priority = 'medium', tags = []}) {
+    createReminder({ todoId, text, remindAt, type = 'manual', priority = 'medium', tags = [] }) {
         if (!todoId || !text || !remindAt) {
             throw new Error('todoId, text och remindAt krävs för att skapa påminnelse');
         }
-        
-        if (!(remindAt instanceof Date) || isNaN(remindAt)) {
+
+        if (!(remindAt instanceof Date) || isNaN(remindAt.getTime())) {
             throw new Error('remindAt måste vara ett giltigt Date-objekt');
         }
-        
+
         // Kontrollera om påminnelsen redan har passerat
         if (remindAt < new Date()) {
             console.warn('Påminnelse skapas för redan passerat datum:', remindAt);
         }
-        
+
         const reminder = {
             id: `reminder_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             todoId,
@@ -127,38 +134,42 @@ class ReminderService {
             snoozeCount: 0,
             triggered: false
         };
-        
+
         this.reminders.push(reminder);
         this.saveReminders();
         this.publish('reminderCreated', reminder);
-        
+
         console.log('Påminnelse skapad:', {
             text,
             remindAt: remindAt.toLocaleString('sv-SE'),
             type
         });
-        
+
         return reminder;
     }
-    
+
     /**
-     * Snooze en todo (skapa påminnelse baserat på preset)
-     * 
-     * @param {string} todoId - Todo ID
-     * @param {string} preset - Snooze preset ('10min', '1h', etc.) eller custom time string
-     * @param {Object} todo - Todo object med text, priority, tags
-     * @returns {Object} Skapad påminnelse
+     * Snooze:ar en todo genom att skapa påminnelse baserat på preset
+     * Tar bort tidigare påminnelser för samma todo för att undvika duplicates
+     *
+     * @param {string} todoId - ID för todo att snooze:a
+     * @param {string} preset - Snooze preset ('10min', '1h', '1day', etc.) eller custom ('+2h')
+     * @param {Object} todo - Todo-objekt
+     * @param {string} todo.text - Todo text
+     * @param {string} [todo.priority] - Prioritet
+     * @param {Array<string>} [todo.tags] - Taggar
+     * @returns {Object} Skapad påminnelse med snooze-metadata
      */
     snoozeTodo(todoId, preset, todo) {
         if (!todoId || !preset || !todo) {
             throw new Error('todoId, preset och todo krävs för snooze');
         }
-        
+
         const remindAt = this.calculateSnoozeTime(preset);
-        
+
         // Ta bort tidigare påminnelser för denna todo (undvik duplicates)
         this.reminders = this.reminders.filter(r => r.todoId !== todoId);
-        
+
         const reminder = this.createReminder({
             todoId,
             text: todo.text,
@@ -167,35 +178,37 @@ class ReminderService {
             priority: todo.priority || 'medium',
             tags: todo.tags || []
         });
-        
+
         reminder.snoozedAt = new Date();
         reminder.snoozeCount = (this.getSnoozedReminder(todoId)?.snoozeCount || 0) + 1;
         this.saveReminders();
-        
+
         this.publish('todoSnoozed', {
             todoId,
             reminder,
             preset,
             snoozeCount: reminder.snoozeCount
         });
-        
+
         return reminder;
     }
-    
+
     /**
-     * Beräkna snooze-tid baserat på preset
-     * 
-     * @param {string} preset - Snooze preset eller custom string
-     * @returns {Date} Påminnelsetid
+     * Beräknar framtida snooze-tid baserat på preset eller custom string
+     * Stödjer: '10min', '30min', '1h', '3h', '1day', 'tomorrow9am', 'nextweek'
+     * Samt custom format: '+2h', '+45min', '+3d'
+     *
+     * @param {string} preset - Snooze preset eller custom time string (t.ex. '+2h')
+     * @returns {Date} Beräknad påminnelsetid
      */
     calculateSnoozeTime(preset) {
         const now = new Date();
-        
+
         // Standard presets
         if (this.snoozePresets[preset] !== undefined && this.snoozePresets[preset] !== null) {
             return new Date(now.getTime() + this.snoozePresets[preset]);
         }
-        
+
         // Special cases
         if (preset === 'tomorrow9am') {
             const tomorrow = new Date(now);
@@ -203,66 +216,73 @@ class ReminderService {
             tomorrow.setHours(9, 0, 0, 0);
             return tomorrow;
         }
-        
+
         if (preset === 'nextweek') {
             const nextWeek = new Date(now);
             nextWeek.setDate(nextWeek.getDate() + 7);
             nextWeek.setHours(9, 0, 0, 0);
             return nextWeek;
         }
-        
+
         // Custom preset (t.ex. "+2h", "+45min")
         const customMatch = preset.match(/^\+?(\d+)(min|h|d)$/i);
         if (customMatch) {
             const [, value, unit] = customMatch;
             const num = parseInt(value, 10);
-            
+
             const multipliers = {
                 'min': 60 * 1000,
                 'h': 60 * 60 * 1000,
                 'd': 24 * 60 * 60 * 1000
             };
-            
+
             const multiplier = multipliers[unit.toLowerCase()];
             if (multiplier) {
                 return new Date(now.getTime() + (num * multiplier));
             }
         }
-        
+
         // Fallback: +1h
         console.warn('Okänd snooze preset:', preset, '- använder +1h');
         return new Date(now.getTime() + this.snoozePresets['1h']);
     }
-    
+
     /**
-     * Skapa deadline-relativ påminnelse (t.ex. "1h innan deadline")
-     * 
-     * @param {Object} todo - Todo med deadline
-     * @param {string} offset - Tidsskillnad ('1h', '30min', '1day', etc.)
-     * @returns {Object|null} Skapad påminnelse eller null om deadline saknas
+     * Skapar en deadline-relativ påminnelse (t.ex. "påminn 1h innan deadline")
+     * Kräver att todo har dueDate, kan ha dueTime för exakt tid
+     *
+     * @param {Object} todo - Todo-objekt med deadline
+     * @param {string} todo.id - Todo ID
+     * @param {string} todo.text - Todo text
+     * @param {string} todo.dueDate - Deadline datum (YYYY-MM-DD)
+     * @param {string} [todo.dueTime] - Deadline tid (HH:MM)
+     * @param {string} [todo.priority] - Prioritet
+     * @param {Array<string>} [todo.tags] - Taggar
+     * @param {string} offset - Tidsskillnad från deadline ('1h', '30min', '1day', etc.)
+     * @returns {Object|null} Skapad påminnelse eller null om deadline saknas eller redan passerat
      */
     createDeadlineReminder(todo, offset) {
         if (!todo.dueDate) {
             console.warn('Kan inte skapa deadline-påminnelse - todo saknar dueDate');
             return null;
         }
-        
+
         const deadline = new Date(todo.dueDate);
         if (todo.dueTime) {
             const [hours, minutes] = todo.dueTime.split(':');
             deadline.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
         }
-        
+
         // Beräkna offset i millisekunder
         const offsetMs = this.parseTimeOffset(offset);
         const remindAt = new Date(deadline.getTime() - offsetMs);
-        
+
         // Kontrollera att påminnelsen inte redan har passerat
         if (remindAt < new Date()) {
             console.warn('Deadline-påminnelse skulle vara i det förflutna, skapar inte:', remindAt);
             return null;
         }
-        
+
         return this.createReminder({
             todoId: todo.id,
             text: `Påminnelse: ${todo.text} (deadline om ${offset})`,
@@ -272,22 +292,24 @@ class ReminderService {
             tags: todo.tags || []
         });
     }
-    
+
     /**
-     * Parsa tidsoffset string till millisekunder
-     * 
-     * @param {string} offset - T.ex. '1h', '30min', '1day'
-     * @returns {number} Millisekunder
+     * Konverterar tidsoffset-sträng till millisekunder
+     * Stödjer format: Xmin, Xh, Xd/Xday/Xdays
+     *
+     * @param {string} offset - Tidsoffset (t.ex. '1h', '30min', '1day')
+     * @returns {number} Antal millisekunder
+     * @throws {Error} Om formatet är ogiltigt
      */
     parseTimeOffset(offset) {
         const match = offset.match(/^(\d+)(min|h|d|day|days)$/i);
         if (!match) {
             throw new Error(`Ogiltigt tidsformat: ${offset}`);
         }
-        
+
         const [, value, unit] = match;
         const num = parseInt(value, 10);
-        
+
         const multipliers = {
             'min': 60 * 1000,
             'h': 60 * 60 * 1000,
@@ -295,14 +317,15 @@ class ReminderService {
             'day': 24 * 60 * 60 * 1000,
             'days': 24 * 60 * 60 * 1000
         };
-        
+
         return num * multipliers[unit.toLowerCase()];
     }
-    
+
     /**
-     * Hämta aktiva påminnelser (inte triggered, framtida)
-     * 
-     * @returns {Array} Aktiva påminnelser sorterade efter tid
+     * Hämtar alla aktiva påminnelser (inte triggered, framtida)
+     * Returnerar sorterade efter tid, närmast först
+     *
+     * @returns {Array<Object>} Aktiva påminnelser sorterade efter remindAt
      */
     getActiveReminders() {
         const now = new Date();
@@ -310,31 +333,33 @@ class ReminderService {
             .filter(r => !r.triggered && r.remindAt > now)
             .sort((a, b) => a.remindAt - b.remindAt);
     }
-    
+
     /**
-     * Hämta påminnelser för en specifik todo
-     * 
-     * @param {string} todoId
-     * @returns {Array} Påminnelser
+     * Hämtar alla påminnelser associerade med en specifik todo
+     *
+     * @param {string} todoId - ID för todo
+     * @returns {Array<Object>} Lista med påminnelser för denna todo
      */
     getRemindersForTodo(todoId) {
         return this.reminders.filter(r => r.todoId === todoId);
     }
-    
+
     /**
-     * Hämta snoozed påminnelse för todo (om den finns)
-     * 
-     * @param {string} todoId
-     * @returns {Object|null}
+     * Hämtar aktiv snoozed påminnelse för en todo (om den finns)
+     * Returnerar endast otriggade snooze-påminnelser
+     *
+     * @param {string} todoId - ID för todo
+     * @returns {Object|null} Snoozed påminnelse eller null om ingen finns
      */
     getSnoozedReminder(todoId) {
         return this.reminders.find(r => r.todoId === todoId && r.type === 'snoozed' && !r.triggered);
     }
-    
+
     /**
-     * Avbryt påminnelse
-     * 
-     * @param {string} reminderId
+     * Avbryter en specifik påminnelse och publicerar event
+     *
+     * @param {string} reminderId - ID för påminnelsen att avbryta
+     * @returns {void}
      */
     cancelReminder(reminderId) {
         const index = this.reminders.findIndex(r => r.id === reminderId);
@@ -345,39 +370,44 @@ class ReminderService {
             this.publish('reminderCancelled', reminder);
         }
     }
-    
+
     /**
-     * Avbryt alla påminnelser för en todo
-     * 
-     * @param {string} todoId
+     * Avbryter alla påminnelser associerade med en todo
+     * Publicerar event om minst en påminnelse avbryts
+     *
+     * @param {string} todoId - ID för todo vars påminnelser ska avbrytas
+     * @returns {void}
      */
     cancelRemindersForTodo(todoId) {
         const cancelled = this.reminders.filter(r => r.todoId === todoId);
         this.reminders = this.reminders.filter(r => r.todoId !== todoId);
         this.saveReminders();
-        
+
         if (cancelled.length > 0) {
-            this.publish('remindersForTodoCancelled', {todoId, count: cancelled.length});
+            this.publish('remindersForTodoCancelled', { todoId, count: cancelled.length });
         }
     }
-    
+
     /**
-     * Kontrollera och trigga påminnelser
+     * Kontrollerar alla påminnelser och triggar de som har passerat sin tid
+     * Körs automatiskt av monitoring interval
+     *
+     * @returns {void}
      */
     checkReminders() {
         const now = new Date();
         const triggered = [];
-        
+
         this.reminders.forEach(reminder => {
             if (!reminder.triggered && reminder.remindAt <= now) {
                 reminder.triggered = true;
                 triggered.push(reminder);
-                
+
                 // Skicka notification
                 this.triggerReminder(reminder);
             }
         });
-        
+
         if (triggered.length > 0) {
             this.saveReminders();
             this.publish('remindersChecked', {
@@ -386,15 +416,20 @@ class ReminderService {
             });
         }
     }
-    
+
     /**
-     * Trigga en påminnelse (visa notification)
-     * 
-     * @param {Object} reminder
+     * Triggar en påminnelse och visar browser notification (eller fallback)
+     * Försöker först med Notification API, faller tillbaka till in-app toast
+     *
+     * @param {Object} reminder - Påminnelse att trigga
+     * @param {string} reminder.id - Reminder ID
+     * @param {string} reminder.text - Påminnelsetext
+     * @param {string} reminder.todoId - Associerad todo ID
+     * @returns {Promise<void>}
      */
     async triggerReminder(reminder) {
         console.log('Triggar påminnelse:', reminder);
-        
+
         // Försök med browser notification först
         if (this.notificationPermission === 'granted') {
             try {
@@ -408,7 +443,7 @@ class ReminderService {
                         reminderId: reminder.id
                     }
                 });
-                
+
                 // Klick på notification → öppna todo
                 notification.onclick = () => {
                     window.focus();
@@ -424,18 +459,21 @@ class ReminderService {
             // Fallback till in-app toast
             this.publish('reminderTriggered', reminder);
         }
-        
+
         // Statistik
         this.publish('reminderTriggered', reminder);
     }
-    
+
     /**
-     * Städa gamla påminnelser (äldre än 7 dagar och triggered)
+     * Städar bort gamla påminnelser (äldre än 7 dagar och triggered)
+     * Sparar automatiskt efter cleanup
+     *
+     * @returns {void}
      */
     cleanupOldReminders() {
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        
+
         const before = this.reminders.length;
         this.reminders = this.reminders.filter(r => {
             if (r.triggered && r.remindAt < sevenDaysAgo) {
@@ -443,16 +481,18 @@ class ReminderService {
             }
             return true;
         });
-        
+
         const removed = before - this.reminders.length;
         if (removed > 0) {
             this.saveReminders();
             console.log(`Städade ${removed} gamla påminnelser`);
         }
     }
-    
+
     /**
-     * Kontrollera notification permission
+     * Kontrollerar nuvarande notification permission status
+     *
+     * @returns {Promise<string>} Permission status: 'granted', 'denied', eller 'default'
      */
     async checkNotificationPermission() {
         if (!('Notification' in window)) {
@@ -460,30 +500,33 @@ class ReminderService {
             this.notificationPermission = 'denied';
             return 'denied';
         }
-        
+
         this.notificationPermission = Notification.permission;
         return this.notificationPermission;
     }
-    
+
     /**
-     * Begär notification permission
+     * Begär notification permission från användaren
+     * Publicerar event vid ändring av permission
+     *
+     * @returns {Promise<string>} Permission status: 'granted' eller 'denied'
      */
     async requestNotificationPermission() {
         if (!('Notification' in window)) {
             console.warn('Browser stödjer inte notifications');
             return 'denied';
         }
-        
+
         if (Notification.permission === 'granted') {
             this.notificationPermission = 'granted';
             return 'granted';
         }
-        
+
         if (Notification.permission === 'denied') {
             this.notificationPermission = 'denied';
             return 'denied';
         }
-        
+
         // Begär permission
         try {
             const permission = await Notification.requestPermission();
@@ -496,31 +539,36 @@ class ReminderService {
             return 'denied';
         }
     }
-    
+
     /**
-     * Starta bakgrundsövervakning
-     * 
+     * Startar bakgrundsövervakning av påminnelser
+     * Kör checkReminders() och cleanupOldReminders() på intervall
+     *
      * @param {number} [interval=30000] - Intervall i millisekunder (default: 30s)
+     * @returns {void}
      */
     startMonitoring(interval = 30000) {
         if (this.checkInterval) {
             clearInterval(this.checkInterval);
         }
-        
+
         // Initial check
         this.checkReminders();
-        
+
         // Kör check med intervall
         this.checkInterval = setInterval(() => {
             this.checkReminders();
             this.cleanupOldReminders();
         }, interval);
-        
+
         console.log(`ReminderService monitoring startad (intervall: ${interval}ms)`);
     }
-    
+
     /**
-     * Stoppa bakgrundsövervakning
+     * Stoppar bakgrundsövervakning av påminnelser
+     * Rensar interval timer
+     *
+     * @returns {void}
      */
     stopMonitoring() {
         if (this.checkInterval) {
@@ -529,21 +577,27 @@ class ReminderService {
             console.log('ReminderService monitoring stoppad');
         }
     }
-    
+
     /**
-     * Hämta statistik
-     * 
-     * @returns {Object}
+     * Hämtar statistik om påminnelser
+     *
+     * @returns {Object} Statistik-objekt med följande properties:
+     * @property {number} total - Totalt antal påminnelser
+     * @property {number} active - Antal aktiva påminnelser
+     * @property {number} snoozed - Antal snoozade påminnelser
+     * @property {number} upcoming24h - Antal påminnelser inom 24h
+     * @property {number} triggered - Antal triggade påminnelser
+     * @property {Object} byType - Påminnelser per typ
      */
     getStats() {
         const now = new Date();
         const active = this.reminders.filter(r => !r.triggered && r.remindAt > now);
         const snoozed = active.filter(r => r.type === 'snoozed');
         const upcoming = active.filter(r => {
-            const hoursUntil = (r.remindAt - now) / (1000 * 60 * 60);
+            const hoursUntil = (r.remindAt.getTime() - now.getTime()) / (1000 * 60 * 60);
             return hoursUntil <= 24;
         });
-        
+
         return {
             total: this.reminders.length,
             active: active.length,
@@ -557,12 +611,14 @@ class ReminderService {
             }
         };
     }
-    
+
     /**
-     * Subscribe till events
-     * 
-     * @param {string} event
-     * @param {Function} callback
+     * Prenumererar på service events
+     * Events: reminderCreated, todoSnoozed, reminderTriggered, reminderCancelled, etc.
+     *
+     * @param {string} event - Event namn
+     * @param {Function} callback - Callback-funktion som tar emot event data
+     * @returns {void}
      */
     subscribe(event, callback) {
         if (!this.subscribers[event]) {
@@ -570,12 +626,14 @@ class ReminderService {
         }
         this.subscribers[event].push(callback);
     }
-    
+
     /**
-     * Publicera event
-     * 
-     * @param {string} event
-     * @param {*} data
+     * Publicerar ett event till alla subscribers
+     * Fångar och loggar errors i callbacks
+     *
+     * @param {string} event - Event namn
+     * @param {*} data - Event data som skickas till callbacks
+     * @returns {void}
      */
     publish(event, data) {
         if (this.subscribers[event]) {

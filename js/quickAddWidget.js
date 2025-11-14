@@ -11,13 +11,13 @@ export class QuickAddWidget extends HTMLElement {
         this.parsed = null;
         this.suggestions = [];
     }
-    
+
     connectedCallback() {
         this.render();
         this.setupEventListeners();
         this.setupKeyboardShortcuts();
     }
-    
+
     render() {
         this.shadowRoot.innerHTML = `
             <style>
@@ -297,17 +297,17 @@ export class QuickAddWidget extends HTMLElement {
             </div>
         `;
     }
-    
+
     setupEventListeners() {
         const input = this.shadowRoot.getElementById('quickAddInput');
         const button = this.shadowRoot.getElementById('addButton');
         const suggestions = this.shadowRoot.getElementById('suggestions');
-        
+
         // Real-time parsing and preview
         input.addEventListener('input', (e) => {
             this.handleInput(e.target.value);
         });
-        
+
         // Enter to submit
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
@@ -318,12 +318,12 @@ export class QuickAddWidget extends HTMLElement {
                 suggestions.classList.remove('visible');
             }
         });
-        
+
         // Button click
         button.addEventListener('click', () => {
             this.handleSubmit();
         });
-        
+
         // Click outside to close suggestions
         document.addEventListener('click', (e) => {
             if (!this.contains(e.target)) {
@@ -331,7 +331,7 @@ export class QuickAddWidget extends HTMLElement {
             }
         });
     }
-    
+
     setupKeyboardShortcuts() {
         // Ctrl+K to focus input
         document.addEventListener('keydown', (e) => {
@@ -342,54 +342,54 @@ export class QuickAddWidget extends HTMLElement {
             }
         });
     }
-    
+
     handleInput(value) {
         // Parse input
         this.parsed = naturalLanguageParser.parse(value);
-        
+
         // Update preview
         this.updatePreview();
-        
+
         // Get suggestions
         this.suggestions = naturalLanguageParser.getSuggestions(value);
         this.updateSuggestions();
     }
-    
+
     updatePreview() {
         const previewSection = this.shadowRoot.getElementById('previewSection');
-        
+
         if (!this.parsed) {
             previewSection.innerHTML = '';
             return;
         }
-        
+
         const badges = [];
-        
+
         // Date badge
         if (this.parsed.dueDate) {
             const dateObj = new Date(this.parsed.dueDate);
             const isToday = dateObj.toDateString() === new Date().toDateString();
             const isTomorrow = dateObj.toDateString() === new Date(Date.now() + 86400000).toDateString();
-            
+
             let dateText = this.parsed.dueDate;
-            if (isToday) dateText = 'Idag';
-            else if (isTomorrow) dateText = 'Imorgon';
-            
+            if (isToday) {dateText = 'Idag';}
+            else if (isTomorrow) {dateText = 'Imorgon';}
+
             badges.push(`<span class="preview-badge badge-date">📅 ${dateText}</span>`);
         }
-        
+
         // Time badge
         if (this.parsed.dueTime) {
             badges.push(`<span class="preview-badge badge-time">⏰ ${this.parsed.dueTime}</span>`);
         }
-        
+
         // Tag badges
         if (this.parsed.tags && this.parsed.tags.length > 0) {
             this.parsed.tags.forEach(tag => {
                 badges.push(`<span class="preview-badge badge-tag">#${tag}</span>`);
             });
         }
-        
+
         // Priority badge
         if (this.parsed.priority && this.parsed.priority !== 'normal') {
             const priorityClass = `badge-priority-${this.parsed.priority}`;
@@ -398,36 +398,36 @@ export class QuickAddWidget extends HTMLElement {
                 medium: '⚠️',
                 low: '🔽'
             }[this.parsed.priority];
-            
+
             badges.push(`<span class="preview-badge ${priorityClass}">${priorityIcon} ${this.parsed.priority}</span>`);
         }
-        
+
         // Cleaned text preview
         if (this.parsed.text) {
             badges.push(`<span class="preview-badge badge-text">"${this.parsed.text}"</span>`);
         }
-        
+
         previewSection.innerHTML = badges.join('');
     }
-    
+
     updateSuggestions() {
         const suggestionsEl = this.shadowRoot.getElementById('suggestions');
-        
+
         if (this.suggestions.length === 0) {
             suggestionsEl.classList.remove('visible');
             return;
         }
-        
+
         const html = this.suggestions.map(s => `
             <div class="suggestion-item" data-value="${s.value}">
                 <span class="suggestion-type">${s.type}</span>
                 ${s.text}
             </div>
         `).join('');
-        
+
         suggestionsEl.innerHTML = html;
         suggestionsEl.classList.add('visible');
-        
+
         // Add click handlers
         suggestionsEl.querySelectorAll('.suggestion-item').forEach(item => {
             item.addEventListener('click', () => {
@@ -435,19 +435,19 @@ export class QuickAddWidget extends HTMLElement {
             });
         });
     }
-    
+
     applySuggestion(value) {
         const input = this.shadowRoot.getElementById('quickAddInput');
         input.value += ' ' + value;
         input.focus();
         this.handleInput(input.value);
     }
-    
+
     handleSubmit() {
         if (!this.parsed || !this.parsed.text) {
             return;
         }
-        
+
         // Validate
         const validation = naturalLanguageParser.validate(this.parsed);
         if (!validation.valid) {
@@ -455,61 +455,61 @@ export class QuickAddWidget extends HTMLElement {
             this.showError(validation.errors.join(', '));
             return;
         }
-        
+
         // Dispatch event with parsed data
         this.dispatchEvent(new CustomEvent('todoAdded', {
             detail: this.parsed,
             bubbles: true,
             composed: true
         }));
-        
+
         // Clear input
         this.clearInput();
-        
+
         // Show success feedback
         this.showSuccess();
     }
-    
+
     clearInput() {
         const input = this.shadowRoot.getElementById('quickAddInput');
         input.value = '';
         this.parsed = null;
         this.updatePreview();
-        
+
         const suggestions = this.shadowRoot.getElementById('suggestions');
         suggestions.classList.remove('visible');
     }
-    
+
     showSuccess() {
         const button = this.shadowRoot.getElementById('addButton');
         const originalText = button.textContent;
-        
+
         button.textContent = '✓ Tillagd!';
         button.style.background = '#4caf50';
-        
+
         setTimeout(() => {
             button.textContent = originalText;
             button.style.background = '';
         }, 1000);
     }
-    
+
     showError(message) {
         const input = this.shadowRoot.getElementById('quickAddInput');
         input.style.borderColor = '#f44336';
-        
+
         setTimeout(() => {
             input.style.borderColor = '';
         }, 2000);
-        
+
         console.error('Quick Add Error:', message);
     }
-    
+
     // Public API
     focus() {
         const input = this.shadowRoot.getElementById('quickAddInput');
         input.focus();
     }
-    
+
     setValue(value) {
         const input = this.shadowRoot.getElementById('quickAddInput');
         input.value = value;

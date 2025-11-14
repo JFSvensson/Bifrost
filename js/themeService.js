@@ -12,7 +12,7 @@ class ThemeService {
     init() {
         // Ladda sparad preferens eller använd systempreferens
         const savedTheme = localStorage.getItem(this.storageKey);
-        
+
         if (savedTheme) {
             this.setTheme(savedTheme);
         } else {
@@ -41,18 +41,18 @@ class ThemeService {
         if (theme === 'dark') {
             body.classList.add('dark-theme');
             body.classList.remove('light-theme');
-            if (themeColor) themeColor.setAttribute('content', '#1a1a2e');
-            if (themeIcon) themeIcon.textContent = '☀️';
+            if (themeColor) {themeColor.setAttribute('content', '#1a1a2e');}
+            if (themeIcon) {themeIcon.textContent = '☀️';}
         } else {
             body.classList.add('light-theme');
             body.classList.remove('dark-theme');
-            if (themeColor) themeColor.setAttribute('content', '#3498db');
-            if (themeIcon) themeIcon.textContent = '🌙';
+            if (themeColor) {themeColor.setAttribute('content', '#3498db');}
+            if (themeIcon) {themeIcon.textContent = '🌙';}
         }
 
         // Spara preferens
         localStorage.setItem(this.storageKey, theme);
-        
+
         // Trigger custom event för andra komponenter
         window.dispatchEvent(new CustomEvent('themechange', { detail: { theme } }));
     }
@@ -65,7 +65,7 @@ class ThemeService {
         const currentTheme = this.getTheme();
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
         this.setTheme(newTheme);
-        
+
         // Animation för smooth transition
         this.animateToggle();
     }
@@ -82,7 +82,7 @@ class ThemeService {
         const toggle = document.getElementById('theme-toggle');
         if (toggle) {
             toggle.addEventListener('click', () => this.toggleTheme());
-            
+
             // Keyboard shortcut: Ctrl/Cmd + Shift + D
             document.addEventListener('keydown', (e) => {
                 if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'D') {

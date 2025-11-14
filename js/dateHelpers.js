@@ -10,19 +10,19 @@ export function isToday(dayName, dayIndex, menuData) {
             return todayIndex === dayIndex;
         }
     }
-    
+
     // Fallback to name matching
     const today = new Date().toLocaleDateString('sv-SE', { weekday: 'long' });
     return dayName?.toLowerCase() === today.toLowerCase();
 }
 
 export function getTodayIndex(startDate, weekLength) {
-    if (!startDate) return -1;
-    
+    if (!startDate) {return -1;}
+
     const start = normalizeDate(startDate);
     const today = normalizeDate(new Date());
     const daysDiff = Math.floor((today - start) / 86400000);
-    
+
     return daysDiff >= 0 && daysDiff < weekLength ? daysDiff : -1;
 }
 

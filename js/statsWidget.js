@@ -15,13 +15,13 @@ class StatsWidget extends HTMLElement {
 
     connectedCallback() {
         this.render();
-        
+
         // Lyssna på todo-ändringar
         window.addEventListener('todosUpdated', (e) => {
             this.currentTodos = e.detail.todos || [];
             this.updateStats();
         });
-        
+
         // Lyssna på tema-ändringar
         window.addEventListener('themechange', () => {
             this.render();
@@ -35,7 +35,7 @@ class StatsWidget extends HTMLElement {
     render() {
         const stats = this.statsService.getFullStats(this.currentTodos);
         const isDark = document.body.classList.contains('dark-theme');
-        
+
         this.shadowRoot.innerHTML = `
             <style>
                 :host {
@@ -328,9 +328,9 @@ class StatsWidget extends HTMLElement {
         if (!data || data.length === 0) {
             return '<div class="no-data">Ingen aktivitet ännu</div>';
         }
-        
+
         const maxValue = Math.max(...data.map(d => d.completed), 1);
-        
+
         return `
             <div class="bar-chart">
                 ${data.map(day => `
@@ -347,14 +347,14 @@ class StatsWidget extends HTMLElement {
 
     renderWeeklyStats(weeklyStats) {
         const days = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag', 'Söndag'];
-        
+
         return `
             <div class="weekly-grid">
                 ${days.map(day => {
-                    const stats = weeklyStats[day] || { completed: 0, created: 0 };
-                    const progress = stats.created > 0 ? (stats.completed / stats.created * 100) : 0;
-                    
-                    return `
+        const stats = weeklyStats[day] || { completed: 0, created: 0 };
+        const progress = stats.created > 0 ? (stats.completed / stats.created * 100) : 0;
+
+        return `
                         <div class="day-card">
                             <div class="day-name">${day.substring(0, 3)}</div>
                             <div class="day-value">${stats.completed}</div>
@@ -363,7 +363,7 @@ class StatsWidget extends HTMLElement {
                             </div>
                         </div>
                     `;
-                }).join('')}
+    }).join('')}
             </div>
         `;
     }

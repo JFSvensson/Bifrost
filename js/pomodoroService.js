@@ -10,7 +10,7 @@ export class PomodoroService {
             shortBreak: 5 * 60, // 5 minutes
             longBreak: 15 * 60 // 15 minutes after 4 sessions
         };
-        
+
         this.state = {
             mode: 'work', // 'work', 'shortBreak', 'longBreak'
             timeLeft: this.duration.work,
@@ -19,20 +19,20 @@ export class PomodoroService {
             totalSessionsToday: 0,
             startTime: null
         };
-        
+
         this.interval = null;
         this.callbacks = new Set();
-        
+
         // Load state from localStorage
         this.loadState();
-        
+
         // Setup keyboard shortcuts
         this.setupKeyboardShortcuts();
-        
+
         // Request notification permission
         this.requestNotificationPermission();
     }
-    
+
     /**
      * Load state from localStorage
      */
@@ -41,11 +41,11 @@ export class PomodoroService {
             const saved = localStorage.getItem('pomodoroState');
             if (saved) {
                 const savedState = JSON.parse(saved);
-                
+
                 // Check if it's from today
                 const today = new Date().toDateString();
                 const savedDate = savedState.date;
-                
+
                 if (savedDate === today) {
                     this.state.totalSessionsToday = savedState.totalSessionsToday || 0;
                     this.state.sessionsCompleted = savedState.sessionsCompleted || 0;
@@ -59,7 +59,7 @@ export class PomodoroService {
             console.error('Failed to load pomodoro state:', error);
         }
     }
-    
+
     /**
      * Save state to localStorage
      */
@@ -75,7 +75,7 @@ export class PomodoroService {
             console.error('Failed to save pomodoro state:', error);
         }
     }
-    
+
     /**
      * Request notification permission
      */
@@ -84,7 +84,7 @@ export class PomodoroService {
             await Notification.requestPermission();
         }
     }
-    
+
     /**
      * Setup keyboard shortcuts
      */
@@ -95,7 +95,7 @@ export class PomodoroService {
                 e.preventDefault();
                 this.toggle();
             }
-            
+
             // Ctrl+Shift+R - Reset timer
             if (e.ctrlKey && e.shiftKey && e.key === 'R') {
                 e.preventDefault();
@@ -103,36 +103,36 @@ export class PomodoroService {
             }
         });
     }
-    
+
     /**
      * Start the timer
      */
     start() {
-        if (this.state.isRunning) return;
-        
+        if (this.state.isRunning) {return;}
+
         this.state.isRunning = true;
         this.state.startTime = Date.now();
-        
+
         this.interval = setInterval(() => {
             this.tick();
         }, 1000);
-        
+
         this.notifyListeners();
     }
-    
+
     /**
      * Pause the timer
      */
     pause() {
-        if (!this.state.isRunning) return;
-        
+        if (!this.state.isRunning) {return;}
+
         this.state.isRunning = false;
         clearInterval(this.interval);
         this.interval = null;
-        
+
         this.notifyListeners();
     }
-    
+
     /**
      * Toggle timer (start/pause)
      */
@@ -143,17 +143,17 @@ export class PomodoroService {
             this.start();
         }
     }
-    
+
     /**
      * Reset current timer
      */
     reset() {
         this.pause();
-        this.state.timeLeft = this.duration[this.state.mode === 'work' ? 'work' : 
-                                            this.state.sessionsCompleted % 4 === 0 ? 'longBreak' : 'shortBreak'];
+        this.state.timeLeft = this.duration[this.state.mode === 'work' ? 'work' :
+            this.state.sessionsCompleted % 4 === 0 ? 'longBreak' : 'shortBreak'];
         this.notifyListeners();
     }
-    
+
     /**
      * Skip to next mode
      */
@@ -161,7 +161,7 @@ export class PomodoroService {
         this.pause();
         this.completeSession();
     }
-    
+
     /**
      * Timer tick (1 second)
      */
@@ -174,25 +174,25 @@ export class PomodoroService {
             this.completeSession();
         }
     }
-    
+
     /**
      * Complete current session and switch mode
      */
     completeSession() {
         const wasWork = this.state.mode === 'work';
-        
+
         // Show notification
         this.showNotification(wasWork);
-        
+
         // Play sound (optional)
         this.playSound();
-        
+
         // Update stats
         if (wasWork) {
             this.state.sessionsCompleted++;
             this.state.totalSessionsToday++;
             this.saveState();
-            
+
             // Dispatch event for stats integration
             window.dispatchEvent(new CustomEvent('pomodoroCompleted', {
                 detail: {
@@ -201,7 +201,7 @@ export class PomodoroService {
                 }
             }));
         }
-        
+
         // Switch mode
         if (wasWork) {
             // Check if it's time for long break
@@ -216,23 +216,23 @@ export class PomodoroService {
             this.state.mode = 'work';
             this.state.timeLeft = this.duration.work;
         }
-        
+
         // Auto-start next session (optional)
         // this.start();
-        
+
         this.pause();
         this.notifyListeners();
     }
-    
+
     /**
      * Show notification when timer completes
      */
     showNotification(wasWork) {
         const title = wasWork ? '🎉 Pomodoro Complete!' : '✅ Break Over!';
-        const body = wasWork 
+        const body = wasWork
             ? `Great work! Time for a ${this.state.sessionsCompleted % 4 === 0 ? '15' : '5'} minute break.`
             : 'Break time is over. Ready to focus again?';
-        
+
         // Desktop notification
         if ('Notification' in window && Notification.permission === 'granted') {
             const notification = new Notification(title, {
@@ -242,17 +242,17 @@ export class PomodoroService {
                 tag: 'pomodoro',
                 requireInteraction: true
             });
-            
+
             notification.onclick = () => {
                 window.focus();
                 notification.close();
             };
         }
-        
+
         // Toast notification
         this.showToast(title, wasWork ? 'work' : 'break');
     }
-    
+
     /**
      * Show toast notification
      */
@@ -260,7 +260,7 @@ export class PomodoroService {
         // Remove existing toasts
         const existing = document.querySelectorAll('.pomodoro-toast');
         existing.forEach(toast => toast.remove());
-        
+
         const toast = document.createElement('div');
         toast.className = `pomodoro-toast pomodoro-toast-${type}`;
         toast.innerHTML = `
@@ -270,18 +270,18 @@ export class PomodoroService {
             </div>
             <button class="toast-close" aria-label="Close">✕</button>
         `;
-        
+
         document.body.appendChild(toast);
-        
+
         // Trigger animation
         setTimeout(() => toast.classList.add('show'), 10);
-        
+
         // Close button
         toast.querySelector('.toast-close').addEventListener('click', () => {
             toast.classList.remove('show');
             setTimeout(() => toast.remove(), 300);
         });
-        
+
         // Auto-remove after 5 seconds
         setTimeout(() => {
             if (toast.parentElement) {
@@ -290,7 +290,7 @@ export class PomodoroService {
             }
         }, 5000);
     }
-    
+
     /**
      * Play completion sound
      */
@@ -300,30 +300,30 @@ export class PomodoroService {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
-            
+
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
-            
+
             oscillator.frequency.value = 800;
             oscillator.type = 'sine';
-            
+
             gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-            
+
             oscillator.start(audioContext.currentTime);
             oscillator.stop(audioContext.currentTime + 0.5);
         } catch (error) {
             console.log('Could not play sound:', error);
         }
     }
-    
+
     /**
      * Get current state
      */
     getState() {
         return { ...this.state };
     }
-    
+
     /**
      * Get formatted time (MM:SS)
      */
@@ -332,16 +332,16 @@ export class PomodoroService {
         const seconds = this.state.timeLeft % 60;
         return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
-    
+
     /**
      * Get progress percentage
      */
     getProgress() {
-        const total = this.duration[this.state.mode === 'work' ? 'work' : 
-                                     this.state.sessionsCompleted % 4 === 0 ? 'longBreak' : 'shortBreak'];
+        const total = this.duration[this.state.mode === 'work' ? 'work' :
+            this.state.sessionsCompleted % 4 === 0 ? 'longBreak' : 'shortBreak'];
         return ((total - this.state.timeLeft) / total) * 100;
     }
-    
+
     /**
      * Get mode display name
      */
@@ -353,7 +353,7 @@ export class PomodoroService {
         };
         return names[this.state.mode] || this.state.mode;
     }
-    
+
     /**
      * Subscribe to timer updates
      */
@@ -361,7 +361,7 @@ export class PomodoroService {
         this.callbacks.add(callback);
         return () => this.callbacks.delete(callback);
     }
-    
+
     /**
      * Notify all listeners
      */
@@ -374,7 +374,7 @@ export class PomodoroService {
             }
         });
     }
-    
+
     /**
      * Get today's stats
      */
@@ -386,15 +386,15 @@ export class PomodoroService {
             streakSessions: this.state.sessionsCompleted
         };
     }
-    
+
     /**
      * Set custom durations (in minutes)
      */
     setDurations(work, shortBreak, longBreak) {
-        if (work) this.duration.work = work * 60;
-        if (shortBreak) this.duration.shortBreak = shortBreak * 60;
-        if (longBreak) this.duration.longBreak = longBreak * 60;
-        
+        if (work) {this.duration.work = work * 60;}
+        if (shortBreak) {this.duration.shortBreak = shortBreak * 60;}
+        if (longBreak) {this.duration.longBreak = longBreak * 60;}
+
         // Reset if not running
         if (!this.state.isRunning) {
             this.reset();

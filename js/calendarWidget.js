@@ -14,35 +14,35 @@ class CalendarWidget extends HTMLElement {
         this.isLoading = false;
         this.unsubscribe = null;
     }
-    
+
     connectedCallback() {
         this.render();
         this.setupEventListeners();
-        
+
         // Subscribe to auth changes
         this.unsubscribe = googleCalendarService.subscribe((data) => {
             this.isAuthenticated = data.authenticated;
             this.render();
-            
+
             if (data.authenticated) {
                 this.loadEvents();
             }
         });
-        
+
         // Initialize service
         this.initializeService();
     }
-    
+
     disconnectedCallback() {
         if (this.unsubscribe) {
             this.unsubscribe();
         }
     }
-    
+
     async initializeService() {
         try {
             await googleCalendarService.initialize();
-            
+
             if (googleCalendarService.isAuthenticated()) {
                 this.isAuthenticated = true;
                 this.render();
@@ -53,13 +53,13 @@ class CalendarWidget extends HTMLElement {
             this.showError(error.message);
         }
     }
-    
+
     async loadEvents() {
-        if (!this.isAuthenticated) return;
-        
+        if (!this.isAuthenticated) {return;}
+
         this.isLoading = true;
         this.render();
-        
+
         try {
             const events = await googleCalendarService.getTodaysEvents();
             this.events = events.map(e => googleCalendarService.formatEvent(e));
@@ -71,7 +71,7 @@ class CalendarWidget extends HTMLElement {
             this.showError('Failed to load calendar events');
         }
     }
-    
+
     render() {
         this.shadowRoot.innerHTML = `
             <style>
@@ -318,7 +318,7 @@ class CalendarWidget extends HTMLElement {
             </div>
         `;
     }
-    
+
     renderContent() {
         if (!this.isAuthenticated) {
             return `
@@ -335,7 +335,7 @@ class CalendarWidget extends HTMLElement {
                 </div>
             `;
         }
-        
+
         if (this.isLoading) {
             return `
                 <div class="loading">
@@ -344,7 +344,7 @@ class CalendarWidget extends HTMLElement {
                 </div>
             `;
         }
-        
+
         return `
             <div class="calendar-header">
                 <h3 class="calendar-title">
@@ -365,7 +365,7 @@ class CalendarWidget extends HTMLElement {
             ${this.renderEvents()}
         `;
     }
-    
+
     renderEvents() {
         if (this.events.length === 0) {
             return `
@@ -375,19 +375,19 @@ class CalendarWidget extends HTMLElement {
                 </div>
             `;
         }
-        
+
         return `
             <div class="events-list">
                 ${this.events.map(event => this.renderEvent(event)).join('')}
             </div>
         `;
     }
-    
+
     renderEvent(event) {
-        const timeStr = event.allDay 
-            ? 'All day' 
+        const timeStr = event.allDay
+            ? 'All day'
             : `${this.formatTime(event.start)} - ${this.formatTime(event.end)}`;
-        
+
         return `
             <div class="event-card ${event.allDay ? 'all-day' : ''}">
                 <div class="event-time">${timeStr}</div>
@@ -397,45 +397,45 @@ class CalendarWidget extends HTMLElement {
             </div>
         `;
     }
-    
+
     formatTime(date) {
         return date.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
     }
-    
+
     escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
-    
+
     setupEventListeners() {
         this.shadowRoot.addEventListener('click', async (e) => {
             if (e.target.id === 'sign-in-btn' || e.target.closest('#sign-in-btn')) {
-              console.log('Initiating Google Calendar sign-in...');
-              console.log()
+                console.log('Initiating Google Calendar sign-in...');
+                console.log();
                 await googleCalendarService.signIn();
             }
-            
+
             if (e.target.id === 'sign-out-btn' || e.target.closest('#sign-out-btn')) {
                 googleCalendarService.signOut();
                 this.events = [];
                 this.render();
             }
-            
+
             if (e.target.id === 'refresh-btn' || e.target.closest('#refresh-btn')) {
                 await this.loadEvents();
             }
         });
     }
-    
+
     showError(message) {
         const errorDiv = document.createElement('div');
         errorDiv.className = 'error-message';
         errorDiv.textContent = `⚠️ ${message}`;
-        
+
         const container = this.shadowRoot.querySelector('.calendar-container');
         container.appendChild(errorDiv);
-        
+
         setTimeout(() => errorDiv.remove(), 5000);
     }
 }
