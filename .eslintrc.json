@@ -1,0 +1,46 @@
+{
+  "env": {
+    "browser": true,
+    "es2022": true
+  },
+  "extends": "eslint:recommended",
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  },
+  "rules": {
+    "no-unused-vars": ["warn", { 
+      "argsIgnorePattern": "^_",
+      "varsIgnorePattern": "^_"
+    }],
+    "no-console": "off",
+    "prefer-const": "warn",
+    "no-var": "error",
+    "eqeqeq": ["warn", "always"],
+    "curly": ["warn", "all"],
+    "no-debugger": "warn",
+    "no-alert": "warn",
+    "semi": ["warn", "always"],
+    "quotes": ["warn", "single", { "avoidEscape": true }],
+    "indent": ["warn", 4, { "SwitchCase": 1 }],
+    "comma-dangle": ["warn", "never"],
+    "no-trailing-spaces": "warn",
+    "object-curly-spacing": ["warn", "always"],
+    "array-bracket-spacing": ["warn", "never"],
+    "space-before-function-paren": ["warn", {
+      "anonymous": "always",
+      "named": "never",
+      "asyncArrow": "always"
+    }],
+    "arrow-spacing": "warn",
+    "keyword-spacing": "warn",
+    "space-infix-ops": "warn",
+    "no-multiple-empty-lines": ["warn", { "max": 2, "maxEOF": 1 }],
+    "no-multi-spaces": "warn"
+  },
+  "globals": {
+    "Notification": "readonly",
+    "HTMLElement": "readonly"
+  },
+  "ignorePatterns": ["node_modules/", "*.log", ".DS_Store", "dist/", "build/", "coverage/", "sw.js"]
+}
