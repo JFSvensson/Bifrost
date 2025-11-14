@@ -4,6 +4,9 @@
   "description": "Modern todo app with Obsidian sync, reminders, and more",
   "type": "module",
   "scripts": {
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
     "lint": "eslint js/**/*.js *.js",
     "lint:fix": "eslint js/**/*.js *.js --fix",
     "format": "prettier --write \"**/*.{js,css,html,md}\"",
@@ -11,8 +14,11 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.15.0",
+    "@vitest/ui": "^4.0.9",
     "eslint": "^9.15.0",
-    "prettier": "^3.3.3"
+    "happy-dom": "^20.0.10",
+    "prettier": "^3.3.3",
+    "vitest": "^4.0.9"
   },
   "keywords": [
     "todo",
