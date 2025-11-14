@@ -71,6 +71,9 @@ class StateManager {
      * @returns {void}
      */
     _init() {
+        // Register state namespace in eventBus
+        eventBus.registerNamespace('state');
+
         this._checkStorageQuota();
         this._cleanupOldBackups();
 
@@ -614,6 +617,41 @@ class StateManager {
         });
 
         eventBus.emit('state:imported', { keyCount: Object.keys(data).length });
+    }
+
+    /**
+     * Beräknar total storlek på localStorage
+     *
+     * @returns {number} Storlek i bytes
+     */
+    getStorageSize() {
+        let size = 0;
+        for (let key in localStorage) {
+            if (localStorage.hasOwnProperty(key)) {
+                size += localStorage[key].length + key.length;
+            }
+        }
+        return size;
+    }
+
+    /**
+     * Exporterar all state (alias för exportAll)
+     *
+     * @returns {Object} Exporterad data
+     */
+    exportState() {
+        return this.exportAll();
+    }
+
+    /**
+     * Importerar state (alias för importAll)
+     *
+     * @param {Object} data - Data att importera
+     * @param {Object} [options={}] - Konfiguration
+     * @returns {void}
+     */
+    importState(data, options = {}) {
+        return this.importAll(data, options);
     }
 }
 
