@@ -3,6 +3,10 @@
  * Handles OAuth 2.0 authentication and Google Calendar API interactions
  */
 
+import eventBus from './eventBus.js';
+import stateManager from './stateManager.js';
+import errorHandler, { ErrorCode } from './errorHandler.js';
+
 export class GoogleCalendarService {
     constructor() {
         this.CLIENT_ID = null;
@@ -15,20 +19,22 @@ export class GoogleCalendarService {
         this.gisInited = false;
         this.accessToken = null;
 
-        this.callbacks = new Set();
-
         // Load credentials from config
         this.loadCredentials();
     }
 
     /**
-     * Load Google API credentials
+     * Load Google API credentials from config file
+     * @returns {Promise<boolean>} True if loaded successfully
      */
     async loadCredentials() {
         try {
             const response = await fetch('/google-credentials.json');
             if (!response.ok) {
-                console.warn('⚠️ Google Calendar credentials not found. Please add google-credentials.json');
+                errorHandler.warning(
+                    'GOOGLE_CALENDAR_NO_CREDS',
+                    'Google Calendar credentials not found. Please add google-credentials.json'
+                );
                 return false;
             }
 
@@ -41,13 +47,17 @@ export class GoogleCalendarService {
             console.log(credentials);
             return true;
         } catch (error) {
-            console.error('❌ Failed to load Google Calendar credentials:', error);
+            errorHandler.handle(error, {
+                code: ErrorCode.SERVICE_INIT_FAILED,
+                context: 'Loading Google Calendar credentials'
+            });
             return false;
         }
     }
 
     /**
      * Initialize Google API and OAuth
+     * @throws {Error} If credentials not configured
      */
     async initialize() {
         if (!this.CLIENT_ID) {
@@ -104,10 +114,13 @@ export class GoogleCalendarService {
 
     /**
      * Initialize Google API Platform Library
+     * @returns {Promise<void>}
      */
     async initializeGapi() {
         return new Promise((resolve) => {
+            // @ts-ignore - gapi is loaded dynamically
             window.gapi.load('client', async () => {
+                // @ts-ignore - gapi is loaded dynamically
                 await window.gapi.client.init({
                     apiKey: this.API_KEY,
                     discoveryDocs: [this.DISCOVERY_DOC]
@@ -120,22 +133,27 @@ export class GoogleCalendarService {
 
     /**
      * Initialize Google Identity Services (OAuth)
+     * @returns {Promise<void>}
      */
     async initializeGis() {
         return new Promise((resolve) => {
+            // @ts-ignore - google is loaded dynamically
             this.tokenClient = window.google.accounts.oauth2.initTokenClient({
                 client_id: this.CLIENT_ID,
                 scope: this.SCOPES,
                 callback: (response) => {
                     if (response.error) {
-                        console.error('OAuth error:', response);
-                        this.notifyListeners({ authenticated: false, error: response.error });
+                        errorHandler.handle(new Error(response.error), {
+                            code: ErrorCode.VALIDATION_ERROR,
+                            context: 'Google OAuth'
+                        });
+                        eventBus.emit('googleCalendar:authFailed', { error: response.error });
                         return;
                     }
 
                     this.accessToken = response.access_token;
                     this.saveAuthToken(response.access_token);
-                    this.notifyListeners({ authenticated: true });
+                    eventBus.emit('googleCalendar:authenticated', { authenticated: true });
                 }
             });
             this.gisInited = true;
@@ -145,21 +163,26 @@ export class GoogleCalendarService {
 
     /**
      * Check if user has stored authentication
+     * @returns {boolean} True if restored successfully
      */
     checkStoredAuth() {
-        const stored = localStorage.getItem('googleCalendarToken');
+        const stored = stateManager.get('googleCalendarToken');
         if (stored) {
             try {
-                const { token, expiry } = JSON.parse(stored);
+                const { token, expiry } = stored;
                 if (expiry > Date.now()) {
                     this.accessToken = token;
+                    // @ts-ignore - gapi is loaded dynamically
                     window.gapi.client.setToken({ access_token: token });
-                    this.notifyListeners({ authenticated: true });
+                    eventBus.emit('googleCalendar:authenticated', { authenticated: true });
                     console.log('✅ Restored Google Calendar authentication');
                     return true;
                 }
             } catch (error) {
-                console.error('Failed to restore auth:', error);
+                errorHandler.handle(error, {
+                    code: ErrorCode.STORAGE_ERROR,
+                    context: 'Restoring Google Calendar auth'
+                });
             }
         }
         return false;
@@ -167,10 +190,12 @@ export class GoogleCalendarService {
 
     /**
      * Save authentication token
+     * @param {string} token - Access token
      */
     saveAuthToken(token) {
         const expiry = Date.now() + (3600 * 1000); // 1 hour
-        localStorage.setItem('googleCalendarToken', JSON.stringify({ token, expiry }));
+        stateManager.set('googleCalendarToken', { token, expiry });
+        // @ts-ignore - gapi is loaded dynamically
         window.gapi.client.setToken({ access_token: token });
     }
 
@@ -191,20 +216,23 @@ export class GoogleCalendarService {
      */
     signOut() {
         if (this.accessToken) {
+            // @ts-ignore - google is loaded dynamically
             window.google.accounts.oauth2.revoke(this.accessToken, () => {
                 console.log('Token revoked');
             });
         }
 
         this.accessToken = null;
-        localStorage.removeItem('googleCalendarToken');
+        stateManager.remove('googleCalendarToken');
+        // @ts-ignore - gapi is loaded dynamically
         window.gapi.client.setToken(null);
-        this.notifyListeners({ authenticated: false });
+        eventBus.emit('googleCalendar:signedOut', { authenticated: false });
         console.log('✅ Signed out from Google Calendar');
     }
 
     /**
      * Check if user is authenticated
+     * @returns {boolean} True if authenticated
      */
     isAuthenticated() {
         return !!this.accessToken;
@@ -212,6 +240,8 @@ export class GoogleCalendarService {
 
     /**
      * Get today's events
+     * @returns {Promise<Array<Object>>} Today's calendar events
+     * @throws {Error} If not authenticated
      */
     async getTodaysEvents() {
         if (!this.isAuthenticated()) {
@@ -226,7 +256,10 @@ export class GoogleCalendarService {
     }
 
     /**
-     * Get upcoming events (next 7 days)
+     * Get upcoming events (next N days)
+     * @param {number} [days=7] - Number of days to look ahead
+     * @returns {Promise<Array<Object>>} Upcoming calendar events
+     * @throws {Error} If not authenticated
      */
     async getUpcomingEvents(days = 7) {
         if (!this.isAuthenticated()) {
@@ -242,6 +275,11 @@ export class GoogleCalendarService {
 
     /**
      * Get events within date range
+     * @param {Date} startDate - Start date
+     * @param {Date} endDate - End date
+     * @param {number} [maxResults=50] - Maximum number of events
+     * @returns {Promise<Array<Object>>} Calendar events
+     * @throws {Error} If not authenticated or fetch fails
      */
     async getEvents(startDate, endDate, maxResults = 50) {
         if (!this.isAuthenticated()) {
@@ -249,6 +287,7 @@ export class GoogleCalendarService {
         }
 
         try {
+            // @ts-ignore - gapi is loaded dynamically
             const response = await window.gapi.client.calendar.events.list({
                 calendarId: 'primary',
                 timeMin: startDate.toISOString(),
@@ -261,13 +300,19 @@ export class GoogleCalendarService {
 
             return response.result.items || [];
         } catch (error) {
-            console.error('Failed to fetch events:', error);
+            errorHandler.handle(error, {
+                code: ErrorCode.API_ERROR,
+                context: 'Fetching Google Calendar events'
+            });
             throw error;
         }
     }
 
     /**
      * Create a calendar event
+     * @param {Object} event - Event data
+     * @returns {Promise<Object>} Created event
+     * @throws {Error} If not authenticated or creation fails
      */
     async createEvent(event) {
         if (!this.isAuthenticated()) {
@@ -275,21 +320,31 @@ export class GoogleCalendarService {
         }
 
         try {
+            // @ts-ignore - gapi is loaded dynamically
             const response = await window.gapi.client.calendar.events.insert({
                 calendarId: 'primary',
                 resource: event
             });
 
             console.log('✅ Event created:', response.result);
+            eventBus.emit('googleCalendar:eventCreated', { event: response.result });
             return response.result;
         } catch (error) {
-            console.error('Failed to create event:', error);
+            errorHandler.handle(error, {
+                code: ErrorCode.API_ERROR,
+                context: 'Creating Google Calendar event',
+                showToast: true
+            });
             throw error;
         }
     }
 
     /**
      * Update a calendar event
+     * @param {string} eventId - Event ID
+     * @param {Object} updates - Updates to apply
+     * @returns {Promise<Object>} Updated event
+     * @throws {Error} If not authenticated or update fails
      */
     async updateEvent(eventId, updates) {
         if (!this.isAuthenticated()) {
@@ -298,6 +353,7 @@ export class GoogleCalendarService {
 
         try {
             // First get the event
+            // @ts-ignore - gapi is loaded dynamically
             const event = await window.gapi.client.calendar.events.get({
                 calendarId: 'primary',
                 eventId: eventId
@@ -307,6 +363,7 @@ export class GoogleCalendarService {
             const updatedEvent = { ...event.result, ...updates };
 
             // Update
+            // @ts-ignore - gapi is loaded dynamically
             const response = await window.gapi.client.calendar.events.update({
                 calendarId: 'primary',
                 eventId: eventId,
@@ -314,15 +371,23 @@ export class GoogleCalendarService {
             });
 
             console.log('✅ Event updated:', response.result);
+            eventBus.emit('googleCalendar:eventUpdated', { event: response.result });
             return response.result;
         } catch (error) {
-            console.error('Failed to update event:', error);
+            errorHandler.handle(error, {
+                code: ErrorCode.API_ERROR,
+                context: 'Updating Google Calendar event',
+                showToast: true
+            });
             throw error;
         }
     }
 
     /**
      * Delete a calendar event
+     * @param {string} eventId - Event ID
+     * @returns {Promise<boolean>} True if deleted
+     * @throws {Error} If not authenticated or deletion fails
      */
     async deleteEvent(eventId) {
         if (!this.isAuthenticated()) {
@@ -330,21 +395,30 @@ export class GoogleCalendarService {
         }
 
         try {
+            // @ts-ignore - gapi is loaded dynamically
             await window.gapi.client.calendar.events.delete({
                 calendarId: 'primary',
                 eventId: eventId
             });
 
             console.log('✅ Event deleted:', eventId);
+            eventBus.emit('googleCalendar:eventDeleted', { eventId });
             return true;
         } catch (error) {
-            console.error('Failed to delete event:', error);
+            errorHandler.handle(error, {
+                code: ErrorCode.API_ERROR,
+                context: 'Deleting Google Calendar event',
+                showToast: true
+            });
             throw error;
         }
     }
 
     /**
      * Create event from todo
+     * @param {Object} todo - Todo to convert
+     * @returns {Promise<Object>} Created event
+     * @throws {Error} If todo missing due date
      */
     async createEventFromTodo(todo) {
         if (!todo.dueDate) {
@@ -384,6 +458,17 @@ export class GoogleCalendarService {
 
     /**
      * Format event for display
+     * @param {Object} event - Raw calendar event
+     * @returns {Object} Formatted event
+     * @property {string} id - Event ID
+     * @property {string} title - Event title
+     * @property {string} description - Event description
+     * @property {Date} start - Start date/time
+     * @property {Date} end - End date/time
+     * @property {boolean} allDay - True if all-day event
+     * @property {string|null} location - Event location
+     * @property {string} link - Calendar link
+     * @property {Object} raw - Raw event object
      */
     formatEvent(event) {
         const start = event.start.dateTime || event.start.date;
@@ -402,26 +487,6 @@ export class GoogleCalendarService {
         };
     }
 
-    /**
-     * Subscribe to authentication changes
-     */
-    subscribe(callback) {
-        this.callbacks.add(callback);
-        return () => this.callbacks.delete(callback);
-    }
-
-    /**
-     * Notify all listeners
-     */
-    notifyListeners(data) {
-        this.callbacks.forEach(callback => {
-            try {
-                callback(data);
-            } catch (error) {
-                console.error('Listener error:', error);
-            }
-        });
-    }
 }
 
 // Export singleton instance
