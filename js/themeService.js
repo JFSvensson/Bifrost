@@ -3,15 +3,30 @@
  * Sparar preferens i localStorage och respekterar systempreferenser
  */
 
+import eventBus from './eventBus.js';
+import stateManager from './stateManager.js';
+import errorHandler, { ErrorCode } from './errorHandler.js';
+
 class ThemeService {
     constructor() {
-        this.storageKey = 'bifrost-theme';
-        this.init();
+        this._init();
     }
 
-    init() {
+    /**
+     * Initialize theme service
+     * @private
+     */
+    _init() {
+        // Register schema
+        stateManager.registerSchema('theme', {
+            version: 1,
+            validate: (data) => ['light', 'dark'].includes(data),
+            migrate: (oldData) => oldData,
+            default: null
+        });
+
         // Ladda sparad preferens eller använd systempreferens
-        const savedTheme = localStorage.getItem(this.storageKey);
+        const savedTheme = stateManager.get('theme');
 
         if (savedTheme) {
             this.setTheme(savedTheme);
@@ -24,7 +39,7 @@ class ThemeService {
         // Lyssna på systempreferens-ändringar
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
             // Byt bara automatiskt om användaren inte har valt manuellt
-            if (!localStorage.getItem(this.storageKey)) {
+            if (!stateManager.get('theme')) {
                 this.setTheme(e.matches ? 'dark' : 'light');
             }
         });
@@ -33,6 +48,10 @@ class ThemeService {
         this.setupToggle();
     }
 
+    /**
+     * Set theme
+     * @param {'light'|'dark'} theme - Theme to apply
+     */
     setTheme(theme) {
         const body = document.body;
         const themeColor = document.getElementById('theme-color');
@@ -51,16 +70,30 @@ class ThemeService {
         }
 
         // Spara preferens
-        localStorage.setItem(this.storageKey, theme);
+        try {
+            stateManager.set('theme', theme);
+        } catch (error) {
+            errorHandler.handle(error, {
+                code: ErrorCode.STORAGE_ERROR,
+                context: 'Saving theme preference'
+            });
+        }
 
-        // Trigger custom event för andra komponenter
-        window.dispatchEvent(new CustomEvent('themechange', { detail: { theme } }));
+        // Emit event
+        eventBus.emit('theme:changed', { theme });
     }
 
+    /**
+     * Get current theme
+     * @returns {'light'|'dark'} Current theme
+     */
     getTheme() {
         return document.body.classList.contains('dark-theme') ? 'dark' : 'light';
     }
 
+    /**
+     * Toggle between light and dark theme
+     */
     toggleTheme() {
         const currentTheme = this.getTheme();
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -70,6 +103,10 @@ class ThemeService {
         this.animateToggle();
     }
 
+    /**
+     * Animate toggle button
+     * @private
+     */
     animateToggle() {
         const toggle = document.getElementById('theme-toggle');
         if (toggle) {
@@ -78,6 +115,10 @@ class ThemeService {
         }
     }
 
+    /**
+     * Setup theme toggle button and keyboard shortcut
+     * @private
+     */
     setupToggle() {
         const toggle = document.getElementById('theme-toggle');
         if (toggle) {
