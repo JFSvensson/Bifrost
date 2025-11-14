@@ -3,6 +3,10 @@
  * Manages work/break intervals, notifications, and session tracking
  */
 
+import eventBus from './eventBus.js';
+import stateManager from './stateManager.js';
+import errorHandler, { ErrorCode } from './errorHandler.js';
+
 export class PomodoroService {
     constructor() {
         this.duration = {
@@ -21,9 +25,31 @@ export class PomodoroService {
         };
 
         this.interval = null;
-        this.callbacks = new Set();
+        this._init();
+    }
 
-        // Load state from localStorage
+    /**
+     * Initialize pomodoro service
+     * @private
+     */
+    _init() {
+        // Register schema
+        stateManager.registerSchema('pomodoroState', {
+            version: 1,
+            validate: (data) => {
+                return typeof data.totalSessionsToday === 'number' &&
+                       typeof data.sessionsCompleted === 'number' &&
+                       typeof data.date === 'string';
+            },
+            migrate: (oldData) => oldData,
+            default: {
+                totalSessionsToday: 0,
+                sessionsCompleted: 0,
+                date: new Date().toDateString()
+            }
+        });
+
+        // Load state from storage
         this.loadState();
 
         // Setup keyboard shortcuts
@@ -34,45 +60,51 @@ export class PomodoroService {
     }
 
     /**
-     * Load state from localStorage
+     * Load state from storage
+     * @private
      */
     loadState() {
         try {
-            const saved = localStorage.getItem('pomodoroState');
-            if (saved) {
-                const savedState = JSON.parse(saved);
+            const savedState = stateManager.get('pomodoroState');
 
-                // Check if it's from today
-                const today = new Date().toDateString();
-                const savedDate = savedState.date;
+            // Check if it's from today
+            const today = new Date().toDateString();
+            const savedDate = savedState.date;
 
-                if (savedDate === today) {
-                    this.state.totalSessionsToday = savedState.totalSessionsToday || 0;
-                    this.state.sessionsCompleted = savedState.sessionsCompleted || 0;
-                } else {
-                    // New day, reset
-                    this.state.totalSessionsToday = 0;
-                    this.state.sessionsCompleted = 0;
-                }
+            if (savedDate === today) {
+                this.state.totalSessionsToday = savedState.totalSessionsToday || 0;
+                this.state.sessionsCompleted = savedState.sessionsCompleted || 0;
+            } else {
+                // New day, reset
+                this.state.totalSessionsToday = 0;
+                this.state.sessionsCompleted = 0;
             }
         } catch (error) {
-            console.error('Failed to load pomodoro state:', error);
+            errorHandler.handle(error, {
+                code: ErrorCode.STORAGE_ERROR,
+                context: 'Loading pomodoro state'
+            });
         }
     }
 
     /**
-     * Save state to localStorage
+     * Save state to storage
+     * @private
      */
     saveState() {
         try {
             const today = new Date().toDateString();
-            localStorage.setItem('pomodoroState', JSON.stringify({
+            stateManager.set('pomodoroState', {
                 totalSessionsToday: this.state.totalSessionsToday,
                 sessionsCompleted: this.state.sessionsCompleted,
                 date: today
-            }));
+            });
         } catch (error) {
-            console.error('Failed to save pomodoro state:', error);
+            errorHandler.handle(error, {
+                code: ErrorCode.STORAGE_ERROR,
+                context: 'Saving pomodoro state',
+                showToast: true
+            });
         }
     }
 
@@ -117,7 +149,7 @@ export class PomodoroService {
             this.tick();
         }, 1000);
 
-        this.notifyListeners();
+        eventBus.emit('pomodoro:started', { state: this.getState() });
     }
 
     /**
@@ -130,7 +162,7 @@ export class PomodoroService {
         clearInterval(this.interval);
         this.interval = null;
 
-        this.notifyListeners();
+        eventBus.emit('pomodoro:paused', { state: this.getState() });
     }
 
     /**
@@ -151,7 +183,7 @@ export class PomodoroService {
         this.pause();
         this.state.timeLeft = this.duration[this.state.mode === 'work' ? 'work' :
             this.state.sessionsCompleted % 4 === 0 ? 'longBreak' : 'shortBreak'];
-        this.notifyListeners();
+        eventBus.emit('pomodoro:reset', { state: this.getState() });
     }
 
     /**
@@ -164,11 +196,12 @@ export class PomodoroService {
 
     /**
      * Timer tick (1 second)
+     * @private
      */
     tick() {
         if (this.state.timeLeft > 0) {
             this.state.timeLeft--;
-            this.notifyListeners();
+            eventBus.emit('pomodoro:tick', { state: this.getState() });
         } else {
             // Timer complete
             this.completeSession();
@@ -177,6 +210,7 @@ export class PomodoroService {
 
     /**
      * Complete current session and switch mode
+     * @private
      */
     completeSession() {
         const wasWork = this.state.mode === 'work';
@@ -193,13 +227,11 @@ export class PomodoroService {
             this.state.totalSessionsToday++;
             this.saveState();
 
-            // Dispatch event for stats integration
-            window.dispatchEvent(new CustomEvent('pomodoroCompleted', {
-                detail: {
-                    sessionsCompleted: this.state.sessionsCompleted,
-                    totalToday: this.state.totalSessionsToday
-                }
-            }));
+            // Emit event for stats integration
+            eventBus.emit('pomodoro:completed', {
+                sessionsCompleted: this.state.sessionsCompleted,
+                totalToday: this.state.totalSessionsToday
+            });
         }
 
         // Switch mode
@@ -221,11 +253,13 @@ export class PomodoroService {
         // this.start();
 
         this.pause();
-        this.notifyListeners();
+        eventBus.emit('pomodoro:modeChanged', { state: this.getState() });
     }
 
     /**
      * Show notification when timer completes
+     * @param {boolean} wasWork - Whether it was a work session
+     * @private
      */
     showNotification(wasWork) {
         const title = wasWork ? '🎉 Pomodoro Complete!' : '✅ Break Over!';
@@ -255,6 +289,9 @@ export class PomodoroService {
 
     /**
      * Show toast notification
+     * @param {string} message - Toast message
+     * @param {string} [type='work'] - Toast type ('work' or 'break')
+     * @private
      */
     showToast(message, type = 'work') {
         // Remove existing toasts
@@ -293,11 +330,14 @@ export class PomodoroService {
 
     /**
      * Play completion sound
+     * @private
      */
     playSound() {
         try {
             // Create a simple beep sound using Web Audio API
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            // @ts-ignore - webkitAudioContext is legacy but still needed for some browsers
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            const audioContext = new AudioCtx();
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
 
@@ -319,6 +359,7 @@ export class PomodoroService {
 
     /**
      * Get current state
+     * @returns {Object} Current pomodoro state
      */
     getState() {
         return { ...this.state };
@@ -326,6 +367,7 @@ export class PomodoroService {
 
     /**
      * Get formatted time (MM:SS)
+     * @returns {string} Formatted time string
      */
     getFormattedTime() {
         const minutes = Math.floor(this.state.timeLeft / 60);
@@ -335,6 +377,7 @@ export class PomodoroService {
 
     /**
      * Get progress percentage
+     * @returns {number} Progress percentage (0-100)
      */
     getProgress() {
         const total = this.duration[this.state.mode === 'work' ? 'work' :
@@ -344,6 +387,7 @@ export class PomodoroService {
 
     /**
      * Get mode display name
+     * @returns {string} Human-readable mode name
      */
     getModeName() {
         const names = {
@@ -355,28 +399,12 @@ export class PomodoroService {
     }
 
     /**
-     * Subscribe to timer updates
-     */
-    subscribe(callback) {
-        this.callbacks.add(callback);
-        return () => this.callbacks.delete(callback);
-    }
-
-    /**
-     * Notify all listeners
-     */
-    notifyListeners() {
-        this.callbacks.forEach(callback => {
-            try {
-                callback(this.getState());
-            } catch (error) {
-                console.error('Listener error:', error);
-            }
-        });
-    }
-
-    /**
      * Get today's stats
+     * @returns {Object} Today's pomodoro statistics
+     * @property {number} sessionsCompleted - Sessions completed in current streak
+     * @property {number} totalSessions - Total sessions today
+     * @property {number} focusMinutes - Total focus time today
+     * @property {number} streakSessions - Current streak
      */
     getTodayStats() {
         return {
@@ -389,6 +417,9 @@ export class PomodoroService {
 
     /**
      * Set custom durations (in minutes)
+     * @param {number} work - Work duration in minutes
+     * @param {number} shortBreak - Short break duration in minutes
+     * @param {number} longBreak - Long break duration in minutes
      */
     setDurations(work, shortBreak, longBreak) {
         if (work) {this.duration.work = work * 60;}
@@ -399,6 +430,8 @@ export class PomodoroService {
         if (!this.state.isRunning) {
             this.reset();
         }
+
+        eventBus.emit('pomodoro:durationsChanged', { duration: this.duration });
     }
 }
 
