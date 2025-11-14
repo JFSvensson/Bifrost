@@ -398,17 +398,26 @@ class EventBus {
     /**
      * Hämtar alla aktiva listeners
      *
-     * @returns {Object.<string, number>} Antal listeners per event
+     * @param {string} [eventName] - Optional event name to get count for specific event
+     * @returns {Object.<string, number>|number} Antal listeners per event, eller antal för specifikt event
      */
-    getListenerCount() {
+    getListenerCount(eventName) {
+        if (eventName) {
+            // Return count for specific event
+            const regularListeners = this.listeners[eventName] || [];
+            const onceListeners = this.onceListeners[eventName] || [];
+            return regularListeners.length + onceListeners.length;
+        }
+
+        // Return counts for all events
         const counts = Object.create(null);
 
-        Object.keys(this.listeners).forEach(eventName => {
-            counts[eventName] = this.listeners[eventName].length;
+        Object.keys(this.listeners).forEach(event => {
+            counts[event] = this.listeners[event].length;
         });
 
-        Object.keys(this.onceListeners).forEach(eventName => {
-            counts[eventName] = (counts[eventName] || 0) + this.onceListeners[eventName].length;
+        Object.keys(this.onceListeners).forEach(event => {
+            counts[event] = (counts[event] || 0) + this.onceListeners[event].length;
         });
 
         return counts;
@@ -442,6 +451,15 @@ class EventBus {
     }
 
     /**
+     * Rensar event-historik
+     *
+     * @returns {void}
+     */
+    clearHistory() {
+        this.eventHistory = [];
+    }
+
+    /**
      * Hämtar statistik över event-systemet
      *
      * @returns {Object} Statistik-objekt
@@ -449,7 +467,7 @@ class EventBus {
     getStats() {
         return {
             totalEvents: this.eventHistory.length,
-            listenerCount: this.getListenerCount(),
+            listenerCount: Object.values(this.getListenerCount()).reduce((sum, count) => sum + count, 0),
             namespaces: Array.from(this.registeredNamespaces),
             recentEvents: this.eventHistory.slice(-10)
         };
