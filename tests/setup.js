@@ -21,7 +21,7 @@ globalThis.localStorage = {
 };
 
 // Mock window.matchMedia for theme testing
-globalThis.matchMedia = globalThis.matchMedia || function(query) {
+globalThis.matchMedia = globalThis.matchMedia || function (query) {
     return {
         matches: false,
         media: query,
@@ -47,4 +47,10 @@ globalThis.PromiseRejectionEvent = class PromiseRejectionEvent {
 // eslint-disable-next-line no-undef
 beforeEach(() => {
     localStorage.clear();
+
+    // Enable test mode for stateManager to disable debouncing in tests
+    // This is handled by the stateManager import check
+    if (globalThis.__VITEST__) {
+        globalThis.__TEST_MODE__ = true;
+    }
 });
