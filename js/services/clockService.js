@@ -1,7 +1,16 @@
 import { clock as clockConfig } from '../config/config.js';
+import eventBus from '../core/eventBus.js';
+import errorHandler, { ErrorCode } from '../core/errorHandler.js';
 
 /**
  * Clock service for time and timezone management
+ * 
+ * Provides time formatting, timezone conversion, and working hours detection.
+ * 
+ * @example
+ * const clockService = new ClockService();
+ * const time = clockService.getCurrentTime('Europe/Stockholm');
+ * console.log(time.time); // "14:30"
  */
 export class ClockService {
     /**
@@ -12,6 +21,65 @@ export class ClockService {
         this.format = clockConfig.format;
         this.updateInterval = clockConfig.updateInterval;
         this.showSeconds = clockConfig.showSeconds;
+
+        this._init();
+    }
+
+    /**
+     * Initialize service
+     * @private
+     */
+    _init() {
+        // Register EventBus namespace
+        eventBus.register('clock');
+
+        // Emit initial time
+        this._emitTimeUpdate();
+
+        // Set up periodic updates if needed
+        if (this.updateInterval > 0) {
+            this.startUpdates();
+        }
+    }
+
+    /**
+     * Start periodic time updates
+     */
+    startUpdates() {
+        if (this.updateIntervalId) {
+            return; // Already running
+        }
+
+        this.updateIntervalId = setInterval(() => {
+            this._emitTimeUpdate();
+        }, this.updateInterval);
+    }
+
+    /**
+     * Stop periodic time updates
+     */
+    stopUpdates() {
+        if (this.updateIntervalId) {
+            clearInterval(this.updateIntervalId);
+            this.updateIntervalId = null;
+        }
+    }
+
+    /**
+     * Emit time update event
+     * @private
+     */
+    _emitTimeUpdate() {
+        try {
+            const allTimezones = this.getAllTimezones();
+            eventBus.emit('clock:update', allTimezones);
+        } catch (error) {
+            errorHandler.handle(error, {
+                code: ErrorCode.UNKNOWN_ERROR,
+                context: 'Updating clock',
+                showToast: false
+            });
+        }
     }
 
     /**
@@ -22,16 +90,25 @@ export class ClockService {
      * @property {string} date - Formatted date
      * @property {string} timezone - Timezone identifier
      * @property {number} timestamp - Unix timestamp
+     * @throws {Error} If timezone is invalid
      */
     getCurrentTime(timezone = 'Europe/Stockholm') {
-        const now = new Date();
+        try {
+            const now = new Date();
 
-        return {
-            time: this.formatTime(now, timezone),
-            date: this.formatDate(now, timezone),
-            timezone: timezone,
-            timestamp: now.getTime()
-        };
+            return {
+                time: this.formatTime(now, timezone),
+                date: this.formatDate(now, timezone),
+                timezone: timezone,
+                timestamp: now.getTime()
+            };
+        } catch (error) {
+            errorHandler.handle(error, {
+                code: ErrorCode.VALIDATION_ERROR,
+                context: `Getting time for timezone: ${timezone}`
+            });
+            throw error;
+        }
     }
 
     /**
@@ -109,11 +186,32 @@ export class ClockService {
      * @param {string} fromTimezone - Source timezone
      * @param {string} toTimezone - Target timezone
      * @returns {number} Hour difference
+     * @throws {Error} If timezone is invalid
      */
     getTimeDifference(fromTimezone, toTimezone) {
-        const now = new Date();
-        const fromTime = new Date(now.toLocaleString('en-US', { timeZone: fromTimezone }));
-        const toTime = new Date(now.toLocaleString('en-US', { timeZone: toTimezone }));
-        return Math.round((toTime.getTime() - fromTime.getTime()) / (1000 * 60 * 60));
+        try {
+            const now = new Date();
+            const fromTime = new Date(now.toLocaleString('en-US', { timeZone: fromTimezone }));
+            const toTime = new Date(now.toLocaleString('en-US', { timeZone: toTimezone }));
+            return Math.round((toTime.getTime() - fromTime.getTime()) / (1000 * 60 * 60));
+        } catch (error) {
+            errorHandler.handle(error, {
+                code: ErrorCode.VALIDATION_ERROR,
+                context: `Calculating time difference: ${fromTimezone} -> ${toTimezone}`
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * Cleanup resources
+     */
+    destroy() {
+        this.stopUpdates();
     }
 }
+
+/**
+ * Events emitted by ClockService:
+ * - clock:update - Emitted periodically with all timezone data
+ */
