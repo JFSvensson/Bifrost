@@ -70,9 +70,6 @@ class ReminderService {
             default: []
         });
 
-        // Register EventBus namespace
-        eventBus.register('reminder');
-
         this.loadReminders();
         this.checkNotificationPermission();
         this.startMonitoring();
@@ -199,6 +196,9 @@ class ReminderService {
 
         const remindAt = this.calculateSnoozeTime(preset);
 
+        // Get previous snooze count BEFORE filtering
+        const previousSnoozeCount = this.getSnoozedReminder(todoId)?.snoozeCount || 0;
+
         // Ta bort tidigare påminnelser för denna todo (undvik duplicates)
         this.reminders = this.reminders.filter(r => r.todoId !== todoId);
 
@@ -212,7 +212,7 @@ class ReminderService {
         });
 
         reminder.snoozedAt = new Date();
-        reminder.snoozeCount = (this.getSnoozedReminder(todoId)?.snoozeCount || 0) + 1;
+        reminder.snoozeCount = previousSnoozeCount + 1;
         this.saveReminders();
 
         eventBus.emit('reminder:todoSnoozed', {
