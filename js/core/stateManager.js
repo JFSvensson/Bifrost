@@ -59,6 +59,9 @@ class StateManager {
         /** @type {boolean} Auto-backup enabled */
         this.autoBackupEnabled = true;
 
+        /** @type {number} Backup counter for unique timestamps */
+        this._backupCounter = 0;
+
         /** @type {number} Max backup age in days */
         this.maxBackupAge = 7;
 
@@ -74,7 +77,36 @@ class StateManager {
         // Create debounced flush function
         this._debouncedFlush = debounce(() => this._flushPendingWrites(), this.debounceDelay);
 
+        /** @type {Set<string>} Internal registry of localStorage keys */
+        this._keys = new Set();
+
         this._init();
+    }
+
+    /**
+     * Synchronize internal key registry with localStorage
+     * @private
+     */
+    _syncKeys() {
+        // Try multiple enumeration methods
+        try {
+            // Method 1: for...in
+            for (const key in localStorage) {
+                if (localStorage.hasOwnProperty(key)) {
+                    this._keys.add(key);
+                }
+            }
+        } catch (e) {}
+        
+        try {
+            // Method 2: Standard iteration
+            if (typeof localStorage.length === 'number') {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key) this._keys.add(key);
+                }
+            }
+        } catch (e) {}
     }
 
     /**
@@ -83,39 +115,16 @@ class StateManager {
      * @returns {string[]} Array of keys
      */
     _getAllKeys() {
+        // Return keys from our registry, filtered to only include keys that still exist
         const keys = [];
-        
-        // Use for...in loop which works better with happy-dom localStorage
-        try {
-            for (const key in localStorage) {
-                // Check if it's own property and actually retrievable
-                if (localStorage.hasOwnProperty(key) && localStorage.getItem(key) !== null) {
-                    keys.push(key);
-                }
-            }
-        } catch (e) {
-            // Fallback to Object.keys if for...in fails
-            try {
-                Object.keys(localStorage).forEach(key => {
-                    if (localStorage.getItem(key) !== null) {
-                        keys.push(key);
-                    }
-                });
-            } catch (e2) {
-                // Last resort: standard iteration
-                try {
-                    if (typeof localStorage.length === 'number') {
-                        for (let i = 0; i < localStorage.length; i++) {
-                            const key = localStorage.key(i);
-                            if (key) keys.push(key);
-                        }
-                    }
-                } catch (e3) {
-                    // Silent fail
-                }
+        for (const key of this._keys) {
+            if (localStorage.getItem(key) !== null) {
+                keys.push(key);
+            } else {
+                // Remove stale keys
+                this._keys.delete(key);
             }
         }
-        
         return keys;
     }
 
@@ -134,6 +143,7 @@ class StateManager {
         // Register state namespace in eventBus
         eventBus.registerNamespace('state');
 
+        this._syncKeys();
         this._checkStorageQuota();
         this._cleanupOldBackups();
 
@@ -281,6 +291,7 @@ class StateManager {
             if (immediate || this.testMode) {
                 const serialized = JSON.stringify(storageObject);
                 localStorage.setItem(key, serialized);
+                this._keys.add(key); // Track key
             } else {
                 // Buffer write for debouncing
                 this.pendingWrites.set(key, { storageObject, notify });
@@ -328,6 +339,7 @@ class StateManager {
             try {
                 const serialized = JSON.stringify(storageObject);
                 localStorage.setItem(key, serialized);
+                this._keys.add(key); // Track key
             } catch (error) {
                 // Hantera quota exceeded
                 if (error.name === 'QuotaExceededError') {
@@ -343,6 +355,7 @@ class StateManager {
                     try {
                         const serialized = JSON.stringify(storageObject);
                         localStorage.setItem(key, serialized);
+                        this._keys.add(key); // Track key
                     } catch (retryError) {
                         console.error(`Failed to flush ${key}:`, retryError);
                     }
@@ -381,6 +394,7 @@ class StateManager {
         const { notify = true } = options;
 
         localStorage.removeItem(key);
+        this._keys.delete(key); // Remove from registry
 
         if (notify) {
             this._notifySubscribers(key, null);
@@ -415,6 +429,7 @@ class StateManager {
         }
 
         localStorage.clear();
+        this._keys.clear(); // Clear key registry
 
         if (!keepSchemas) {
             this.schemas = {};
@@ -522,8 +537,9 @@ class StateManager {
                 }
             });
 
-            const backupKey = `backup_${Date.now()}`;
+            const backupKey = `backup_${Date.now()}_${this._backupCounter++}`;
             localStorage.setItem(backupKey, JSON.stringify(backup));
+            this._keys.add(backupKey);
 
             console.log('[StateManager] Backup created:', backupKey);
             return true;
@@ -565,6 +581,7 @@ class StateManager {
             // Återställ alla keys
             Object.keys(backup).forEach(key => {
                 localStorage.setItem(key, backup[key]);
+                this._keys.add(key); // Track restored key
             });
 
             eventBus.emit('state:restored', { backupKey });
@@ -589,6 +606,9 @@ class StateManager {
      * @returns {void}
      */
     _cleanupOldBackups() {
+        // Re-sync keys to catch any backups created outside normal flow (e.g., in tests)
+        this._syncKeys();
+        
         const cutoffTime = Date.now() - (this.maxBackupAge * 24 * 60 * 60 * 1000);
 
         const keysToRemove = this._getAllKeys()
@@ -598,7 +618,10 @@ class StateManager {
                 return timestamp < cutoffTime;
             });
         
-        keysToRemove.forEach(key => localStorage.removeItem(key));
+        keysToRemove.forEach(key => {
+            localStorage.removeItem(key);
+            this._keys.delete(key);
+        });
     }
 
     /**
@@ -608,6 +631,9 @@ class StateManager {
      * @returns {void}
      */
     _cleanupOldData() {
+        // Re-sync keys to ensure we find all stored data
+        this._syncKeys();
+        
         const now = Date.now();
         const keys = this._getAllKeys();
         const keysToRemove = [];
@@ -626,7 +652,10 @@ class StateManager {
             }
         });
         
-        keysToRemove.forEach(key => localStorage.removeItem(key));
+        keysToRemove.forEach(key => {
+            localStorage.removeItem(key);
+            this._keys.delete(key);
+        });
     }
 
     /**
@@ -733,8 +762,10 @@ class StateManager {
 
         Object.keys(data).forEach(key => {
             try {
-                const value = typeof data[key] === 'string' ? data[key] : JSON.stringify(data[key]);
+                // Always JSON.stringify to ensure consistent storage format
+                const value = JSON.stringify(data[key]);
                 localStorage.setItem(key, value);
+                this._keys.add(key); // Track imported key
             } catch (error) {
                 errorHandler.log(
                     ErrorCode.STORAGE_ERROR,
@@ -762,6 +793,22 @@ class StateManager {
         });
         
         return size;
+    }
+
+    /**
+     * Get all keys in localStorage (including internal registry for test environments)
+     * @returns {string[]} Array of all keys
+     */
+    getAllKeys() {
+        return this._getAllKeys();
+    }
+
+    /**
+     * Add a key to the internal registry (for test environments)
+     * @param {string} key - Key to track
+     */
+    _trackKey(key) {
+        this._keys.add(key);
     }
 
     /**
