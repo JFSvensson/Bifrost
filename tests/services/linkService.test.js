@@ -37,8 +37,23 @@ describe('LinkService', () => {
       expect(linkService.storageKey).toBe('links');
     });
 
-    it('should setup event listeners', () => {
-      expect(eventBus.listeners['app:ready']).toBeDefined();
+    it('should setup event listeners', async () => {
+      // Event listeners set up during initialization
+      // Create new service to test fresh listener setup
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => []
+      });
+      
+      const newService = new LinkService(stateManager);
+      const loadSpy = vi.spyOn(newService, 'load');
+      
+      eventBus.emit('app:ready');
+      
+      // Wait a tick for event to process
+      await new Promise(resolve => setTimeout(resolve, 0));
+      
+      expect(loadSpy).toHaveBeenCalled();
     });
   });
 
@@ -172,16 +187,13 @@ describe('LinkService', () => {
     });
 
     it('should validate links data format', async () => {
-      // Non-array response
+      // Non-array response should throw error
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({ invalid: 'format' })
       });
 
-      await linkService.fetchLinks();
-
-      // Should handle invalid format
-      expect(linkService.links).not.toEqual({ invalid: 'format' });
+      await expect(linkService.fetchLinks()).rejects.toThrow('Invalid links data format');
     });
   });
 
@@ -427,10 +439,20 @@ describe('LinkService', () => {
 
   describe('Event listeners', () => {
     it('should reload links on app:ready event', async () => {
-      const loadSpy = vi.spyOn(linkService, 'load');
-
+      // Event listener already set up during beforeEach
+      // Test by verifying load is called when app:ready emitted
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => []
+      });
+      
+      const loadSpy = vi.spyOn(linkService, 'load').mockImplementation(async () => {});
+      
       eventBus.emit('app:ready');
-
+      
+      // Wait for async event handler
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
       expect(loadSpy).toHaveBeenCalled();
     });
   });
