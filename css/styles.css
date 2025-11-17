@@ -1034,3 +1034,33 @@ school-menu {
         display: none;
     }
 }
+/* ===== LAZY LOADING WIDGETS ===== */
+.widget-loading {
+    min-height: 100px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.widget-loading::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border: 3px solid rgba(52, 152, 219, 0.2);
+    border-top-color: #3498db;
+    border-radius: 50%;
+    animation: widget-spin 0.8s linear infinite;
+}
+
+@keyframes widget-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Remove loading indicator once widget is loaded */
+.widget-loading:defined::before {
+    display: none;
+}
