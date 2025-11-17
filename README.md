@@ -109,7 +109,7 @@ Bifrost/
 - **Sektioner** - Organisera todos under rubriker
 - **Visuell distinktion** - Obsidian vs lokala todos med olika färger
 - **Auto-merge** - Kombinerar Obsidian + Bifrost todos
-- **Se guide**: [OBSIDIAN_SETUP.md](OBSIDIAN_SETUP.md)
+- **Se guide**: [OBSIDIAN_SETUP.md](docs/guides/OBSIDIAN_SETUP.md)
 
 ### ⚡ **Quick Add**
 - **Natural language parsing** - Skriv "Möt Anna imorgon 14:00 #arbete [!high]"
@@ -120,7 +120,7 @@ Bifrost/
 - **Live preview** - Se parsed elements medan du skriver
 - **Keyboard shortcuts** - Ctrl+K för fokus, Enter för submit
 - **Suggestions** - Autocomplete för datum och prioriteter
-- **Se guide**: [QUICK_ADD_GUIDE.md](QUICK_ADD_GUIDE.md)
+- **Se guide**: [QUICK_ADD_GUIDE.md](docs/features/QUICK_ADD_GUIDE.md)
 
 ### 📊 **Statistik Dashboard**
 - **Streaks** - Spårar dagar i rad med färdiga todos 🔥
@@ -130,7 +130,7 @@ Bifrost/
 - **Completion rate** - Procentandel färdiga todos
 - **Genomsnittstid** - Hur lång tid det tar att slutföra todos
 - **Real-time uppdatering** - Statistik uppdateras live
-- **Se guide**: [STATS_GUIDE.md](STATS_GUIDE.md)
+- **Se guide**: [STATS_GUIDE.md](docs/features/STATS_GUIDE.md)
 
 ### ⚠️ **Deadline Warnings**
 - **Smart kategorisering** - Försenad, idag, imorgon, denna vecka
@@ -140,7 +140,7 @@ Bifrost/
 - **Daglig sammanfattning** - Rapport vid första laddning
 - **Färgkodade nivåer** - Röd (försenad), Orange (idag), Blå (imorgon)
 - **Automatisk monitoring** - Kontrollerar varje minut, återställs vid midnatt
-- **Se guide**: [DEADLINE_GUIDE.md](DEADLINE_GUIDE.md)
+- **Se guide**: [DEADLINE_GUIDE.md](docs/features/DEADLINE_GUIDE.md)
 
 ### ⏱️ **Pomodoro Timer**
 - **25/5/15 min intervaller** - Work (25 min), short break (5 min), long break (15 min)
@@ -150,7 +150,7 @@ Bifrost/
 - **Keyboard shortcuts** - Ctrl+Shift+P (start/pause), Ctrl+Shift+R (reset)
 - **Ljudnotifikationer** - Subtil beep när session är klar
 - **Dark theme support** - Fullt stöd för mörkt tema
-- **Se guide**: [POMODORO_GUIDE.md](POMODORO_GUIDE.md)
+- **Se guide**: [POMODORO_GUIDE.md](docs/features/POMODORO_GUIDE.md)
 
 ### 📅 **Google Calendar Integration**
 - **OAuth 2.0 autentisering** - Säker inloggning med Google-konto
@@ -160,7 +160,7 @@ Bifrost/
 - **Event detaljer** - Titel, tid, beskrivning, plats, länk
 - **All-day & timed events** - Stöd för båda typerna
 - **Calendar widget** - Visuell display med refresh-funktion
-- **Se guide**: [GOOGLE_CALENDAR_GUIDE.md](GOOGLE_CALENDAR_GUIDE.md)
+- **Se guide**: [GOOGLE_CALENDAR_GUIDE.md](docs/guides/GOOGLE_CALENDAR_GUIDE.md)
 
 ## Snabbstart
 
@@ -186,7 +186,7 @@ Proxyn kör på: http://localhost:8787/api/school-menu
 node obsidianBridge.js
 ```
 Bridge kör på: http://localhost:8081/obsidian/todos  
-Se [OBSIDIAN_SETUP.md](OBSIDIAN_SETUP.md) för fullständig guide
+Se [OBSIDIAN_SETUP.md](docs/guides/OBSIDIAN_SETUP.md) för fullständig guide
 
 ### 4. Starta statisk server
 **VS Code (rekommenderat):**
@@ -209,7 +209,7 @@ Surfa till den port din server visar (t.ex. http://localhost:5500 eller http://l
 
 ## Konfiguration
 
-Anpassa inställningar i [`js/config.js`](js/config.js). Se [CONFIG.md](CONFIG.md) för detaljer.
+Anpassa inställningar i [`js/config/config.js`](js/config/config.js). Se [CONFIG.md](docs/architecture/CONFIG.md) för detaljer.
 
 **Populära anpassningar:**
 ```js
@@ -490,17 +490,17 @@ GET https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geoty
 **Todos från Obsidian visas inte:**
 - Kontrollera format: `- [ ] Text` (mellanslag viktigt!)
 - Verifiera att bridge är igång och tillgänglig
-- Kolla `todos.obsidian.enabled: true` i config.js
+- Kolla `todos.obsidian.enabled: true` i js/config/config.js
 - Se Network-fliken i DevTools för API-anrop
 
 **Väder laddas inte:**
 - Kontrollera internetanslutning (SMHI API kräver internet)
 - Kolla nätverksflik i DevTools för CORS-fel
-- Verifiera att koordinater är korrekta i config.js
+- Verifiera att koordinater är korrekta i js/config/config.js
 
 **Klockan visar fel tid:**
 - Kontrollera systemtid på datorn
-- Verifiera tidszonsinställningar i config.js
+- Verifiera tidszonsinställningar in js/config/config.js
 - Kolla att `Intl.DateTimeFormat` stöds i webbläsaren
 
 **Skolmat laddas inte:**
@@ -523,7 +523,7 @@ GET https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geoty
 
 **Todo-listan sparas inte:**
 - Kontrollera localStorage i DevTools
-- Kolla att `todos.autoSave: true` i config.js
+- Kolla att `todos.autoSave: true` i js/config/config.js
 
 **Responsiv design fungerar inte:**
 - Kontrollera att viewport meta-tag finns i HTML
@@ -537,16 +537,16 @@ GET https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geoty
 
 ## Dokumentation
 
-- **[CONFIG.md](CONFIG.md)** - Fullständig konfigurationsguide
-- **[OBSIDIAN_SETUP.md](OBSIDIAN_SETUP.md)** - Obsidian-integration setup
-- **[DARK_THEME.md](DARK_THEME.md)** - Guide för mörkt tema och anpassning
-- **[STATS_GUIDE.md](STATS_GUIDE.md)** - Statistik dashboard och API-referens
-- **[DEADLINE_GUIDE.md](DEADLINE_GUIDE.md)** - Deadline warnings och notifications
-- **[POMODORO_GUIDE.md](POMODORO_GUIDE.md)** - Pomodoro timer och fokusläge
-- **[GOOGLE_CALENDAR_GUIDE.md](GOOGLE_CALENDAR_GUIDE.md)** - Google Calendar integration
-- **[QUICK_ADD_GUIDE.md](QUICK_ADD_GUIDE.md)** - Natural language parser för todos
-- **[FAVICON_README.md](FAVICON_README.md)** - Favicon-generering och anpassning
-- **[example-TODO.md](example-TODO.md)** - Exempel på Obsidian todo-format
+- **[CONFIG.md](docs/architecture/CONFIG.md)** - Fullständig konfigurationsguide
+- **[OBSIDIAN_SETUP.md](docs/guides/OBSIDIAN_SETUP.md)** - Obsidian-integration setup
+- **[DARK_THEME.md](docs/guides/DARK_THEME.md)** - Guide för mörkt tema och anpassning
+- **[STATS_GUIDE.md](docs/features/STATS_GUIDE.md)** - Statistik dashboard och API-referens
+- **[DEADLINE_GUIDE.md](docs/features/DEADLINE_GUIDE.md)** - Deadline warnings och notifications
+- **[POMODORO_GUIDE.md](docs/features/POMODORO_GUIDE.md)** - Pomodoro timer och fokusläge
+- **[GOOGLE_CALENDAR_GUIDE.md](docs/guides/GOOGLE_CALENDAR_GUIDE.md)** - Google Calendar integration
+- **[QUICK_ADD_GUIDE.md](docs/features/QUICK_ADD_GUIDE.md)** - Natural language parser för todos
+- **[FAVICON_README.md](docs/guides/FAVICON_README.md)** - Favicon-generering och anpassning
+- **[example-TODO.md](data/examples/example-TODO.md)** - Exempel på Obsidian todo-format
 
 ## Utveckling
 
@@ -554,7 +554,7 @@ GET https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geoty
 1. Skapa ny ES6-modul i `js/`
 2. Importera i `main.js` eller `index.html`
 3. Uppdatera Service Worker's `STATIC_ASSETS`
-4. Lägg till konfiguration i `config.js`
+4. Lägg till konfiguration i `js/config/config.js`
 
 **Skapa ny widget:**
 ```javascript
@@ -603,9 +603,9 @@ customElements.define('new-widget', NewWidget);
 - **Layout**: Justera CSS Grid i `styles.css`
 
 **Nya konfigurationsalternativ:**
-1. Lägg till i `config.js`
+1. Lägg till i `js/config/config.js`
 2. Använd i relevanta komponenter via import
-3. Dokumentera i `CONFIG.md`
+3. Dokumentera i `docs/architecture/CONFIG.md`
 
 ## Teknologi
 
@@ -758,18 +758,18 @@ customElements.define('new-widget', NewWidget);
 
 ## Dokumentation
 
-- [CONFIG.md](CONFIG.md) - Fullständig konfigurationsguide
-- [OBSIDIAN_SETUP.md](OBSIDIAN_SETUP.md) - Steg-för-steg Obsidian-integration
-- [DARK_THEME.md](DARK_THEME.md) - Guide för mörkt tema och anpassning
-- [STATS_GUIDE.md](STATS_GUIDE.md) - Statistik dashboard och API-referens
-- [DEADLINE_GUIDE.md](DEADLINE_GUIDE.md) - Deadline warnings och notifications
-- [POMODORO_GUIDE.md](POMODORO_GUIDE.md) - Pomodoro timer och fokusläge
-- [GOOGLE_CALENDAR_GUIDE.md](GOOGLE_CALENDAR_GUIDE.md) - Google Calendar integration
-- [QUICK_ADD_GUIDE.md](QUICK_ADD_GUIDE.md) - Natural language parser för todos
-- [RECURRING_GUIDE.md](RECURRING_GUIDE.md) - Återkommande uppgifter och automatisering
-- [REMINDER_GUIDE.md](REMINDER_GUIDE.md) - Påminnelser, snooze och notifications
-- [FAVICON_README.md](FAVICON_README.md) - Skapa och anpassa favicon
-- [example-TODO.md](example-TODO.md) - Exempel på Obsidian todo-format
+- [CONFIG.md](docs/architecture/CONFIG.md) - Fullständig konfigurationsguide
+- [OBSIDIAN_SETUP.md](docs/guides/OBSIDIAN_SETUP.md) - Steg-för-steg Obsidian-integration
+- [DARK_THEME.md](docs/guides/DARK_THEME.md) - Guide för mörkt tema och anpassning
+- [STATS_GUIDE.md](docs/features/STATS_GUIDE.md) - Statistik dashboard och API-referens
+- [DEADLINE_GUIDE.md](docs/features/DEADLINE_GUIDE.md) - Deadline warnings och notifications
+- [POMODORO_GUIDE.md](docs/features/POMODORO_GUIDE.md) - Pomodoro timer och fokusläge
+- [GOOGLE_CALENDAR_GUIDE.md](docs/guides/GOOGLE_CALENDAR_GUIDE.md) - Google Calendar integration
+- [QUICK_ADD_GUIDE.md](docs/features/QUICK_ADD_GUIDE.md) - Natural language parser för todos
+- [RECURRING_GUIDE.md](docs/features/RECURRING_GUIDE.md) - Återkommande uppgifter och automatisering
+- [REMINDER_GUIDE.md](docs/features/REMINDER_GUIDE.md) - Påminnelser, snooze och notifications
+- [FAVICON_README.md](docs/guides/FAVICON_README.md) - Skapa och anpassa favicon
+- [example-TODO.md](data/examples/example-TODO.md) - Exempel på Obsidian todo-format
 
 ## Prestandaoptimering
 
