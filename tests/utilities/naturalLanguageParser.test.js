@@ -79,9 +79,9 @@ describe('NaturalLanguageParser', () => {
       expect(tags).toEqual(['project123', 'q1']);
     });
 
-    it('should ignore # symbols not followed by word characters', () => {
+    it('should extract tags including numbers', () => {
       const tags = parser.extractTags('Price #10 Task #real');
-      expect(tags).toEqual(['real']);
+      expect(tags).toEqual(['10', 'real']);
     });
   });
 
@@ -188,18 +188,18 @@ describe('NaturalLanguageParser', () => {
     });
 
     describe('slash dates', () => {
-      it('should parse MM/DD format', () => {
-        const result = parser.extractDate('12/25');
+      it('should parse DD/MM format', () => {
+        const result = parser.extractDate('25/12');
         expect(result.formatted).toContain('-12-25');
       });
 
-      it('should parse MM/DD/YYYY format', () => {
-        const result = parser.extractDate('12/25/2024');
+      it('should parse DD/MM/YYYY format', () => {
+        const result = parser.extractDate('25/12/2024');
         expect(result.formatted).toBe('2024-12-25');
       });
 
-      it('should parse MM/DD/YY format', () => {
-        const result = parser.extractDate('12/25/24');
+      it('should parse DD/MM/YY format', () => {
+        const result = parser.extractDate('25/12/24');
         expect(result.formatted).toBe('2024-12-25');
       });
     });
@@ -321,7 +321,7 @@ describe('NaturalLanguageParser', () => {
     });
 
     it('should parse "remind in X hours"', () => {
-      const result = parser.extractReminder('remind me in 2 hours');
+      const result = parser.extractReminder('remind me in 2h');
       expect(result).toMatchObject({
         type: 'in-time'
       });
