@@ -4,6 +4,9 @@
  */
 
 import { googleCalendarService } from './googleCalendarService.js';
+import eventBus from '../core/eventBus.js';
+import stateManager from '../core/stateManager.js';
+import errorHandler, { ErrorCode } from '../core/errorHandler.js';
 
 export class CalendarSyncService {
     constructor() {
@@ -12,41 +15,67 @@ export class CalendarSyncService {
         this.syncFrequency = 5 * 60 * 1000; // 5 minutes
         this.lastSync = null;
         this.syncedTodos = new Map(); // todoId -> eventId mapping
+        this.getTodosCallback = null;
 
-        // Load sync mappings from localStorage
+        this._init();
+    }
+
+    /**
+     * Initialize service
+     * @private
+     */
+    _init() {
+        // Register StateManager schema
+        stateManager.registerSchema('calendarSyncMappings', {
+            version: 1,
+            validate: (data) => typeof data === 'object',
+            migrate: (oldData) => oldData,
+            default: {}
+        });
+
+        // Register EventBus namespace
+        eventBus.register('calendar');
+
+        // Load sync mappings
         this.loadSyncMappings();
     }
 
     /**
-     * Load sync mappings from localStorage
+     * Load sync mappings from StateManager
      */
     loadSyncMappings() {
         try {
-            const stored = localStorage.getItem('calendarSyncMappings');
-            if (stored) {
-                const mappings = JSON.parse(stored);
+            const mappings = stateManager.get('calendarSyncMappings');
+            if (mappings && Object.keys(mappings).length > 0) {
                 this.syncedTodos = new Map(Object.entries(mappings));
                 console.log(`✅ Loaded ${this.syncedTodos.size} sync mappings`);
             }
         } catch (error) {
-            console.error('Failed to load sync mappings:', error);
+            errorHandler.handle(error, {
+                code: ErrorCode.STORAGE_ERROR,
+                context: 'Loading calendar sync mappings'
+            });
         }
     }
 
     /**
-     * Save sync mappings to localStorage
+     * Save sync mappings to StateManager
      */
     saveSyncMappings() {
         try {
             const mappings = Object.fromEntries(this.syncedTodos);
-            localStorage.setItem('calendarSyncMappings', JSON.stringify(mappings));
+            stateManager.set('calendarSyncMappings', mappings);
         } catch (error) {
-            console.error('Failed to save sync mappings:', error);
+            errorHandler.handle(error, {
+                code: ErrorCode.STORAGE_ERROR,
+                context: 'Saving calendar sync mappings'
+            });
         }
     }
 
     /**
      * Enable automatic synchronization
+     * @param {Function} getTodosCallback - Callback to get current todos
      */
     enableSync(getTodosCallback) {
         if (this.syncEnabled) {return;}
@@ -63,6 +92,7 @@ export class CalendarSyncService {
         }, this.syncFrequency);
 
         console.log('✅ Calendar sync enabled');
+        eventBus.emit('calendar:syncEnabled', { frequency: this.syncFrequency });
     }
 
     /**
@@ -79,6 +109,7 @@ export class CalendarSyncService {
         }
 
         console.log('✅ Calendar sync disabled');
+        eventBus.emit('calendar:syncDisabled', {});
     }
 
     /**
@@ -109,13 +140,14 @@ export class CalendarSyncService {
             this.lastSync = new Date();
             console.log('✅ Calendar sync complete');
 
-            // Dispatch sync event
-            window.dispatchEvent(new CustomEvent('calendarSynced', {
-                detail: { timestamp: this.lastSync }
-            }));
+            // Emit sync event
+            eventBus.emit('calendar:synced', { timestamp: this.lastSync });
 
         } catch (error) {
-            console.error('❌ Calendar sync failed:', error);
+            errorHandler.handle(error, {
+                code: ErrorCode.API_ERROR,
+                context: 'Calendar sync'
+            });
         }
     }
 
@@ -139,7 +171,11 @@ export class CalendarSyncService {
                     await this.createCalendarEvent(todo);
                 }
             } catch (error) {
-                console.error(`Failed to sync todo "${todo.text}":`, error);
+                errorHandler.handle(error, {
+                    code: ErrorCode.API_ERROR,
+                    context: `Syncing todo "${todo.text}" to calendar`,
+                    showToast: false
+                });
             }
         }
 
@@ -160,14 +196,15 @@ export class CalendarSyncService {
 
             console.log(`✅ Created calendar event for todo "${todo.text}"`);
 
-            // Dispatch event
-            window.dispatchEvent(new CustomEvent('todoSyncedToCalendar', {
-                detail: { todo, event }
-            }));
+            // Emit event
+            eventBus.emit('calendar:todoSynced', { todo, event });
 
             return event;
         } catch (error) {
-            console.error(`Failed to create event for todo "${todo.text}":`, error);
+            errorHandler.handle(error, {
+                code: ErrorCode.API_ERROR,
+                context: `Creating calendar event for todo "${todo.text}"`
+            });
             throw error;
         }
     }
@@ -200,7 +237,11 @@ export class CalendarSyncService {
                 this.syncedTodos.delete(todo.id);
                 this.saveSyncMappings();
             }
-            console.error(`Failed to update event for todo "${todo.text}":`, error);
+            errorHandler.handle(error, {
+                code: ErrorCode.API_ERROR,
+                context: `Updating calendar event for todo "${todo.text}"`,
+                showToast: false
+            });
         }
     }
 
@@ -336,20 +377,37 @@ export class CalendarSyncService {
 
             console.log(`📅 Found ${newEvents.length} new calendar events`);
 
-            // Dispatch event with new calendar events
+            // Emit event with new calendar events
             if (newEvents.length > 0) {
-                window.dispatchEvent(new CustomEvent('newCalendarEvents', {
-                    detail: { events: newEvents }
-                }));
+                eventBus.emit('calendar:newEvents', { events: newEvents });
             }
 
             return newEvents;
         } catch (error) {
-            console.error('Failed to sync calendar to todos:', error);
+            errorHandler.handle(error, {
+                code: ErrorCode.API_ERROR,
+                context: 'Syncing calendar to todos'
+            });
             throw error;
         }
     }
+
+    /**
+     * Cleanup resources
+     */
+    destroy() {
+        this.disableSync();
+    }
 }
+
+/**
+ * Events emitted by CalendarSyncService:
+ * - calendar:syncEnabled - When automatic sync is enabled
+ * - calendar:syncDisabled - When automatic sync is disabled
+ * - calendar:synced - After successful sync (timestamp)
+ * - calendar:todoSynced - When a todo is synced to calendar (todo, event)
+ * - calendar:newEvents - When new calendar events are found (events)
+ */
 
 // Export singleton instance
 export const calendarSyncService = new CalendarSyncService();
