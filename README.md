@@ -176,14 +176,14 @@ Skapa `data/links.json`:
 
 ### 2. Starta proxyn för skolmat
 ```bash
-node js/proxy.js
+node js/integrations/proxy.js
 ```
 Proxyn kör på: http://localhost:8787/api/school-menu
 
 ### 3. (Valfritt) Starta Obsidian Bridge för todo-synk
 ```bash
-# Ändra vault-sökväg i obsidianBridge.js först
-node obsidianBridge.js
+# Ändra vault-sökväg i js/integrations/obsidianBridge.js först
+node js/integrations/obsidianBridge.js
 ```
 Bridge kör på: http://localhost:8081/obsidian/todos  
 Se [OBSIDIAN_SETUP.md](docs/guides/OBSIDIAN_SETUP.md) för fullständig guide
@@ -481,8 +481,8 @@ GET https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geoty
 ## Felsökning
 
 **Obsidian-synk fungerar inte:**
-- Kontrollera att `node obsidianBridge.js` körs
-- Verifiera vault-sökväg i `obsidianBridge.js`
+- Kontrollera att `node js/integrations/obsidianBridge.js` körs
+- Verifiera vault-sökväg i `js/integrations/obsidianBridge.js`
 - Kolla att TODO.md finns i vault med rätt format
 - Se konsolen för sync-meddelanden
 - Kontrollera att port 8081 inte är blockerad
@@ -504,7 +504,7 @@ GET https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geoty
 - Kolla att `Intl.DateTimeFormat` stöds i webbläsaren
 
 **Skolmat laddas inte:**
-- Kontrollera att proxyn körs: `node js/proxy.js`
+- Kontrollera att proxyn körs: `node js/integrations/proxy.js`
 - Kolla proxyn på: http://localhost:8787/api/school-menu
 - Verifiera att rätt skolmeny-ID används
 
@@ -599,7 +599,7 @@ customElements.define('new-widget', NewWidget);
 **Anpassa befintliga komponenter:**
 - **Väder**: Ändra `weatherConfig.location` eller lägg till nya parametrar
 - **Klocka**: Modifiera `clockConfig.timezones` eller format
-- **Skolmat**: Uppdatera `DEFAULT_ID` i `proxy.js`
+- **Skolmat**: Uppdatera `DEFAULT_ID` i `js/integrations/proxy.js`
 - **Layout**: Justera CSS Grid i `styles.css`
 
 **Nya konfigurationsalternativ:**

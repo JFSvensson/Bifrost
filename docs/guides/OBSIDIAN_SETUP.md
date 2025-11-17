@@ -4,7 +4,7 @@
 
 ### 1. Konfigurera Obsidian Bridge
 
-1. **Ändra vault-sökväg** i `obsidianBridge.js`:
+1. **Ändra vault-sökväg** i `js/integrations/obsidianBridge.js`:
    ```js
    const config = {
        vaultPath: 'C:/Users/DittNamn/Documents/ObsidianVault', // ← Din vault
@@ -21,10 +21,10 @@
 
 ```bash
 # Terminal 1: Starta Obsidian Bridge
-node obsidianBridge.js
+node js/integrations/obsidianBridge.js
 
 # Terminal 2: Starta school proxy (om du vill ha skolmat)
-node js/proxy.js
+node js/integrations/proxy.js
 
 # Terminal 3: Starta webserver (Live Server i VS Code eller)
 npx serve
@@ -97,11 +97,11 @@ obsidian: {
 ## 🔧 Felsökning
 
 ### "Obsidian bridge timeout"
-- Kontrollera att `node obsidianBridge.js` körs
+- Kontrollera att `node js/integrations/obsidianBridge.js` körs
 - Verifiera att porten (8081) inte är blockerad
 
 ### "Vault hittades inte"
-- Dubbelkolla sökvägen i `obsidianBridge.js`
+- Dubbelkolla sökvägen i `js/integrations/obsidianBridge.js`
 - Använd absolut sökväg med forward slashes
 
 ### Todos visas inte

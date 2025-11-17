@@ -42,8 +42,15 @@ console.log(`
 // Create simple favicon.ico content (base64 encoded minimal icon)
 const simpleFaviconIco = 'data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAABILAAASCwAAAAAAAAAAAAD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A6+vrAOvr6wDr6+sA6+vrAOvr6wDr6+sA6+vrAOvr6wDr6+sA6+vrAOvr6wDr6+sA6+vrAOvr6wD///8A////AOvr6wAAAAAA6+vrAOvr6wDr6+sA6+vrAOvr6wDr6+sA6+vrAOvr6wDr6+sA6+vrAOvr6wAAAAAA6+vrAP///wD///8A6+vrAOvr6wAAAAAA6+vrAOvr6wDr6+sA6+vrAOvr6wDr6+sA6+vrAOvr6wAAAAAA6+vrAOvr6wD///8A////AOvr6wDr6+sA6+vrAAAAAACgoKAAoKCgAKCgoACgoKAAoKCgAKCgoAAAAADr6+sA6+vrAOvr6wD///8A////AOvr6wDr6+sA6+vrAKCgoADAwMAAoKCgAODg4AC3t7cAx8fHAMfHxwCgoKAA6+vrAOvr6wDr6+sA////AP///wDr6+sA6+vrAOvr6wCgoKAAwMDAAKCgoADg4OAAt7e3AMfHxwDHx8cAoKCgAOvr6wDr6+sA6+vrAP///wD///8A6+vrAOvr6wDr6+sAoKCgAMDAwACgoKAA4ODgALe3twDHx8cAx8fHAKCgoADr6+sA6+vrAOvr6wD///8A////AOvr6wDr6+sA6+vrAKCgoADAwMAAoKCgAODg4AC3t7cAx8fHAMfHxwCgoKAA6+vrAOvr6wDr6+sA////AP///wDr6+sA6+vrAOvr6wCgoKAAoKCgAKCgoACgoKAAoKCgAKCgoACgoKAAoKCgAOvr6wDr6+sA6+vrAP///wD///8A6+vrAOvr6wDr6+sA6+vrAOvr6wDr6+sA6+vrAOvr6wDr6+sA6+vrAOvr6wDr6+sA6+vrAOvr6wD///8A////AP///wDr6+sA6+vrAOvr6wDr6+sA6+vrAOvr6wDr6+sA6+vrAOvr6wDr6+sA6+vrAOvr6wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==';
 
+// Ensure output directory exists
+const outputDir = path.join(__dirname, '..', 'assets', 'icons');
+if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+}
+
 // Write simple ICO file reference
-fs.writeFileSync('favicon-data.txt', `
+const outputFile = path.join(outputDir, 'favicon-data.txt');
+fs.writeFileSync(outputFile, `
 🎨 Bifrost Favicon Files Created!
 
 1. favicon.svg - Modern SVG favicon (already created)
@@ -55,17 +62,17 @@ ${simpleFaviconIco}
 
 🚀 To generate high-quality PNG files, use an online converter:
 1. Go to https://realfavicongenerator.net/
-2. Upload the favicon.svg file
+2. Upload the assets/icons/favicon.svg file
 3. Download the generated package
-4. Extract files to your Bifrost directory
+4. Extract files to assets/icons/ directory
 
 Or use ImageMagick if installed:
-convert favicon.svg -resize 16x16 favicon-16x16.png
-convert favicon.svg -resize 32x32 favicon-32x32.png
-convert favicon.svg -resize 192x192 icon-192x192.png
-convert favicon.svg -resize 512x512 icon-512x512.png
+convert assets/icons/favicon.svg -resize 16x16 assets/icons/favicon-16x16.png
+convert assets/icons/favicon.svg -resize 32x32 assets/icons/favicon-32x32.png
+convert assets/icons/favicon.svg -resize 192x192 assets/icons/icon-192x192.png
+convert assets/icons/favicon.svg -resize 512x512 assets/icons/icon-512x512.png
 `);
 
 console.log('✅ Favicon setup complete!');
-console.log('📄 Check favicon-data.txt for instructions');
-console.log('🎯 Your SVG favicon is ready to use');
+console.log(`📄 Check ${outputFile} for instructions`);
+console.log('🎯 Your SVG favicon is ready to use in assets/icons/');

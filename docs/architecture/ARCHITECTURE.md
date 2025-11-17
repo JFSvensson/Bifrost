@@ -106,10 +106,11 @@ bifrost/
 │   │   ├── debounce.js
 │   │   └── naturalLanguageParser.js
 │   │
+│   ├── integrations/       # 🔌 Integration scripts
+│   │   ├── obsidianBridge.js   # Obsidian vault bridge
+│   │   └── proxy.js            # CORS proxy server
+│   │
 │   ├── main.js             # Application orchestrator
-│   ├── widgetLoader.js     # Lazy loading system
-│   ├── sw.js               # Service Worker
-│   └── proxy.js            # Node.js proxy server
 │
 ├── data/
 │   └── links.json          # Quick links configuration
