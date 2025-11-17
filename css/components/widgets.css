@@ -1,0 +1,146 @@
+/* ===== THEME TOGGLE BUTTON ===== */
+.theme-toggle {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    background: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1) rotate(10deg);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.theme-toggle:active {
+    transform: scale(0.95);
+}
+
+.theme-toggle.toggling {
+    animation: spin 0.3s ease;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(180deg); }
+}
+
+/* ===== SEARCH ===== */
+.search form {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.search input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+}
+
+.search input:focus {
+    outline: none;
+    border-color: #e74c3c;
+}
+
+.search button {
+    padding: 0.75rem 1.5rem;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+}
+
+.search button:hover {
+    background: #c0392b;
+}
+
+/* ===== LINKS ===== */
+.links {
+    list-style: none;
+    counter-reset: link-counter;
+}
+
+.links li {
+    margin: 0.5rem 0;
+}
+
+.links a {
+    display: block;
+    padding: 0.75rem 1rem;
+    background: #f8f9fa;
+    color: #2c3e50;
+    text-decoration: none;
+    border-radius: 8px;
+    border-left: 4px solid #27ae60;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.links a:hover {
+    background: #27ae60;
+    color: white;
+    transform: translateX(4px);
+}
+
+/* Keyboard shortcut indicators */
+.links a:nth-child(-n+9)::after {
+    content: "Ctrl+" counter(link-counter);
+    counter-increment: link-counter;
+    float: right;
+    font-size: 0.8rem;
+    opacity: 0.6;
+    font-weight: normal;
+}
+
+/* ===== SCHOOL MENU ===== */
+school-menu {
+    display: block;
+}
+
+/* ===== LAZY LOADING WIDGETS ===== */
+.widget-loading {
+    min-height: 100px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.widget-loading::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border: 3px solid rgba(52, 152, 219, 0.2);
+    border-top-color: #3498db;
+    border-radius: 50%;
+    animation: widget-spin 0.8s linear infinite;
+}
+
+@keyframes widget-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Remove loading indicator once widget is loaded */
+.widget-loading:defined::before {
+    display: none;
+}

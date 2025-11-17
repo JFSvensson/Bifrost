@@ -42,8 +42,22 @@ Bifrost/
 │       ├── favicon.ico              # ICO fallback
 │       ├── apple-touch-icon.png     # iOS icon
 │       └── favicon-data.txt         # Generation notes
-├── css/
-│   └── styles.css          # Responsiva stilar med CSS Grid
+├── css/                    # 🎨 Modular styles
+│   ├── styles.css              # Main stylesheet with @imports
+│   ├── base/
+│   │   └── reset.css           # CSS reset and base styles
+│   ├── layouts/
+│   │   └── grid.css            # Grid layout and structure
+│   ├── components/
+│   │   ├── card.css            # Card component styles
+│   │   ├── todo.css            # Todo list styles
+│   │   ├── toasts.css          # Toast notification styles
+│   │   └── widgets.css         # Widget component styles
+│   ├── themes/
+│   │   └── dark.css            # Dark theme overrides
+│   └── utilities/
+│       ├── responsive.css      # Media queries and responsive design
+│       └── modes.css           # Compact mode and print styles
 ├── data/
 │   ├── links.json          # Länkdata (skapas av användaren)
 │   └── examples/

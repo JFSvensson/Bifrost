@@ -1,8 +1,17 @@
-const CACHE_NAME = 'bifrost-v2';
+const CACHE_NAME = 'bifrost-v3';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
     '/css/styles.css',
+    '/css/base/reset.css',
+    '/css/layouts/grid.css',
+    '/css/components/card.css',
+    '/css/components/todo.css',
+    '/css/components/toasts.css',
+    '/css/components/widgets.css',
+    '/css/themes/dark.css',
+    '/css/utilities/responsive.css',
+    '/css/utilities/modes.css',
     '/js/main.js',
     '/js/widgetLoader.js',
     '/js/widgets/linkWidget.js',

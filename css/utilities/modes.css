@@ -1,0 +1,43 @@
+/* ===== COMPACT MODE ===== */
+.compact-mode .card {
+    padding: 1rem;
+}
+
+.compact-mode .container {
+    gap: 1rem;
+}
+
+.compact-mode .card h2 {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+    .theme-toggle {
+        display: none;
+    }
+    
+    body {
+        background: white;
+    }
+    
+    .container {
+        box-shadow: none;
+        grid-template-columns: 1fr;
+        grid-template-areas: 
+            "header"
+            "main"
+            "sidebar";
+    }
+    
+    .card {
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+    
+    .todo-input,
+    .search {
+        display: none;
+    }
+}

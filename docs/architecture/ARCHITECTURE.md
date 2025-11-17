@@ -59,8 +59,22 @@ bifrost/
 ├── jsconfig.json           # VS Code/editor configuration
 ├── package.json            # NPM scripts and dev dependencies
 │
-├── css/
-│   └── styles.css          # All application styles
+├── css/                    # 🎨 Modular styles
+│   ├── styles.css              # Main stylesheet with @imports
+│   ├── base/
+│   │   └── reset.css           # CSS reset and base styles
+│   ├── layouts/
+│   │   └── grid.css            # Grid layout and structure
+│   ├── components/
+│   │   ├── card.css            # Card component styles
+│   │   ├── todo.css            # Todo list styles
+│   │   ├── toasts.css          # Toast notification styles
+│   │   └── widgets.css         # Widget component styles
+│   ├── themes/
+│   │   └── dark.css            # Dark theme overrides
+│   └── utilities/
+│       ├── responsive.css      # Media queries and responsive design
+│       └── modes.css           # Compact mode and print styles
 │
 ├── js/
 │   ├── core/               # 🏗️ Core infrastructure
@@ -618,6 +632,53 @@ scripts/
 
 ---
 
+## CSS Architecture
+
+### Modular CSS Structure
+
+The application uses a modular CSS architecture with organized imports for maintainability:
+
+```
+css/
+├── styles.css          # Main entry point with @import statements
+├── base/
+│   └── reset.css       # CSS reset, box-sizing, body defaults
+├── layouts/
+│   └── grid.css        # Container grid layout, header, sidebar
+├── components/
+│   ├── card.css        # Card component base styles
+│   ├── todo.css        # Todo list, priorities, icons, inputs
+│   ├── toasts.css      # Notification toasts (Pomodoro, Deadline)
+│   └── widgets.css     # Widget-specific styles (theme toggle, search, links)
+├── themes/
+│   └── dark.css        # Dark theme overrides with .dark-theme class
+└── utilities/
+    ├── responsive.css  # Media queries (tablet, mobile, small mobile)
+    └── modes.css       # Compact mode, print styles
+```
+
+**Import Order:**
+1. **Base** - Foundational styles
+2. **Layouts** - Page structure
+3. **Components** - Reusable UI components
+4. **Themes** - Theme overrides
+5. **Utilities** - Responsive and special modes
+
+**Benefits:**
+- **Separation of Concerns** - Each file has a single responsibility
+- **Maintainability** - Easy to locate and modify styles
+- **Performance** - Browser caches individual modules
+- **Scalability** - Add new modules without touching existing code
+- **Team Collaboration** - Multiple developers can work on different modules
+
+**Conventions:**
+- Use CSS custom properties for theming where appropriate
+- Keep component styles co-located with their concerns
+- Dark theme uses `.dark-theme` class with cascade overrides
+- Responsive breakpoints: 1024px (tablet), 768px (mobile), 480px (small mobile)
+
+---
+
 ## Code Conventions
 
 ### File Naming
@@ -627,6 +688,7 @@ scripts/
 - **Utilities**: `camelCase.js` in `js/utils/` (e.g., `utils/dateHelpers.js`)
 - **Core**: `camelCase.js` in `js/core/` (e.g., `core/errorHandler.js`)
 - **Config**: `camelCase.js` in `js/config/` (e.g., `config/types.js`)
+- **CSS Modules**: `kebab-case.css` in category folders (e.g., `components/todo.css`)
 - **Constants**: `SCREAMING_SNAKE_CASE` in files (e.g., `ErrorCode.STORAGE_ERROR`)
 
 ### Class Naming
