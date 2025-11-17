@@ -417,8 +417,12 @@ describe('ErrorHandler', () => {
         });
 
         it('should catch unhandled promise rejections', () => {
+            const rejectedPromise = Promise.reject('Rejected');
+            // Prevent unhandled rejection in test environment
+            rejectedPromise.catch(() => {});
+            
             const promiseEvent = new globalThis.PromiseRejectionEvent('unhandledrejection', {
-                promise: Promise.reject('Rejected'),
+                promise: rejectedPromise,
                 reason: 'Rejected'
             });
 
