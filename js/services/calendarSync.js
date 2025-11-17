@@ -33,9 +33,6 @@ export class CalendarSyncService {
             default: {}
         });
 
-        // Register EventBus namespace
-        eventBus.register('calendar');
-
         // Load sync mappings
         this.loadSyncMappings();
     }
