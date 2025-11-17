@@ -12,17 +12,17 @@
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     
+    <!-- Critical: Load immediately for core functionality -->
     <script type="module" src="js/themeService.js" defer></script>
     <script type="module" src="js/naturalLanguageParser.js" defer></script>
     <script type="module" src="js/quickAddWidget.js" defer></script>
     <script type="module" src="js/recurringService.js" defer></script>
-    <script type="module" src="js/recurringWidget.js" defer></script>
     <script type="module" src="js/reminderService.js" defer></script>
-    <script type="module" src="js/reminderWidget.js" defer></script>
-    <script type="module" src="js/statsWidget.js" defer></script>
-    <script type="module" src="js/deadlineWidget.js" defer></script>
-    <script type="module" src="js/pomodoroWidget.js" defer></script>
-    <script type="module" src="js/calendarWidget.js" defer></script>
+    
+    <!-- Lazy loading system - loads widgets on demand -->
+    <script type="module" src="js/widgetLoader.js" defer></script>
+    
+    <!-- Main app logic -->
     <script type="module" src="js/main.js" defer></script>
     <script src="js/linkHandler.js" defer></script>
     <script type="module" src="js/schoolMenu.js" defer></script>
