@@ -3,7 +3,7 @@
  * Inkluderar grafer, streaks, och insikter
  */
 
-import { StatsService } from './statsService.js';
+import { StatsService } from '../services/statsService.js';
 
 class StatsWidget extends HTMLElement {
     constructor() {

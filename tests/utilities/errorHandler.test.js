@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import errorHandler, { ErrorLevel, ErrorCode } from '../../js/errorHandler.js';
+import errorHandler, { ErrorLevel, ErrorCode } from '../../js/core/errorHandler.js';
 
 // Mock Event class for testing environment
 if (!globalThis.Event) {

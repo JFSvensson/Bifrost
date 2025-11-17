@@ -3,7 +3,7 @@
  * Visual component displaying calendar events
  */
 
-import { googleCalendarService } from './googleCalendarService.js';
+import { googleCalendarService } from '../services/googleCalendarService.js';
 
 class CalendarWidget extends HTMLElement {
     constructor() {

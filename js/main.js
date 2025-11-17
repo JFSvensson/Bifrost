@@ -1,12 +1,12 @@
-import { todos, shortcuts, ui } from './config.js';
-import { ObsidianTodoService } from './obsidianTodoService.js';
-import { StatsService } from './statsService.js';
-import { DeadlineService } from './deadlineService.js';
-import { pomodoroService } from './pomodoroService.js';
-import { calendarSyncService } from './calendarSync.js';
-import { recurringService } from './recurringService.js';
-import reminderService from './reminderService.js';
-import './uiConfig.js'; // Initialize UI with config values
+import { todos, shortcuts, ui } from './config/config.js';
+import { ObsidianTodoService } from './services/obsidianTodoService.js';
+import { StatsService } from './services/statsService.js';
+import { DeadlineService } from './services/deadlineService.js';
+import { pomodoroService } from './services/pomodoroService.js';
+import { calendarSyncService } from './services/calendarSync.js';
+import { recurringService } from './services/recurringService.js';
+import reminderService from './services/reminderService.js';
+import './config/uiConfig.js'; // Initialize UI with config values
 
 let obsidianService;
 let statsService;

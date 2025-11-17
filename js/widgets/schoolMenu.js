@@ -1,5 +1,5 @@
-import { MenuService } from './menuService.js';
-import { isToday } from './dateHelpers.js';
+import { MenuService } from '../services/menuService.js';
+import { isToday } from '../utils/dateHelpers.js';
 
 class SchoolMenu extends HTMLElement {
     constructor() {

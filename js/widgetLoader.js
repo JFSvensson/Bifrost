@@ -8,12 +8,12 @@
 
 const loadedWidgets = new Set();
 const widgetLoaders = new Map([
-    ['stats-widget', () => import('./statsWidget.js')],
-    ['deadline-widget', () => import('./deadlineWidget.js')],
-    ['recurring-widget', () => import('./recurringWidget.js')],
-    ['reminder-widget', () => import('./reminderWidget.js')],
-    ['pomodoro-widget', () => import('./pomodoroWidget.js')],
-    ['calendar-widget', () => import('./calendarWidget.js')]
+    ['stats-widget', () => import('./widgets/statsWidget.js')],
+    ['deadline-widget', () => import('./widgets/deadlineWidget.js')],
+    ['recurring-widget', () => import('./widgets/recurringWidget.js')],
+    ['reminder-widget', () => import('./widgets/reminderWidget.js')],
+    ['pomodoro-widget', () => import('./widgets/pomodoroWidget.js')],
+    ['calendar-widget', () => import('./widgets/calendarWidget.js')]
 ]);
 
 /**

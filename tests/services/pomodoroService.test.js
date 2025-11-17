@@ -4,9 +4,9 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { PomodoroService } from '../../js/pomodoroService.js';
-import eventBus from '../../js/eventBus.js';
-import stateManager from '../../js/stateManager.js';
+import { PomodoroService } from '../../js/services/pomodoroService.js';
+import eventBus from '../../js/core/eventBus.js';
+import stateManager from '../../js/core/stateManager.js';
 
 describe('PomodoroService', () => {
   let pomodoroService;

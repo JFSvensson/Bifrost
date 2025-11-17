@@ -3,7 +3,7 @@
  * Visual component for the Pomodoro timer with circular progress
  */
 
-import { pomodoroService } from './pomodoroService.js';
+import { pomodoroService } from '../services/pomodoroService.js';
 
 class PomodoroWidget extends HTMLElement {
     constructor() {

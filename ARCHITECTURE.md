@@ -63,42 +63,68 @@ bifrost/
 │   └── styles.css          # All application styles
 │
 ├── js/
-│   ├── types.js            # JSDoc type definitions
-│   ├── errorHandler.js     # Centralized error handling
-│   ├── eventBus.js         # Pub/sub event system
-│   ├── stateManager.js     # Centralized state management
+│   ├── core/               # 🏗️ Core infrastructure
+│   │   ├── errorHandler.js     # Centralized error handling
+│   │   ├── eventBus.js         # Pub/sub event system
+│   │   └── stateManager.js     # State management with localStorage
 │   │
-│   ├── *Service.js         # Business logic services
-│   │   ├── reminderService.js
-│   │   ├── recurringService.js
+│   ├── config/             # ⚙️ Configuration
+│   │   ├── config.js           # Application configuration
+│   │   ├── types.js            # JSDoc type definitions
+│   │   └── uiConfig.js         # UI configuration
+│   │
+│   ├── services/           # 🔧 Business logic services
+│   │   ├── calendarSync.js
+│   │   ├── clockService.js
 │   │   ├── deadlineService.js
-│   │   ├── statsService.js
-│   │   ├── pomodoroService.js
-│   │   ├── obsidianTodoService.js
 │   │   ├── googleCalendarService.js
-│   │   ├── weatherService.js
+│   │   ├── linkService.js
 │   │   ├── menuService.js
+│   │   ├── obsidianTodoService.js
+│   │   ├── pomodoroService.js
+│   │   ├── recurringService.js
+│   │   ├── reminderService.js
+│   │   ├── statsService.js
 │   │   ├── themeService.js
-│   │   └── clockService.js
+│   │   └── weatherService.js
 │   │
-│   ├── *Widget.js          # UI Web Components
-│   │   ├── reminderWidget.js
-│   │   ├── recurringWidget.js
-│   │   ├── deadlineWidget.js
-│   │   ├── statsWidget.js
-│   │   ├── pomodoroWidget.js
+│   ├── widgets/            # 🎨 UI Web Components
 │   │   ├── calendarWidget.js
-│   │   ├── weatherWidget.js
 │   │   ├── clockWidget.js
-│   │   └── quickAddWidget.js
+│   │   ├── deadlineWidget.js
+│   │   ├── linkWidget.js
+│   │   ├── pomodoroWidget.js
+│   │   ├── quickAddWidget.js
+│   │   ├── recurringWidget.js
+│   │   ├── reminderWidget.js
+│   │   ├── schoolMenu.js
+│   │   ├── statsWidget.js
+│   │   └── weatherWidget.js
+│   │
+│   ├── utils/              # 🛠️ Utilities & helpers
+│   │   ├── dateHelpers.js
+│   │   ├── debounce.js
+│   │   └── naturalLanguageParser.js
 │   │
 │   ├── main.js             # Application orchestrator
-│   ├── naturalLanguageParser.js
-│   ├── dateHelpers.js
-│   └── sw.js               # Service Worker
+│   ├── widgetLoader.js     # Lazy loading system
+│   ├── sw.js               # Service Worker
+│   └── proxy.js            # Node.js proxy server
 │
 ├── data/
 │   └── links.json          # Quick links configuration
+│
+├── tests/                  # 🧪 Test files
+│   ├── setup.js
+│   ├── services/
+│   │   ├── deadlineService.test.js
+│   │   ├── pomodoroService.test.js
+│   │   ├── recurringService.test.js
+│   │   └── statsService.test.js
+│   └── utilities/
+│       ├── errorHandler.test.js
+│       ├── eventBus.test.js
+│       └── stateManager.test.js
 │
 └── docs/                   # Documentation
     ├── ARCHITECTURE.md     # This file
@@ -125,9 +151,9 @@ All business logic is organized into **Service** classes that:
 #### Service Template
 
 ```javascript
-import eventBus from './eventBus.js';
-import stateManager from './stateManager.js';
-import errorHandler, { ErrorCode } from './errorHandler.js';
+import eventBus from '../core/eventBus.js';
+import stateManager from '../core/stateManager.js';
+import errorHandler, { ErrorCode } from '../core/errorHandler.js';
 
 class MyService {
     constructor() {
@@ -199,8 +225,8 @@ Widgets are **custom HTML elements** that:
 #### Widget Template
 
 ```javascript
-import eventBus from './eventBus.js';
-import myService from './myService.js';
+import eventBus from '../core/eventBus.js';
+import myService from '../services/myService.js';
 
 class MyWidget extends HTMLElement {
     constructor() {
@@ -350,7 +376,7 @@ Theme variables are defined in `styles.css` with `:root` and `body.dark-theme`.
 **StateManager** centralizes all localStorage operations:
 
 ```javascript
-import stateManager from './stateManager.js';
+import stateManager from '../core/stateManager.js';
 
 // Register schema with validation
 stateManager.registerSchema('todos', {
@@ -397,7 +423,7 @@ Use descriptive, singular or plural keys:
 **EventBus** provides pub/sub pattern for decoupled communication:
 
 ```javascript
-import eventBus from './eventBus.js';
+import eventBus from '../core/eventBus.js';
 
 // Subscribe
 const unsubscribe = eventBus.on('todo:created', (data) => {
@@ -462,7 +488,7 @@ eventBus.on('todo:*', (data, eventName) => {
 **ErrorHandler** centralizes error management:
 
 ```javascript
-import errorHandler, { ErrorCode } from './errorHandler.js';
+import errorHandler, { ErrorCode } from '../core/errorHandler.js';
 
 // Handle errors with toast
 try {
@@ -515,9 +541,11 @@ API_TIMEOUT → "Servern svarar inte - försök igen"
 
 ### File Naming
 
-- **Services**: `camelCaseService.js` (e.g., `reminderService.js`)
-- **Widgets**: `camelCaseWidget.js` (e.g., `reminderWidget.js`)
-- **Utilities**: `camelCase.js` (e.g., `dateHelpers.js`)
+- **Services**: `camelCaseService.js` in `js/services/` (e.g., `services/reminderService.js`)
+- **Widgets**: `camelCaseWidget.js` in `js/widgets/` (e.g., `widgets/reminderWidget.js`)
+- **Utilities**: `camelCase.js` in `js/utils/` (e.g., `utils/dateHelpers.js`)
+- **Core**: `camelCase.js` in `js/core/` (e.g., `core/errorHandler.js`)
+- **Config**: `camelCase.js` in `js/config/` (e.g., `config/types.js`)
 - **Constants**: `SCREAMING_SNAKE_CASE` in files (e.g., `ErrorCode.STORAGE_ERROR`)
 
 ### Class Naming
@@ -575,7 +603,7 @@ createReminder(reminderData) {
 
 ### Type Definitions
 
-Core types defined in `types.js`:
+Core types defined in `config/types.js`:
 
 ```javascript
 /**
@@ -591,7 +619,7 @@ Core types defined in `types.js`:
 Import types in other files:
 
 ```javascript
-/// <reference path="./types.js" />
+/// <reference path="../config/types.js" />
 
 /**
  * @param {Todo} todo
@@ -625,7 +653,7 @@ Enables VS Code type checking:
 
 ```javascript
 import { describe, it, expect } from 'vitest';
-import reminderService from './reminderService.js';
+import reminderService from '../js/services/reminderService.js';
 
 describe('ReminderService', () => {
     it('creates reminder with valid data', () => {
@@ -645,17 +673,16 @@ describe('ReminderService', () => {
 
 ```
 tests/
-├── unit/
-│   ├── services/
-│   │   ├── reminderService.test.js
-│   │   ├── recurringService.test.js
-│   │   └── statsService.test.js
-│   └── utilities/
-│       ├── errorHandler.test.js
-│       ├── eventBus.test.js
-│       └── stateManager.test.js
-└── integration/
-    └── todoFlow.test.js
+├── setup.js
+├── services/
+│   ├── deadlineService.test.js
+│   ├── pomodoroService.test.js
+│   ├── recurringService.test.js
+│   └── statsService.test.js
+└── utilities/
+    ├── errorHandler.test.js
+    ├── eventBus.test.js
+    └── stateManager.test.js
 ```
 
 ---
@@ -742,9 +769,9 @@ Prefix private methods with underscore:
 
 1. **Import utilities**:
    ```javascript
-   import eventBus from './eventBus.js';
-   import stateManager from './stateManager.js';
-   import errorHandler, { ErrorCode } from './errorHandler.js';
+   import eventBus from '../core/eventBus.js';
+   import stateManager from '../core/stateManager.js';
+   import errorHandler, { ErrorCode } from '../core/errorHandler.js';
    ```
 
 2. **Replace localStorage with StateManager**:
@@ -839,5 +866,6 @@ Prefix private methods with underscore:
 
 ---
 
-**Last Updated**: 2024-11-14
-**Version**: 1.0
+**Last Updated**: 2025-11-17
+**Version**: 2.0
+

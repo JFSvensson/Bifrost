@@ -1,5 +1,5 @@
-import eventBus from './eventBus.js';
-import linkService from './linkService.js';
+import eventBus from '../core/eventBus.js';
+import linkService from '../services/linkService.js';
 
 /**
  * Web Component for displaying quick links

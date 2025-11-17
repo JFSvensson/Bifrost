@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { StatsService } from '../../js/statsService.js';
-import eventBus from '../../js/eventBus.js';
+import { StatsService } from '../../js/services/statsService.js';
+import eventBus from '../../js/core/eventBus.js';
 import stateManager from '../../js/stateManager.js';
 
 describe('StatsService', () => {

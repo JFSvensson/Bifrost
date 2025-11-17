@@ -4,9 +4,9 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { RecurringService } from '../../js/recurringService.js';
-import eventBus from '../../js/eventBus.js';
-import stateManager from '../../js/stateManager.js';
+import { RecurringService } from '../../js/services/recurringService.js';
+import eventBus from '../../js/core/eventBus.js';
+import stateManager from '../../js/core/stateManager.js';
 
 describe('RecurringService', () => {
   let recurringService;

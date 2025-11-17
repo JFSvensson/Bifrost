@@ -1,5 +1,5 @@
-import { WeatherService } from './weatherService.js';
-import { weather as weatherConfig } from './config.js';
+import { WeatherService } from '../services/weatherService.js';
+import { weather as weatherConfig } from '../config/config.js';
 
 class WeatherWidget extends HTMLElement {
     constructor() {

@@ -1,4 +1,4 @@
-import { clock as clockConfig } from './config.js';
+import { clock as clockConfig } from '../config/config.js';
 
 /**
  * Clock service for time and timezone management

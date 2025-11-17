@@ -1,5 +1,5 @@
-import { schoolMenu } from './config.js';
-import errorHandler, { ErrorCode } from './errorHandler.js';
+import { schoolMenu } from '../config/config.js';
+import errorHandler, { ErrorCode } from '../core/errorHandler.js';
 
 /**
  * Simple service for school menu API calls

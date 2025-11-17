@@ -34,7 +34,7 @@
 
 import eventBus from './eventBus.js';
 import errorHandler, { ErrorCode } from './errorHandler.js';
-import { debounce } from './debounce.js';
+import { debounce } from '../utils/debounce.js';
 
 /**
  * StateManager class - Singleton för centraliserad state-hantering

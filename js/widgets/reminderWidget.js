@@ -16,7 +16,7 @@
  * <reminder-widget></reminder-widget>
  */
 
-import reminderService from './reminderService.js';
+import reminderService from '../services/reminderService.js';
 
 class ReminderWidget extends HTMLElement {
     constructor() {

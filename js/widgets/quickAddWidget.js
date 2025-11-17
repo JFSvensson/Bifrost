@@ -1,4 +1,4 @@
-import { naturalLanguageParser } from './naturalLanguageParser.js';
+import { naturalLanguageParser } from '../utils/naturalLanguageParser.js';
 
 /**
  * Quick Add Widget - Natural language todo input

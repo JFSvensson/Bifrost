@@ -2,7 +2,7 @@
  * Deadline Warnings Widget - Visar upcoming och överdue deadlines
  */
 
-import { DeadlineService } from './deadlineService.js';
+import { DeadlineService } from '../services/deadlineService.js';
 
 class DeadlineWidget extends HTMLElement {
     constructor() {

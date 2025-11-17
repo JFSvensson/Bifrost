@@ -4,17 +4,17 @@ const STATIC_ASSETS = [
     '/index.html',
     '/css/styles.css',
     '/js/main.js',
-    '/js/linkHandler.js',
-    '/js/schoolMenu.js',
-    '/js/menuService.js',
-    '/js/dateHelpers.js',
-    '/js/config.js',
-    '/js/uiConfig.js',
-    '/js/weatherWidget.js',
-    '/js/weatherService.js',
-    '/js/clockWidget.js',
-    '/js/clockService.js',
-    '/js/obsidianTodoService.js'
+    '/js/widgets/linkWidget.js',
+    '/js/widgets/schoolMenu.js',
+    '/js/services/menuService.js',
+    '/js/utils/dateHelpers.js',
+    '/js/config/config.js',
+    '/js/config/uiConfig.js',
+    '/js/widgets/weatherWidget.js',
+    '/js/services/weatherService.js',
+    '/js/widgets/clockWidget.js',
+    '/js/services/clockService.js',
+    '/js/services/obsidianTodoService.js'
 ];
 
 // Install event - cache static assets

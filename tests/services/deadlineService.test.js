@@ -4,9 +4,9 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { DeadlineService } from '../../js/deadlineService.js';
-import eventBus from '../../js/eventBus.js';
-import stateManager from '../../js/stateManager.js';
+import { DeadlineService } from '../../js/services/deadlineService.js';
+import eventBus from '../../js/core/eventBus.js';
+import stateManager from '../../js/core/stateManager.js';
 
 describe('DeadlineService', () => {
   let deadlineService;

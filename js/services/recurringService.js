@@ -3,9 +3,9 @@
  * Manages recurring todo patterns and automatic creation of next instances
  */
 
-import eventBus from './eventBus.js';
-import stateManager from './stateManager.js';
-import errorHandler, { ErrorCode } from './errorHandler.js';
+import eventBus from '../core/eventBus.js';
+import stateManager from '../core/stateManager.js';
+import errorHandler, { ErrorCode } from '../core/errorHandler.js';
 
 export class RecurringService {
     constructor() {

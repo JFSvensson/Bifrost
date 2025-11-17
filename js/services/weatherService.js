@@ -1,5 +1,5 @@
-import { weather as weatherConfig } from './config.js';
-import errorHandler, { ErrorCode } from './errorHandler.js';
+import { weather as weatherConfig } from '../config/config.js';
+import errorHandler, { ErrorCode } from '../core/errorHandler.js';
 
 /**
  * Weather service using SMHI API

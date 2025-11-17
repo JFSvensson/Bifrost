@@ -1,4 +1,4 @@
-import { recurringService } from './recurringService.js';
+import { recurringService } from '../services/recurringService.js';
 
 /**
  * Recurring Widget - Manage recurring todo patterns

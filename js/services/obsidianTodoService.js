@@ -1,6 +1,6 @@
-import { todos as todoConfig } from './config.js';
-import stateManager from './stateManager.js';
-import errorHandler, { ErrorCode } from './errorHandler.js';
+import { todos as todoConfig } from '../config/config.js';
+import stateManager from '../core/stateManager.js';
+import errorHandler, { ErrorCode } from '../core/errorHandler.js';
 
 /**
  * Service for syncing todos with Obsidian via bridge

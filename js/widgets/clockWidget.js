@@ -1,5 +1,5 @@
-import { ClockService } from './clockService.js';
-import { clock as clockConfig } from './config.js';
+import { ClockService } from '../services/clockService.js';
+import { clock as clockConfig } from '../config/config.js';
 
 class ClockWidget extends HTMLElement {
     constructor() {
