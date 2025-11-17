@@ -1,11 +1,13 @@
-const CACHE_NAME = 'bifrost-v1';
+const CACHE_NAME = 'bifrost-v2';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
     '/css/styles.css',
     '/js/main.js',
+    '/js/widgetLoader.js',
     '/js/widgets/linkWidget.js',
     '/js/widgets/schoolMenu.js',
+    '/js/services/linkService.js',
     '/js/services/menuService.js',
     '/js/utils/dateHelpers.js',
     '/js/config/config.js',
@@ -14,7 +16,9 @@ const STATIC_ASSETS = [
     '/js/services/weatherService.js',
     '/js/widgets/clockWidget.js',
     '/js/services/clockService.js',
-    '/js/services/obsidianTodoService.js'
+    '/js/services/obsidianTodoService.js',
+    '/assets/icons/favicon.svg',
+    '/data/links.json'
 ];
 
 // Install event - cache static assets
