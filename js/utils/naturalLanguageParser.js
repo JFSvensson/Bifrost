@@ -69,10 +69,10 @@ export class NaturalLanguageParser {
         // Reminder patterns (Swedish/English)
         this.reminderPatterns = {
             // "påminn mig om X" / "remind me in X"
-            remindInTime: /\b(?:påminn|remind)(?:\s+mig)?\s+(?:om|in)\s+(\d+)\s*(min(?:uter)?|h(?:our)?|tim(?:mar)?|dag(?:ar)?|d(?:ay)?s?)\b/i,
+            remindInTime: /\b(?:påminn|remind)(?:\s+(?:mig|me))?\s+(?:om|in)\s+(\d+)\s*(min(?:uter)?|h(?:our)?|tim(?:mar)?|dag(?:ar)?|d(?:ay)?s?)\b/i,
 
             // "påminn X innan" / "remind X before"
-            remindBefore: /\b(?:påminn|remind)(?:\s+mig)?\s+(\d+)\s*(min(?:uter)?|h(?:our)?|tim(?:mar)?|dag(?:ar)?|d(?:ay)?s?)\s+(?:innan|före|before)\b/i,
+            remindBefore: /\b(?:påminn|remind)(?:\s+(?:mig|me))?\s+(\d+)\s*(min(?:uter)?|h(?:our)?|tim(?:mar)?|dag(?:ar)?|d(?:ay)?s?)\s+(?:innan|före|before)\b/i,
 
             // "påminn mig imorgon 09:00" / "remind me tomorrow 09:00"
             remindAtTime: /\b(?:påminn|remind)(?:\s+mig)?\s+(?:imorgon|tomorrow|idag|today)\s+(?:kl\.?\s*)?(\d{1,2}):?(\d{2})?\b/i,
@@ -570,7 +570,12 @@ export class NaturalLanguageParser {
             const parts = match[1].split('/');
             const day = parseInt(parts[0]);
             const month = parseInt(parts[1]) - 1; // 0-indexed
-            const year = parts[2] ? parseInt(parts[2]) : today.getFullYear();
+            let year = parts[2] ? parseInt(parts[2]) : today.getFullYear();
+            
+            // Handle 2-digit years: assume 2000-2099
+            if (year < 100) {
+                year += 2000;
+            }
 
             const date = new Date(year, month, day);
             if (!isNaN(date.getTime())) {
@@ -588,7 +593,12 @@ export class NaturalLanguageParser {
             const parts = match[1].split('.');
             const day = parseInt(parts[0]);
             const month = parseInt(parts[1]) - 1;
-            const year = parts[2] ? parseInt(parts[2]) : today.getFullYear();
+            let year = parts[2] ? parseInt(parts[2]) : today.getFullYear();
+            
+            // Handle 2-digit years: assume 2000-2099
+            if (year < 100) {
+                year += 2000;
+            }
 
             const date = new Date(year, month, day);
             if (!isNaN(date.getTime())) {
