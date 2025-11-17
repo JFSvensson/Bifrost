@@ -259,7 +259,7 @@ describe('NaturalLanguageParser', () => {
       const result = parser.extractRecurring('varje dag');
       expect(result).toMatchObject({
         type: 'daily',
-        interval: 1
+        frequency: 1
       });
     });
 
@@ -267,7 +267,7 @@ describe('NaturalLanguageParser', () => {
       const result = parser.extractRecurring('var 3:e dag');
       expect(result).toMatchObject({
         type: 'daily',
-        interval: 3
+        frequency: 3
       });
     });
 
@@ -275,7 +275,7 @@ describe('NaturalLanguageParser', () => {
       const result = parser.extractRecurring('varje vecka');
       expect(result).toMatchObject({
         type: 'weekly',
-        interval: 1
+        frequency: 1
       });
     });
 
@@ -283,7 +283,7 @@ describe('NaturalLanguageParser', () => {
       const result = parser.extractRecurring('varje måndag');
       expect(result).toMatchObject({
         type: 'weekly',
-        interval: 1,
+        frequency: 1,
         daysOfWeek: [1] // Monday
       });
     });
@@ -292,7 +292,7 @@ describe('NaturalLanguageParser', () => {
       const result = parser.extractRecurring('varje månad');
       expect(result).toMatchObject({
         type: 'monthly',
-        interval: 1
+        frequency: 1
       });
     });
 
@@ -300,7 +300,7 @@ describe('NaturalLanguageParser', () => {
       const result = parser.extractRecurring('varje månad den 15:e');
       expect(result).toMatchObject({
         type: 'monthly',
-        interval: 1,
+        frequency: 1,
         dayOfMonth: 15
       });
     });
@@ -314,34 +314,34 @@ describe('NaturalLanguageParser', () => {
     it('should parse "påminn om X minuter"', () => {
       const result = parser.extractReminder('påminn mig om 30 minuter');
       expect(result).toMatchObject({
-        type: 'in',
-        value: 30,
-        unit: 'minutes'
+        type: 'in-time'
       });
+      expect(result.offset).toBeDefined();
+      expect(result.offsetDisplay).toContain('30');
     });
 
     it('should parse "remind in X hours"', () => {
       const result = parser.extractReminder('remind me in 2 hours');
       expect(result).toMatchObject({
-        type: 'in',
-        value: 2,
-        unit: 'hours'
+        type: 'in-time'
       });
+      expect(result.offset).toBeDefined();
+      expect(result.offsetDisplay).toContain('2');
     });
 
     it('should parse "påminn X innan"', () => {
       const result = parser.extractReminder('påminn 30 minuter innan');
       expect(result).toMatchObject({
-        type: 'before',
-        value: 30,
-        unit: 'minutes'
+        type: 'before-deadline'
       });
+      expect(result.offset).toBeDefined();
+      expect(result.offsetDisplay).toContain('innan');
     });
 
     it('should parse reminder at specific time', () => {
       const result = parser.extractReminder('påminn mig imorgon 09:00');
       expect(result).toMatchObject({
-        type: 'at',
+        type: 'at-time',
         when: 'tomorrow',
         time: '09:00'
       });
