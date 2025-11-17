@@ -169,11 +169,12 @@ export class StatsService {
         const today = new Date().toDateString();
 
         this.stats.totalCompleted++;
+        
+        // Update streak BEFORE setting lastCompletionDate
+        this.updateStreak(today);
+        
         this.stats.lastCompletionDate = today;
         this.stats.lastActivityDate = today;
-
-        // Update streak
-        this.updateStreak(today);
 
         // Priority stats
         const priority = todo.priority || 'normal';
