@@ -31,52 +31,101 @@ En modern startsida med att‑göra‑lista, sök, länkar, väder, klocka samt 
 Bifrost/
 ├── index.html              # Huvudsida med grid-layout
 ├── manifest.json           # PWA-manifest med nordisk regnbågs-ikon
-├── favicon.svg             # SVG-ikon med regnbågsbro
-├── obsidianBridge.js       # Node.js bridge för Obsidian-synk
-├── example-TODO.md         # Exempel på Obsidian todo-format
-├── OBSIDIAN_SETUP.md       # Guide för Obsidian-integration
-├── FAVICON_README.md       # Guide för favicon-generering
-├── DARK_THEME.md           # Guide för mörkt tema
-├── STATS_GUIDE.md          # Guide för statistik-dashboard
-├── DEADLINE_GUIDE.md       # Guide för deadline warnings
-├── POMODORO_GUIDE.md       # Guide för Pomodoro timer
-├── GOOGLE_CALENDAR_GUIDE.md # Guide för Google Calendar integration
-├── QUICK_ADD_GUIDE.md      # Guide för Quick Add natural language parser
-├── CONFIG.md               # Konfigurationsdokumentation
-├── css/styles.css          # Responsiva stilar med CSS Grid
+├── package.json            # NPM dependencies och scripts
+├── vitest.config.js        # Test configuration
+├── jsconfig.json           # JavaScript project config
+├── LICENSE                 # MIT License
+├── README.md               # This file
+├── assets/
+│   └── icons/
+│       ├── favicon.svg              # SVG-ikon med regnbågsbro
+│       ├── favicon.ico              # ICO fallback
+│       ├── apple-touch-icon.png     # iOS icon
+│       └── favicon-data.txt         # Generation notes
+├── css/
+│   └── styles.css          # Responsiva stilar med CSS Grid
+├── data/
+│   ├── links.json          # Länkdata (skapas av användaren)
+│   └── examples/
+│       └── example-TODO.md # Exempel på Obsidian todo-format
+├── docs/
+│   ├── architecture/
+│   │   ├── ARCHITECTURE.md          # Full technical architecture
+│   │   └── CONFIG.md                # Konfigurationsdokumentation
+│   ├── contributing/
+│   │   ├── CONTRIBUTING.md          # Contributing guidelines
+│   │   └── IMPLEMENTATION_SUMMARY.md # Implementation details
+│   ├── features/
+│   │   ├── DEADLINE_GUIDE.md        # Deadline warnings guide
+│   │   ├── POMODORO_GUIDE.md        # Pomodoro timer guide
+│   │   ├── QUICK_ADD_GUIDE.md       # Quick Add parser guide
+│   │   ├── RECURRING_GUIDE.md       # Recurring todos guide
+│   │   ├── REMINDER_GUIDE.md        # Reminders & snooze guide
+│   │   └── STATS_GUIDE.md           # Statistik-dashboard guide
+│   └── guides/
+│       ├── DARK_THEME.md            # Tema-guide
+│       ├── FAVICON_README.md        # Favicon generation guide
+│       ├── GOOGLE_CALENDAR_GUIDE.md # Google Calendar integration
+│       └── OBSIDIAN_SETUP.md        # Obsidian integration guide
 ├── js/
-│   ├── main.js            # Huvudlogik + todo-hantering
-│   ├── config.js          # Centraliserad konfiguration
-│   ├── uiConfig.js        # UI-initialisering
-│   ├── naturalLanguageParser.js  # Natural language parser för Quick Add
-│   ├── quickAddWidget.js  # Quick Add UI-komponent
-│   ├── recurringService.js  # Recurring todos service
-│   ├── recurringWidget.js   # Recurring todos widget
-│   ├── reminderService.js   # Reminders & snooze service
-│   ├── reminderWidget.js    # Reminders widget
-│   ├── themeService.js    # Tema-hantering (ljust/mörkt)
-│   ├── statsService.js    # Statistik-spårning
-│   ├── statsWidget.js     # Statistik-visualisering
-│   ├── deadlineService.js # Deadline-analys och notifications
-│   ├── deadlineWidget.js  # Deadline-visualisering
-│   ├── pomodoroService.js # Pomodoro timer-logik
-│   ├── pomodoroWidget.js  # Pomodoro timer-widget
-│   ├── googleCalendarService.js # Google Calendar API och OAuth
-│   ├── calendarWidget.js  # Calendar-visualisering
-│   ├── calendarSync.js    # Bilateral sync todos ↔ calendar
-│   ├── linkHandler.js     # Länkhantering
-│   ├── schoolMenu.js      # Skolmatskomponent
-│   ├── menuService.js     # API-service för skolmat
-│   ├── dateHelpers.js     # Datumfunktioner
-│   ├── weatherWidget.js   # Väderkomponent
-│   ├── weatherService.js  # SMHI API-service
-│   ├── clockWidget.js     # Klockkomponent
-│   ├── clockService.js    # Tidshantering och tidszoner
-│   ├── obsidianTodoService.js  # Obsidian-synkronisering
-│   ├── sw.js             # Service Worker
-│   └── proxy.js          # CORS-proxy för skolmat
-└── data/
-    └── links.json        # Länkdata (skapas av användaren)
+│   ├── main.js             # Huvudlogik + todo-hantering
+│   ├── sw.js               # Service Worker (v2 cache)
+│   ├── widgetLoader.js     # Widget initialization
+│   ├── config/
+│   │   ├── config.js       # Centraliserad konfiguration
+│   │   ├── types.js        # Type definitions
+│   │   └── uiConfig.js     # UI-initialisering
+│   ├── core/
+│   │   ├── errorHandler.js # Global error handling
+│   │   ├── eventBus.js     # Pub/sub event system
+│   │   └── stateManager.js # LocalStorage state manager
+│   ├── integrations/
+│   │   ├── obsidianBridge.js # Node.js bridge för Obsidian-synk
+│   │   └── proxy.js          # CORS-proxy för skolmat (Node.js)
+│   ├── services/
+│   │   ├── calendarSync.js          # Bilateral sync todos ↔ calendar
+│   │   ├── clockService.js          # Tidshantering och tidszoner
+│   │   ├── deadlineService.js       # Deadline-analys och notifications
+│   │   ├── googleCalendarService.js # Google Calendar API och OAuth
+│   │   ├── linkService.js           # Länkhantering
+│   │   ├── menuService.js           # API-service för skolmat
+│   │   ├── obsidianTodoService.js   # Obsidian-synkronisering
+│   │   ├── pomodoroService.js       # Pomodoro timer-logik
+│   │   ├── recurringService.js      # Recurring todos service
+│   │   ├── reminderService.js       # Reminders & snooze service
+│   │   ├── statsService.js          # Statistik-spårning
+│   │   ├── themeService.js          # Tema-hantering (ljust/mörkt)
+│   │   └── weatherService.js        # SMHI API-service
+│   ├── utils/
+│   │   ├── dateHelpers.js           # Datumfunktioner
+│   │   ├── debounce.js              # Debounce utility
+│   │   └── naturalLanguageParser.js # Natural language parser för Quick Add
+│   └── widgets/
+│       ├── calendarWidget.js  # Calendar-visualisering
+│       ├── clockWidget.js     # Klockkomponent
+│       ├── deadlineWidget.js  # Deadline-visualisering
+│       ├── linkWidget.js      # Snabblänkar widget
+│       ├── pomodoroWidget.js  # Pomodoro timer-widget
+│       ├── quickAddWidget.js  # Quick Add UI-komponent
+│       ├── recurringWidget.js # Recurring todos widget
+│       ├── reminderWidget.js  # Reminders widget
+│       ├── schoolMenu.js      # Skolmatskomponent
+│       ├── statsWidget.js     # Statistik-visualisering
+│       └── weatherWidget.js   # Väderkomponent
+├── scripts/
+│   ├── eslint.config.js       # ESLint configuration
+│   └── generate-favicons.js   # Favicon generation utility
+└── tests/
+    ├── setup.js
+    ├── services/
+    │   ├── deadlineService.test.js
+    │   ├── pomodoroService.test.js
+    │   ├── recurringService.test.js
+    │   └── statsService.test.js
+    └── utilities/
+        ├── errorHandler.test.js
+        ├── eventBus.test.js
+        └── stateManager.test.js
 ```
 
 ## Komponentöversikt
