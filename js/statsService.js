@@ -417,4 +417,54 @@ export class StatsService {
         this.saveStats();
         eventBus.emit('stats:reset', null);
     }
+
+    /**
+     * Get current statistics
+     * @returns {Object} Copy of stats object
+     */
+    getStats() {
+        return { ...this.stats };
+    }
+
+    /**
+     * Get completion rate percentage
+     * @returns {number} Completion rate (0-100)
+     */
+    getCompletionRate() {
+        if (this.stats.totalCreated === 0) {
+            return 0;
+        }
+        return Math.round((this.stats.totalCompleted / this.stats.totalCreated) * 100);
+    }
+
+    /**
+     * Get priority breakdown statistics
+     * @returns {Object} Priority stats
+     */
+    getPriorityBreakdown() {
+        return { ...this.stats.priorityStats };
+    }
+
+    /**
+     * Get source breakdown statistics
+     * @returns {Object} Source stats
+     */
+    getSourceBreakdown() {
+        return { ...this.stats.sourceStats };
+    }
+
+    /**
+     * Get weekly breakdown statistics
+     * @returns {Object} Weekly stats
+     */
+    getWeeklyBreakdown() {
+        return { ...this.stats.weeklyStats };
+    }
+
+    /**
+     * Reset statistics (alias for reset)
+     */
+    resetStats() {
+        this.reset();
+    }
 }
