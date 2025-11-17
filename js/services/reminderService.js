@@ -9,7 +9,7 @@
  * - Bakgrundsövervakning med setInterval
  * - Browser notifications (med fallback till in-app toast)
  * - Integrering med deadlineService för "påminn X innan deadline"
- * - Persistens i localStorage
+ * - Persistens via StateManager
  *
  * @example
  * // Skapa påminnelse
@@ -24,10 +24,14 @@
  * reminderService.snoozeTodo('123', '+10min');
  *
  * // Lyssna på påminnelser
- * reminderService.subscribe('reminderTriggered', (reminder) => {
+ * eventBus.on('reminder:triggered', (reminder) => {
  *   showNotification(reminder.text);
  * });
  */
+
+import eventBus from '../core/eventBus.js';
+import stateManager from '../core/stateManager.js';
+import errorHandler, { ErrorCode } from '../core/errorHandler.js';
 
 class ReminderService {
     /**
@@ -37,7 +41,6 @@ class ReminderService {
     constructor() {
         this.reminders = [];
         this.checkInterval = null;
-        this.subscribers = {};
         this.notificationPermission = 'default';
 
         // Snooze presets (i millisekunder)
@@ -51,23 +54,41 @@ class ReminderService {
             'nextweek': null // Special case: beräknas dynamiskt
         };
 
+        this._init();
+    }
+
+    /**
+     * Initialize service
+     * @private
+     */
+    _init() {
+        // Register StateManager schema
+        stateManager.registerSchema('reminders', {
+            version: 1,
+            validate: (data) => Array.isArray(data),
+            migrate: (oldData) => oldData,
+            default: []
+        });
+
+        // Register EventBus namespace
+        eventBus.register('reminder');
+
         this.loadReminders();
         this.checkNotificationPermission();
         this.startMonitoring();
     }
 
     /**
-     * Laddar påminnelser från localStorage och konverterar till rätt format
+     * Laddar påminnelser från StateManager och konverterar till rätt format
      * Kör även cleanup av gamla påminnelser
      * @returns {void}
      */
     loadReminders() {
         try {
-            const stored = localStorage.getItem('reminders');
-            if (stored) {
-                this.reminders = JSON.parse(stored);
+            const stored = stateManager.get('reminders');
+            if (stored && stored.length > 0) {
                 // Konvertera string dates till Date objects
-                this.reminders = this.reminders.map(r => ({
+                this.reminders = stored.map(r => ({
                     ...r,
                     remindAt: new Date(r.remindAt),
                     createdAt: new Date(r.createdAt),
@@ -76,22 +97,30 @@ class ReminderService {
 
                 // Städa gamla påminnelser (äldre än 7 dagar)
                 this.cleanupOldReminders();
+            } else {
+                this.reminders = [];
             }
         } catch (error) {
-            console.error('Fel vid laddning av påminnelser:', error);
+            errorHandler.handle(error, {
+                code: ErrorCode.STORAGE_ERROR,
+                context: 'Loading reminders'
+            });
             this.reminders = [];
         }
     }
 
     /**
-     * Sparar alla påminnelser till localStorage
+     * Sparar alla påminnelser till StateManager
      * @returns {void}
      */
     saveReminders() {
         try {
-            localStorage.setItem('reminders', JSON.stringify(this.reminders));
+            stateManager.set('reminders', this.reminders);
         } catch (error) {
-            console.error('Fel vid sparande av påminnelser:', error);
+            errorHandler.handle(error, {
+                code: ErrorCode.STORAGE_ERROR,
+                context: 'Saving reminders'
+            });
         }
     }
 
@@ -108,12 +137,16 @@ class ReminderService {
      * @returns {Object} Den skapade påminnelsen
      */
     createReminder({ todoId, text, remindAt, type = 'manual', priority = 'medium', tags = [] }) {
-        if (!todoId || !text || !remindAt) {
-            throw new Error('todoId, text och remindAt krävs för att skapa påminnelse');
-        }
+        // Validate required fields
+        errorHandler.validateRequired({ todoId, text, remindAt }, ['todoId', 'text', 'remindAt'], 'ReminderService.createReminder');
 
         if (!(remindAt instanceof Date) || isNaN(remindAt.getTime())) {
-            throw new Error('remindAt måste vara ett giltigt Date-objekt');
+            const error = new Error('remindAt måste vara ett giltigt Date-objekt');
+            errorHandler.handle(error, {
+                code: ErrorCode.VALIDATION_ERROR,
+                context: 'Creating reminder'
+            });
+            throw error;
         }
 
         // Kontrollera om påminnelsen redan har passerat
@@ -137,7 +170,7 @@ class ReminderService {
 
         this.reminders.push(reminder);
         this.saveReminders();
-        this.publish('reminderCreated', reminder);
+        eventBus.emit('reminder:created', reminder);
 
         console.log('Påminnelse skapad:', {
             text,
@@ -161,9 +194,8 @@ class ReminderService {
      * @returns {Object} Skapad påminnelse med snooze-metadata
      */
     snoozeTodo(todoId, preset, todo) {
-        if (!todoId || !preset || !todo) {
-            throw new Error('todoId, preset och todo krävs för snooze');
-        }
+        // Validate required fields
+        errorHandler.validateRequired({ todoId, preset, todo }, ['todoId', 'preset', 'todo'], 'ReminderService.snoozeTodo');
 
         const remindAt = this.calculateSnoozeTime(preset);
 
@@ -183,7 +215,7 @@ class ReminderService {
         reminder.snoozeCount = (this.getSnoozedReminder(todoId)?.snoozeCount || 0) + 1;
         this.saveReminders();
 
-        this.publish('todoSnoozed', {
+        eventBus.emit('reminder:todoSnoozed', {
             todoId,
             reminder,
             preset,
@@ -367,7 +399,7 @@ class ReminderService {
             const reminder = this.reminders[index];
             this.reminders.splice(index, 1);
             this.saveReminders();
-            this.publish('reminderCancelled', reminder);
+            eventBus.emit('reminder:cancelled', reminder);
         }
     }
 
@@ -384,7 +416,7 @@ class ReminderService {
         this.saveReminders();
 
         if (cancelled.length > 0) {
-            this.publish('remindersForTodoCancelled', { todoId, count: cancelled.length });
+            eventBus.emit('reminder:todoCancelled', { todoId, count: cancelled.length });
         }
     }
 
@@ -410,7 +442,7 @@ class ReminderService {
 
         if (triggered.length > 0) {
             this.saveReminders();
-            this.publish('remindersChecked', {
+            eventBus.emit('reminder:checked', {
                 count: triggered.length,
                 reminders: triggered
             });
@@ -447,21 +479,25 @@ class ReminderService {
                 // Klick på notification → öppna todo
                 notification.onclick = () => {
                     window.focus();
-                    this.publish('reminderClicked', reminder);
+                    eventBus.emit('reminder:clicked', reminder);
                     notification.close();
                 };
             } catch (error) {
-                console.error('Kunde inte visa browser notification:', error);
+                errorHandler.handle(error, {
+                    code: ErrorCode.UNKNOWN_ERROR,
+                    context: 'Showing browser notification',
+                    showToast: false
+                });
                 // Fallback till in-app toast
-                this.publish('reminderTriggered', reminder);
+                eventBus.emit('reminder:triggered', reminder);
             }
         } else {
             // Fallback till in-app toast
-            this.publish('reminderTriggered', reminder);
+            eventBus.emit('reminder:triggered', reminder);
         }
 
         // Statistik
-        this.publish('reminderTriggered', reminder);
+        eventBus.emit('reminder:triggered', reminder);
     }
 
     /**
@@ -531,10 +567,14 @@ class ReminderService {
         try {
             const permission = await Notification.requestPermission();
             this.notificationPermission = permission;
-            this.publish('notificationPermissionChanged', permission);
+            eventBus.emit('reminder:permissionChanged', permission);
             return permission;
         } catch (error) {
-            console.error('Fel vid begäran av notification permission:', error);
+            errorHandler.handle(error, {
+                code: ErrorCode.UNKNOWN_ERROR,
+                context: 'Requesting notification permission',
+                showToast: false
+            });
             this.notificationPermission = 'denied';
             return 'denied';
         }
@@ -612,41 +652,19 @@ class ReminderService {
         };
     }
 
-    /**
-     * Prenumererar på service events
-     * Events: reminderCreated, todoSnoozed, reminderTriggered, reminderCancelled, etc.
-     *
-     * @param {string} event - Event namn
-     * @param {Function} callback - Callback-funktion som tar emot event data
-     * @returns {void}
-     */
-    subscribe(event, callback) {
-        if (!this.subscribers[event]) {
-            this.subscribers[event] = [];
-        }
-        this.subscribers[event].push(callback);
-    }
-
-    /**
-     * Publicerar ett event till alla subscribers
-     * Fångar och loggar errors i callbacks
-     *
-     * @param {string} event - Event namn
-     * @param {*} data - Event data som skickas till callbacks
-     * @returns {void}
-     */
-    publish(event, data) {
-        if (this.subscribers[event]) {
-            this.subscribers[event].forEach(callback => {
-                try {
-                    callback(data);
-                } catch (error) {
-                    console.error(`Fel i subscriber för ${event}:`, error);
-                }
-            });
-        }
-    }
 }
+
+/**
+ * Events emitted by ReminderService:
+ * - reminder:created - När en påminnelse skapas
+ * - reminder:todoSnoozed - När en todo snooze:as
+ * - reminder:triggered - När en påminnelse triggas
+ * - reminder:clicked - När användaren klickar på en notification
+ * - reminder:cancelled - När en påminnelse avbryts
+ * - reminder:todoCancelled - När alla påminnelser för en todo avbryts
+ * - reminder:checked - När påminnelser har kontrollerats
+ * - reminder:permissionChanged - När notification permission ändras
+ */
 
 // Singleton export
 const reminderService = new ReminderService();
