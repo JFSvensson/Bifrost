@@ -6,6 +6,36 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import stateManager from '../../js/core/stateManager.js';
 
+// Helper to get localStorage keys (works with happy-dom)
+function getLocalStorageKeys() {
+    // happy-dom localStorage doesn't properly support .length/.key() iteration
+    // Use Object.keys as fallback
+    const keys = [];
+    try {
+        // Try standard iteration first
+        if (localStorage.length > 0) {
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key) keys.push(key);
+            }
+        }
+    } catch (e) {
+        // Fallback: iterate object properties
+    }
+    
+    // If no keys found via iteration, try Object.keys
+    if (keys.length === 0) {
+        const objKeys = Object.keys(localStorage);
+        objKeys.forEach(key => {
+            if (localStorage.getItem(key) !== null) {
+                keys.push(key);
+            }
+        });
+    }
+    
+    return keys;
+}
+
 describe('StateManager', () => {
     beforeEach(() => {
     // Clear localStorage and reset state
@@ -345,7 +375,7 @@ describe('StateManager', () => {
             expect(result).toBe(true);
 
             // Check backup exists
-            const backupKeys = Object.keys(localStorage).filter(k => k.startsWith('backup_'));
+            const backupKeys = getLocalStorageKeys().filter(k => k.startsWith('backup_'));
             expect(backupKeys.length).toBeGreaterThan(0);
         });
 
@@ -366,7 +396,7 @@ describe('StateManager', () => {
         it('should restore from specific backup', () => {
             stateManager.set('key1', 'value1');
             stateManager._createBackup();
-            const firstBackup = Object.keys(localStorage).find(k => k.startsWith('backup_'));
+            const firstBackup = getLocalStorageKeys().find(k => k.startsWith('backup_'));
 
             stateManager.set('key1', 'value2');
             stateManager._createBackup();
