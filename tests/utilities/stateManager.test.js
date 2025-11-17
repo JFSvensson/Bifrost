@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import stateManager from '../../js/stateManager.js';
+import stateManager from '../../js/core/stateManager.js';
 
 describe('StateManager', () => {
     beforeEach(() => {
