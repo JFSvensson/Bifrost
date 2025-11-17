@@ -111,9 +111,22 @@ bifrost/
 │   │   └── proxy.js            # CORS proxy server
 │   │
 │   ├── main.js             # Application orchestrator
+│   ├── widgetLoader.js     # Lazy loading system
+│   └── sw.js               # Service Worker
+│
+├── assets/                 # 🎨 Static assets
+│   └── icons/
+│       ├── favicon.svg         # SVG favicon
+│       └── favicon-data.txt    # Favicon generation notes
 │
 ├── data/
-│   └── links.json          # Quick links configuration
+│   ├── links.json          # Quick links configuration
+│   └── examples/
+│       └── example-TODO.md     # Obsidian todo format example
+│
+├── scripts/                # 🔧 Build & tooling scripts
+│   ├── eslint.config.js        # ESLint configuration
+│   └── generate-favicons.js    # Favicon generator
 │
 ├── tests/                  # 🧪 Test files
 │   ├── setup.js
@@ -127,13 +140,25 @@ bifrost/
 │       ├── eventBus.test.js
 │       └── stateManager.test.js
 │
-└── docs/                   # Documentation
-    ├── ARCHITECTURE.md     # This file
-    ├── REMINDER_GUIDE.md
-    ├── RECURRING_GUIDE.md
-    ├── POMODORO_GUIDE.md
-    ├── STATS_GUIDE.md
-    └── ...
+└── docs/                   # 📚 Documentation
+    ├── architecture/
+    │   ├── ARCHITECTURE.md     # This file
+    │   └── CONFIG.md           # Configuration guide
+    ├── features/
+    │   ├── DEADLINE_GUIDE.md
+    │   ├── POMODORO_GUIDE.md
+    │   ├── QUICK_ADD_GUIDE.md
+    │   ├── RECURRING_GUIDE.md
+    │   ├── REMINDER_GUIDE.md
+    │   └── STATS_GUIDE.md
+    ├── guides/
+    │   ├── DARK_THEME.md
+    │   ├── FAVICON_README.md
+    │   ├── GOOGLE_CALENDAR_GUIDE.md
+    │   └── OBSIDIAN_SETUP.md
+    └── contributing/
+        ├── CONTRIBUTING.md
+        └── IMPLEMENTATION_SUMMARY.md
 ```
 
 ---
@@ -534,6 +559,61 @@ ErrorHandler translates technical errors to user-friendly Swedish messages:
 ```javascript
 STORAGE_ERROR → "Kunde inte spara data"
 API_TIMEOUT → "Servern svarar inte - försök igen"
+```
+
+---
+
+## Assets & Resources
+
+### Assets Organization
+
+Static assets are organized in the `/assets` directory:
+
+```
+assets/
+└── icons/
+    ├── favicon.svg         # SVG favicon (32x32)
+    ├── favicon.ico         # ICO fallback
+    ├── apple-touch-icon.png # iOS home screen icon
+    └── favicon-data.txt    # Generation notes
+```
+
+**Favicon Strategy:**
+- Primary: SVG favicon for modern browsers
+- Fallback: ICO for legacy support
+- PWA: Multiple sizes in manifest.json
+- Generation: Use `node scripts/generate-favicons.js`
+
+### Integration Scripts
+
+External integration scripts in `/js/integrations`:
+
+```
+js/integrations/
+├── obsidianBridge.js  # Obsidian vault synchronization
+└── proxy.js           # CORS proxy for external APIs
+```
+
+**ObsidianBridge:**
+- Node.js server on port 8081
+- Watches vault files for changes
+- Provides REST API for todo sync
+- Real-time file system monitoring
+
+**Proxy:**
+- Node.js CORS proxy on port 8787
+- Proxies school menu API requests
+- Bypasses CORS restrictions
+- Caches responses
+
+### Build Scripts
+
+Development and build tools in `/scripts`:
+
+```
+scripts/
+├── eslint.config.js      # ESLint configuration
+└── generate-favicons.js  # Favicon generation utility
 ```
 
 ---
