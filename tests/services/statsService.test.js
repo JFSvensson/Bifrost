@@ -188,7 +188,13 @@ describe('StatsService', () => {
 
     it('should track completion time if todo has createdAt', () => {
       const yesterday = new Date('2024-01-14T12:00:00Z');
-      const todo = { id: '1', text: 'Test', createdAt: yesterday.toISOString() };
+      const now = new Date('2024-01-15T12:00:00Z');
+      const todo = { 
+        id: '1', 
+        text: 'Test', 
+        createdAt: yesterday.toISOString(),
+        completedAt: now.toISOString()
+      };
 
       statsService.trackTodoCompleted(todo);
 
@@ -231,10 +237,13 @@ describe('StatsService', () => {
         });
 
         it('should update longest streak', () => {
+            const today = new Date().toDateString();
             statsService.stats.currentStreak = 5;
             statsService.stats.longestStreak = 3;
+            // Set lastCompletionDate to today so currentStreak isn't reset
+            statsService.stats.lastCompletionDate = today;
 
-            statsService.updateStreak(new Date().toDateString());
+            statsService.updateStreak(today);
 
             expect(statsService.stats.longestStreak).toBe(5);
         });
