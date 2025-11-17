@@ -199,6 +199,38 @@ export class RecurringService {
     }
 
     /**
+     * Toggle pattern active state
+     * @param {string} patternId - Pattern ID
+     * @returns {Object|null} Updated pattern or null
+     */
+    togglePattern(patternId) {
+        const pattern = this.recurringPatterns.find(p => p.id === patternId);
+        if (!pattern) {
+            return null;
+        }
+        return pattern.active ? this.pausePattern(patternId) : this.resumePattern(patternId);
+    }
+
+    /**
+     * Calculate next due date for pattern (alias for calculateNextOccurrence)
+     * @param {Object} pattern - Pattern object
+     * @param {Date} [fromDate] - Base date
+     * @returns {Date} Next due date
+     */
+    calculateNextDue(pattern, fromDate) {
+        return this.calculateNextOccurrence(pattern, fromDate);
+    }
+
+    /**
+     * Generate todo from pattern (alias for createTodoFromPattern)
+     * @param {Object} pattern - Pattern object
+     * @returns {Object} Created todo
+     */
+    generateTodo(pattern) {
+        return this.createTodoFromPattern(pattern);
+    }
+
+    /**
      * Calculate next occurrence date based on pattern
      * @param {Object} pattern - Recurring pattern
      * @param {Date} [fromDate=null] - Base date for calculation
