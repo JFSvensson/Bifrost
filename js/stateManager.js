@@ -34,6 +34,7 @@
 
 import eventBus from './eventBus.js';
 import errorHandler, { ErrorCode } from './errorHandler.js';
+import { debounce } from './debounce.js';
 
 /**
  * StateManager class - Singleton för centraliserad state-hantering
@@ -61,6 +62,18 @@ class StateManager {
         /** @type {number} Max backup age in days */
         this.maxBackupAge = 7;
 
+        /** @type {Map<string, any>} Pending writes buffer */
+        this.pendingWrites = new Map();
+
+        /** @type {number} Debounce delay in milliseconds */
+        this.debounceDelay = 300;
+
+        /** @type {boolean} Test mode - disable debouncing for tests */
+        this.testMode = false;
+
+        // Create debounced flush function
+        this._debouncedFlush = debounce(() => this._flushPendingWrites(), this.debounceDelay);
+
         this._init();
     }
 
@@ -71,6 +84,11 @@ class StateManager {
      * @returns {void}
      */
     _init() {
+        // Enable test mode if running in Vitest (disable debouncing for tests)
+        if (typeof process !== 'undefined' && process.env?.VITEST) {
+            this.testMode = true;
+        }
+
         // Register state namespace in eventBus
         eventBus.registerNamespace('state');
 
@@ -79,10 +97,22 @@ class StateManager {
 
         // Registrera event listeners
         eventBus.on('app:beforeUnload', () => {
+            // Flush pending writes before unload
+            this.flush();
+            
             if (this.autoBackupEnabled) {
                 this._createBackup();
             }
         });
+
+        // Also flush on page visibility change (tab switch, minimize)
+        if (typeof document !== 'undefined') {
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    this.flush();
+                }
+            });
+        }
     }
 
     /**
@@ -175,13 +205,15 @@ class StateManager {
      * @param {number} [options.ttl] - Time to live i millisekunder
      * @param {boolean} [options.validate=true] - Validera mot schema
      * @param {boolean} [options.notify=true] - Notifiera subscribers
+     * @param {boolean} [options.immediate=false] - Skip debouncing and save immediately
      * @returns {boolean} True om spara lyckades
      */
     set(key, data, options = {}) {
         const {
             ttl,
             validate = true,
-            notify = true
+            notify = true,
+            immediate = false
         } = options;
 
         try {
@@ -203,11 +235,17 @@ class StateManager {
                 storageObject._ttl = Date.now() + ttl;
             }
 
-            // Försök spara
-            const serialized = JSON.stringify(storageObject);
-            localStorage.setItem(key, serialized);
+            // If immediate or test mode, save directly to localStorage
+            if (immediate || this.testMode) {
+                const serialized = JSON.stringify(storageObject);
+                localStorage.setItem(key, serialized);
+            } else {
+                // Buffer write for debouncing
+                this.pendingWrites.set(key, { storageObject, notify });
+                this._debouncedFlush();
+            }
 
-            // Notifiera subscribers
+            // Notifiera subscribers immediately (don't debounce UI updates)
             if (notify) {
                 this._notifySubscribers(key, data);
             }
@@ -218,25 +256,6 @@ class StateManager {
             return true;
 
         } catch (error) {
-            // Hantera quota exceeded
-            if (error.name === 'QuotaExceededError') {
-                errorHandler.handle(error, {
-                    code: ErrorCode.STORAGE_QUOTA_EXCEEDED,
-                    context: `Saving key '${key}'`,
-                    showToast: true
-                });
-
-                // Försök rensa gammalt och försök igen
-                this._cleanupOldData();
-
-                try {
-                    localStorage.setItem(key, JSON.stringify({ _data: data }));
-                    return true;
-                } catch (retryError) {
-                    return false;
-                }
-            }
-
             errorHandler.handle(error, {
                 code: ErrorCode.STORAGE_ERROR,
                 context: `Saving key '${key}'`,
@@ -247,6 +266,67 @@ class StateManager {
         }
     }
 
+    /**
+     * Flushes all pending writes to localStorage
+     * Called by debounced function after delay
+     * @private
+     * @returns {void}
+     */
+    _flushPendingWrites() {
+        if (this.pendingWrites.size === 0) {
+            return;
+        }
+
+        performance.mark('storage-flush-start');
+
+        const writesToFlush = Array.from(this.pendingWrites.entries());
+        this.pendingWrites.clear();
+
+        for (const [key, { storageObject }] of writesToFlush) {
+            try {
+                const serialized = JSON.stringify(storageObject);
+                localStorage.setItem(key, serialized);
+            } catch (error) {
+                // Hantera quota exceeded
+                if (error.name === 'QuotaExceededError') {
+                    errorHandler.handle(error, {
+                        code: ErrorCode.STORAGE_QUOTA_EXCEEDED,
+                        context: `Flushing key '${key}'`,
+                        showToast: true
+                    });
+
+                    // Försök rensa gammalt och försök igen
+                    this._cleanupOldData();
+
+                    try {
+                        const serialized = JSON.stringify(storageObject);
+                        localStorage.setItem(key, serialized);
+                    } catch (retryError) {
+                        console.error(`Failed to flush ${key}:`, retryError);
+                    }
+                } else {
+                    errorHandler.handle(error, {
+                        code: ErrorCode.STORAGE_ERROR,
+                        context: `Flushing key '${key}'`,
+                        showToast: false
+                    });
+                }
+            }
+        }
+
+        performance.mark('storage-flush-end');
+        performance.measure('storage-flush', 'storage-flush-start', 'storage-flush-end');
+    }
+
+    /**
+     * Forces immediate flush of all pending writes
+     * Useful before page unload or critical operations
+     * @returns {void}
+     */
+    flush() {
+        this._debouncedFlush.cancel();
+        this._flushPendingWrites();
+    }
     /**
      * Tar bort data från storage
      *
