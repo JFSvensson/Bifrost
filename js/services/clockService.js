@@ -30,9 +30,6 @@ export class ClockService {
      * @private
      */
     _init() {
-        // Register EventBus namespace
-        eventBus.register('clock');
-
         // Emit initial time
         this._emitTimeUpdate();
 
