@@ -117,6 +117,8 @@ describe('debounce', () => {
         debounced();
         expect(func).toHaveBeenCalledTimes(1);
 
+        // Make another call to ensure trailing edge fires
+        debounced();
         vi.advanceTimersByTime(100);
 
         expect(func).toHaveBeenCalledTimes(2);
