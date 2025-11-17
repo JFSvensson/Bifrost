@@ -78,6 +78,48 @@ class StateManager {
     }
 
     /**
+     * Get all localStorage keys (works in both browser and test environments)
+     * @private
+     * @returns {string[]} Array of keys
+     */
+    _getAllKeys() {
+        const keys = [];
+        
+        // Use for...in loop which works better with happy-dom localStorage
+        try {
+            for (const key in localStorage) {
+                // Check if it's own property and actually retrievable
+                if (localStorage.hasOwnProperty(key) && localStorage.getItem(key) !== null) {
+                    keys.push(key);
+                }
+            }
+        } catch (e) {
+            // Fallback to Object.keys if for...in fails
+            try {
+                Object.keys(localStorage).forEach(key => {
+                    if (localStorage.getItem(key) !== null) {
+                        keys.push(key);
+                    }
+                });
+            } catch (e2) {
+                // Last resort: standard iteration
+                try {
+                    if (typeof localStorage.length === 'number') {
+                        for (let i = 0; i < localStorage.length; i++) {
+                            const key = localStorage.key(i);
+                            if (key) keys.push(key);
+                        }
+                    }
+                } catch (e3) {
+                    // Silent fail
+                }
+            }
+        }
+        
+        return keys;
+    }
+
+    /**
      * Initialiserar StateManager och kontrollerar storage
      *
      * @private
@@ -472,7 +514,7 @@ class StateManager {
     _createBackup() {
         try {
             const backup = {};
-            const keys = Object.keys(localStorage);
+            const keys = this._getAllKeys();
 
             keys.forEach(key => {
                 if (!key.startsWith('backup_')) {
@@ -506,7 +548,7 @@ class StateManager {
         try {
             // Hitta senaste backup om ingen specificerad
             if (!backupKey) {
-                const backupKeys = Object.keys(localStorage)
+                const backupKeys = this._getAllKeys()
                     .filter(k => k.startsWith('backup_'))
                     .sort()
                     .reverse();
@@ -549,14 +591,14 @@ class StateManager {
     _cleanupOldBackups() {
         const cutoffTime = Date.now() - (this.maxBackupAge * 24 * 60 * 60 * 1000);
 
-        Object.keys(localStorage)
+        const keysToRemove = this._getAllKeys()
             .filter(k => k.startsWith('backup_'))
-            .forEach(key => {
+            .filter(key => {
                 const timestamp = parseInt(key.split('_')[1], 10);
-                if (timestamp < cutoffTime) {
-                    localStorage.removeItem(key);
-                }
+                return timestamp < cutoffTime;
             });
+        
+        keysToRemove.forEach(key => localStorage.removeItem(key));
     }
 
     /**
@@ -567,7 +609,8 @@ class StateManager {
      */
     _cleanupOldData() {
         const now = Date.now();
-        const keys = Object.keys(localStorage);
+        const keys = this._getAllKeys();
+        const keysToRemove = [];
 
         keys.forEach(key => {
             try {
@@ -576,12 +619,14 @@ class StateManager {
 
                 // Ta bort om TTL passerat
                 if (parsed._ttl && parsed._ttl < now) {
-                    localStorage.removeItem(key);
+                    keysToRemove.push(key);
                 }
             } catch (error) {
                 // Ignore parse errors
             }
         });
+        
+        keysToRemove.forEach(key => localStorage.removeItem(key));
     }
 
     /**
@@ -653,12 +698,15 @@ class StateManager {
      */
     exportAll() {
         const data = {};
-        const keys = Object.keys(localStorage);
+        const keys = this._getAllKeys();
 
         keys.forEach(key => {
             if (!key.startsWith('backup_')) {
                 try {
-                    data[key] = JSON.parse(localStorage.getItem(key));
+                    const value = localStorage.getItem(key);
+                    if (value !== null) {
+                        data[key] = JSON.parse(value);
+                    }
                 } catch (error) {
                     data[key] = localStorage.getItem(key);
                 }
@@ -706,11 +754,13 @@ class StateManager {
      */
     getStorageSize() {
         let size = 0;
-        for (let key in localStorage) {
-            if (localStorage.hasOwnProperty(key)) {
-                size += localStorage[key].length + key.length;
-            }
-        }
+        const keys = this._getAllKeys();
+        
+        keys.forEach(key => {
+            const value = localStorage.getItem(key);
+            size += (value ? value.length : 0) + key.length;
+        });
+        
         return size;
     }
 
