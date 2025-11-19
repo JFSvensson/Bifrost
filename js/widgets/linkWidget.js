@@ -98,7 +98,7 @@ class LinkWidget extends HTMLElement {
                 <ul>
                     ${this.links.map(link => `
                         <li>
-                            <a href="${this._escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">
+                            <a href="${this._escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer" aria-label="Öppna ${this._escapeHtml(link.name)} i ny flik">
                                 ${this._escapeHtml(link.name)}
                             </a>
                         </li>
