@@ -328,7 +328,7 @@ class CalendarWidget extends HTMLElement {
                     <p style="color: #7f8c8d; margin-bottom: 1.5rem;">
                         Sign in to view your calendar events and sync todos
                     </p>
-                    <button class="auth-btn" id="sign-in-btn">
+                    <button class="auth-btn" id="sign-in-btn" aria-label="Logga in med Google Calendar">
                         <span>📧</span>
                         <span>Sign in with Google</span>
                     </button>
