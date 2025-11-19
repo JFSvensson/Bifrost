@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bifrost-v3';
+const CACHE_NAME = 'bifrost-v4';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
@@ -19,6 +19,7 @@ const STATIC_ASSETS = [
     '/js/services/linkService.js',
     '/js/services/menuService.js',
     '/js/utils/dateHelpers.js',
+    '/js/utils/sanitizer.js',
     '/js/config/config.js',
     '/js/config/uiConfig.js',
     '/js/widgets/weatherWidget.js',
@@ -29,6 +30,14 @@ const STATIC_ASSETS = [
     '/assets/icons/favicon.svg',
     '/data/links.json'
 ];
+
+// Security headers for responses
+const SECURITY_HEADERS = {
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'SAMEORIGIN',
+    'X-XSS-Protection': '1; mode=block',
+    'Referrer-Policy': 'strict-origin-when-cross-origin'
+};
 
 // Install event - cache static assets
 self.addEventListener('install', event => {
@@ -63,6 +72,32 @@ self.addEventListener('activate', event => {
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', event => {
     const { request } = event;
+    const url = new URL(request.url);
+    
+    // Security: Only handle same-origin requests and allowed external APIs
+    const allowedHosts = ['smhi.se', 'accounts.google.com', 'www.googleapis.com', 'oauth2.googleapis.com'];
+    const isAllowedExternal = allowedHosts.some(host => url.hostname.includes(host));
+    const isSameOrigin = url.origin === self.location.origin;
+    const isLocalhost = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+    
+    if (!isSameOrigin && !isAllowedExternal && !isLocalhost) {
+        // Block requests to unauthorized origins
+        return;
+    }
+    
+    // Add security headers to responses
+    const addSecurityHeaders = (response) => {
+        const newHeaders = new Headers(response.headers);
+        Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
+            newHeaders.set(key, value);
+        });
+        
+        return new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: newHeaders
+        });
+    };
     
     // Handle weather API with cache fallback
     if (request.url.includes('smhi.se')) {
@@ -76,12 +111,14 @@ self.addEventListener('fetch', event => {
                             cache.put(request, responseClone);
                         });
                     }
-                    return response;
+                    return addSecurityHeaders(response);
                 })
                 .catch(() => {
                     // Fallback to cache if network fails
                     console.log('Weather API failed, serving from cache');
-                    return caches.match(request);
+                    return caches.match(request).then(response => 
+                        response ? addSecurityHeaders(response) : response
+                    );
                 })
         );
         return;
