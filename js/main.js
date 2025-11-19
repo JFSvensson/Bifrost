@@ -477,6 +477,7 @@ function renderTodos() {
         checkbox.className = 'todo-checkbox';
         checkbox.checked = todo.completed;
         checkbox.dataset.action = 'toggle';
+        checkbox.setAttribute('aria-label', `Markera "${todo.text}" som ${todo.completed ? 'ej klar' : 'klar'}`);
         li.appendChild(checkbox);
 
         // Create todo content
@@ -546,6 +547,7 @@ function renderTodos() {
             snoozeBtn.textContent = '💤';
             snoozeBtn.title = 'Snooze';
             snoozeBtn.dataset.action = 'snooze';
+            snoozeBtn.setAttribute('aria-label', `Snooza "${todo.text}"`);
             li.appendChild(snoozeBtn);
         }
 
@@ -555,6 +557,7 @@ function renderTodos() {
             removeBtn.className = 'remove-todo';
             removeBtn.textContent = '✕';
             removeBtn.dataset.action = 'remove';
+            removeBtn.setAttribute('aria-label', `Ta bort "${todo.text}"`);
             li.appendChild(removeBtn);
         }
 
