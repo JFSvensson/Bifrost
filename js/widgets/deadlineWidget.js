@@ -3,6 +3,7 @@
  */
 
 import { DeadlineService } from '../services/deadlineService.js';
+import { escapeHTML } from '../utils/sanitizer.js';
 
 class DeadlineWidget extends HTMLElement {
     constructor() {
@@ -16,7 +17,7 @@ class DeadlineWidget extends HTMLElement {
         this.render();
 
         // Lyssna på todo-uppdateringar
-        window.addEventListener('todosUpdated', (e) => {
+        window.addEventListener('todosUpdated', (/** @type {CustomEvent} */ e) => {
             this.todos = e.detail.todos || [];
             this.updateWarnings();
         });
@@ -265,7 +266,7 @@ class DeadlineWidget extends HTMLElement {
                         <li class="warning-item ${level}">
                             <span class="warning-icon">${todo.deadline.icon}</span>
                             <div class="warning-content">
-                                <div class="warning-text">${this.escapeHtml(todo.text)}</div>
+                                <div class="warning-text">${escapeHTML(todo.text)}</div>
                                 <div class="warning-meta">
                                     ${todo.priority && todo.priority !== 'normal' ? `
                                         <span class="priority-badge priority-${todo.priority}">
@@ -292,12 +293,6 @@ class DeadlineWidget extends HTMLElement {
             low: '🔽 Låg'
         };
         return map[priority] || priority;
-    }
-
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
     }
 }
 
