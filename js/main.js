@@ -1,71 +1,208 @@
-import { todos, shortcuts, ui } from './config/config.js';
-import { ObsidianTodoService } from './services/obsidianTodoService.js';
-import { StatsService } from './services/statsService.js';
-import { DeadlineService } from './services/deadlineService.js';
-import { pomodoroService } from './services/pomodoroService.js';
-import { calendarSyncService } from './services/calendarSync.js';
-import { recurringService } from './services/recurringService.js';
-import reminderService from './services/reminderService.js';
+/**
+ * Main application initialization
+ * Optimized for performance with critical path first
+ */
+
+/* global performance */
+
+// Mark initialization start
+performance.mark('app-init-start');
+
+// ===== CRITICAL IMPORTS (needed immediately) =====
+import { todos, shortcuts } from './config/config.js';
 import './config/uiConfig.js'; // Initialize UI with config values
+import performanceMonitor from './services/performanceMonitor.js';
+import eventBus from './core/eventBus.js';
+
+// ===== DEFERRED IMPORTS (loaded after critical path) =====
+let ObsidianTodoService;
+let StatsService;
+let DeadlineService;
+let pomodoroService;
+let calendarSyncService;
+let recurringService;
+let reminderService;
 
 let obsidianService;
 let statsService;
 let deadlineService;
 let currentTodos = [];
 
-// Quick Add widget setup
-document.addEventListener('DOMContentLoaded', () => {
-    const quickAddWidget = document.querySelector('quick-add-widget');
-    if (quickAddWidget) {
-        quickAddWidget.addEventListener('todoAdded', (e) => {
-            handleQuickAdd(e.detail);
-        });
+// ===== INITIALIZATION PHASES =====
+
+/**
+ * Phase 1: Critical path - Core functionality
+ * Load immediately for fast initial render
+ */
+async function initCriticalServices() {
+    performance.mark('critical-services-start');
+
+    // Load todos first (blocking for UI)
+    await loadTodos();
+    renderTodos();
+    updateTodoStatus();
+
+    performance.mark('critical-services-end');
+    performance.measure('critical-services', 'critical-services-start', 'critical-services-end');
+}
+
+/**
+ * Phase 2: Essential services
+ * Load services needed for core features
+ */
+async function initEssentialServices() {
+    performance.mark('essential-services-start');
+
+    // Dynamic imports for essential services
+    const [obsidianModule, statsModule, recurringModule, reminderModule] = await Promise.all([
+        import('./services/obsidianTodoService.js'),
+        import('./services/statsService.js'),
+        import('./services/recurringService.js'),
+        import('./services/reminderService.js')
+    ]);
+
+    ObsidianTodoService = obsidianModule.ObsidianTodoService;
+    StatsService = statsModule.StatsService;
+    recurringService = recurringModule.recurringService;
+    reminderService = reminderModule.default;
+
+    // Initialize Obsidian if enabled
+    if (todos.obsidian && todos.obsidian.enabled) {
+        obsidianService = new ObsidianTodoService();
+        console.log('🔗 Obsidian integration enabled');
     }
 
-    // Recurring widget setup
-    const recurringWidget = document.querySelector('recurring-widget');
-    if (recurringWidget) {
-        recurringWidget.addEventListener('toast', (e) => {
-            showToast(e.detail.message);
-        });
-    }
+    // Initialize stats service
+    statsService = new StatsService();
+    console.log('📊 Statistics tracking enabled');
 
-    // Reminder widget setup
-    const reminderWidget = document.querySelector('reminder-widget');
-    if (reminderWidget) {
-        reminderWidget.addEventListener('show-toast', (e) => {
-            showToast(e.detail.message);
-        });
-    }
-
-    // Subscribe to recurring service events
-    recurringService.subscribe((event, data) => {
-        handleRecurringEvent(event, data);
+    // Setup service event listeners via eventBus
+    eventBus.on('recurring:todoCreated', (data) => {
+        handleRecurringEvent('todoCreated', data);
     });
 
-    // Subscribe to reminder service events
-    reminderService.subscribe('reminderTriggered', (reminder) => {
+    eventBus.on('reminder:triggered', (reminder) => {
         handleReminderTriggered(reminder);
     });
 
-    reminderService.subscribe('todoSnoozed', () => {
-        renderTodos(); // Update snooze indicators
+    eventBus.on('todo:snoozed', () => {
+        renderTodos();
     });
-});
 
-// Initialize services
-if (todos.obsidian && todos.obsidian.enabled) {
-    obsidianService = new ObsidianTodoService();
-    console.log('🔗 Obsidian integration enabled');
+    performance.mark('essential-services-end');
+    performance.measure('essential-services', 'essential-services-start', 'essential-services-end');
 }
 
-statsService = new StatsService();
-console.log('📊 Statistics tracking enabled');
+/**
+ * Phase 3: Non-critical services
+ * Load services that aren't needed immediately (deferred)
+ */
+async function initDeferredServices() {
+    performance.mark('deferred-services-start');
 
-deadlineService = new DeadlineService();
-console.log('🔔 Deadline warnings enabled');
+    // Load remaining services
+    const [deadlineModule, pomodoroModule, calendarModule] = await Promise.all([
+        import('./services/deadlineService.js'),
+        import('./services/pomodoroService.js'),
+        import('./services/calendarSync.js')
+    ]);
 
-console.log('⏱️ Pomodoro timer initialized');
+    DeadlineService = deadlineModule.DeadlineService;
+    pomodoroService = pomodoroModule.pomodoroService;
+    calendarSyncService = calendarModule.calendarSyncService;
+
+    // Initialize deadline service
+    deadlineService = new DeadlineService();
+    console.log('🔔 Deadline warnings enabled');
+    startDeadlineMonitoring();
+
+    console.log('⏱️ Pomodoro timer initialized');
+
+    performance.mark('deferred-services-end');
+    performance.measure('deferred-services', 'deferred-services-start', 'deferred-services-end');
+}
+
+/**
+ * Phase 4: Widget event listeners
+ * Setup widget event listeners after widgets are loaded
+ */
+function initWidgetListeners() {
+    performance.mark('widget-listeners-start');
+
+    // Quick Add widget (critical - loaded immediately)
+    const quickAddWidget = document.querySelector('quick-add-widget');
+    if (quickAddWidget) {
+        quickAddWidget.addEventListener('todoAdded', (e) => {
+            const customEvent = /** @type {CustomEvent} */ (e);
+            handleQuickAdd(customEvent.detail);
+        });
+    }
+
+    // Recurring widget (lazy loaded)
+    const recurringWidget = document.querySelector('recurring-widget');
+    if (recurringWidget) {
+        recurringWidget.addEventListener('toast', (e) => {
+            const customEvent = /** @type {CustomEvent} */ (e);
+            showToast(customEvent.detail.message);
+        });
+    }
+
+    // Reminder widget (lazy loaded)
+    const reminderWidget = document.querySelector('reminder-widget');
+    if (reminderWidget) {
+        reminderWidget.addEventListener('show-toast', (e) => {
+            const customEvent = /** @type {CustomEvent} */ (e);
+            showToast(customEvent.detail.message);
+        });
+    }
+
+    performance.mark('widget-listeners-end');
+    performance.measure('widget-listeners', 'widget-listeners-start', 'widget-listeners-end');
+}
+
+/**
+ * Main initialization sequence
+ * Executes phases in priority order for optimal performance
+ */
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        // Phase 1: Critical (blocking)
+        await initCriticalServices();
+
+        // Phase 2: Essential (parallel with Phase 4)
+        const essentialPromise = initEssentialServices();
+
+        // Phase 4: Widget listeners (can run immediately)
+        initWidgetListeners();
+
+        // Wait for essential services
+        await essentialPromise;
+
+        // Phase 3: Deferred (lowest priority, runs in background)
+        // Use requestIdleCallback if available, otherwise setTimeout
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(() => initDeferredServices());
+        } else {
+            setTimeout(() => initDeferredServices(), 100);
+        }
+
+        performance.mark('app-init-end');
+        performance.measure('app-total-init', 'app-init-start', 'app-init-end');
+
+        // Log performance metrics in development
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            const measures = performance.getEntriesByType('measure');
+            console.group('⚡ Performance Metrics');
+            measures.forEach(measure => {
+                console.log(`${measure.name}: ${measure.duration.toFixed(2)}ms`);
+            });
+            console.groupEnd();
+        }
+    } catch (error) {
+        console.error('❌ Initialization error:', error);
+        showToast('Fel vid initialisering av appen', 'error');
+    }
+});
 
 // Enable calendar sync when authenticated
 window.addEventListener('calendarAuthenticated', () => {
@@ -223,7 +360,8 @@ function handleReminderTriggered(reminder) {
 
 
 function addTodo() {
-    const todoText = document.getElementById('new-todo').value;
+    const newTodoInput = /** @type {HTMLInputElement} */ (document.getElementById('new-todo'));
+    const todoText = newTodoInput.value;
     if (todoText === '') {return;}
 
     // Check max items limit
@@ -257,12 +395,58 @@ function addTodo() {
         statsService.trackTodoCreated(newTodo);
     }
 
-    document.getElementById('new-todo').value = '';
+    newTodoInput.value = '';
     renderTodos();
     dispatchTodosUpdated();
 }
 
+/**
+ * Setup event delegation for todo list actions
+ * Single listener handles all todo item interactions
+ */
+function setupTodoListDelegation() {
+    const todoList = document.getElementById('todo-items');
+    if (!todoList) {return;}
+
+    // Remove old listener if exists
+    // @ts-ignore - Custom property for cleanup
+    if (todoList._clickHandler) {
+        // @ts-ignore
+        todoList.removeEventListener('click', todoList._clickHandler);
+    }
+
+    // Single delegated click handler
+    const clickHandler = (e) => {
+        const target = e.target;
+        const action = target.dataset.action;
+        const todoItem = target.closest('.todo-item');
+        
+        if (!todoItem) {return;}
+        
+        const todoId = todoItem.dataset.todoId;
+        
+        switch (action) {
+            case 'toggle':
+                toggleTodo(todoId);
+                break;
+            case 'snooze':
+                e.stopPropagation();
+                showSnoozeDropdown(target, currentTodos.find(t => t.id === todoId));
+                break;
+            case 'remove':
+                removeTodo(todoId);
+                break;
+        }
+    };
+
+    todoList.addEventListener('click', clickHandler);
+    // @ts-ignore - Store for cleanup
+    todoList._clickHandler = clickHandler;
+}
+
 function renderTodos() {
+    performanceMonitor.start('render-todos');
+    
     const todoList = document.getElementById('todo-items');
     todoList.innerHTML = '';
 
@@ -279,7 +463,7 @@ function renderTodos() {
         checkbox.type = 'checkbox';
         checkbox.className = 'todo-checkbox';
         checkbox.checked = todo.completed;
-        checkbox.onclick = () => toggleTodo(todo.id);
+        checkbox.dataset.action = 'toggle';
         li.appendChild(checkbox);
 
         // Create todo content
@@ -348,10 +532,7 @@ function renderTodos() {
             snoozeBtn.className = 'snooze-todo';
             snoozeBtn.textContent = '💤';
             snoozeBtn.title = 'Snooze';
-            snoozeBtn.onclick = (e) => {
-                e.stopPropagation();
-                showSnoozeDropdown(snoozeBtn, todo);
-            };
+            snoozeBtn.dataset.action = 'snooze';
             li.appendChild(snoozeBtn);
         }
 
@@ -360,15 +541,19 @@ function renderTodos() {
             const removeBtn = document.createElement('button');
             removeBtn.className = 'remove-todo';
             removeBtn.textContent = '✕';
-            removeBtn.onclick = () => removeTodo(todo.id);
+            removeBtn.dataset.action = 'remove';
             li.appendChild(removeBtn);
         }
 
         todoList.appendChild(li);
     });
 
+    // Setup event delegation for todo list interactions
+    setupTodoListDelegation();
+
     // Update status
     updateTodoStatus();
+    performanceMonitor.end('render-todos');
 }
 
 function getPriorityIcon(priority) {
@@ -383,7 +568,7 @@ function getPriorityIcon(priority) {
 function formatDueDate(date) {
     const dueDate = new Date(date);
     const today = new Date();
-    const diffDays = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+    const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) {return '📅 Idag';}
     if (diffDays === 1) {return '📅 Imorgon';}
@@ -396,7 +581,7 @@ function formatDueDate(date) {
 function formatCompletedTime(date) {
     const completed = new Date(date);
     const now = new Date();
-    const diffMs = now - completed;
+    const diffMs = now.getTime() - completed.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
@@ -412,7 +597,7 @@ function formatCompletedTime(date) {
 function formatTimeUntilReminder(date) {
     const reminder = new Date(date);
     const now = new Date();
-    const diffMs = reminder - now;
+    const diffMs = reminder.getTime() - now.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
 
@@ -439,8 +624,9 @@ let activeSnoozeDropdown = null;
 function showSnoozeDropdown(button, todo) {
     // Close any existing dropdown
     if (activeSnoozeDropdown) {
+        const isSameButton = activeSnoozeDropdown.dataset.buttonId === (button.id || `btn-${Date.now()}`);
         activeSnoozeDropdown.remove();
-        if (activeSnoozeDropdown.targetButton === button) {
+        if (isSameButton) {
             activeSnoozeDropdown = null;
             return;
         }
@@ -449,7 +635,9 @@ function showSnoozeDropdown(button, todo) {
     // Create dropdown
     const dropdown = document.createElement('div');
     dropdown.className = 'snooze-dropdown';
-    dropdown.targetButton = button;
+    // Store reference using data attribute instead of custom property
+    dropdown.dataset.buttonId = button.id || `btn-${Date.now()}`;
+    if (!button.id) button.id = dropdown.dataset.buttonId;
 
     const presets = [
         { label: '10 minuter', value: '10min' },
@@ -600,12 +788,15 @@ function showSyncError(message) {
 }
 
 function saveTodos() {
+    performanceMonitor.start('save-todos');
     // Only save Bifrost todos to localStorage
     const bifrostTodos = currentTodos.filter(todo => todo.source === 'bifrost');
     localStorage.setItem(todos.storageKey, JSON.stringify(bifrostTodos));
+    performanceMonitor.end('save-todos');
 }
 
 async function loadTodos() {
+    performanceMonitor.start('load-todos');
     if (obsidianService) {
         // Load and sync with Obsidian
         await syncWithObsidian();
@@ -628,6 +819,7 @@ async function loadTodos() {
 
     // Starta deadline monitoring
     startDeadlineMonitoring();
+    performanceMonitor.end('load-todos');
 }
 
 function startDeadlineMonitoring() {
@@ -643,7 +835,7 @@ function startDeadlineMonitoring() {
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
 
-    const msUntilMidnight = tomorrow - now;
+    const msUntilMidnight = tomorrow.getTime() - now.getTime();
     setTimeout(() => {
         deadlineService.resetNotificationHistory();
         // Återställ varje dag
@@ -668,15 +860,11 @@ function showToast(message, type = 'success') {
     }, 3000);
 }
 
-// Expose functions globally
+// Expose functions globally for backward compatibility
+// These are used by inline event handlers and external scripts
 window.addTodo = addTodo;
 window.toggleTodo = toggleTodo;
 window.removeTodo = removeTodo;
-window.filterTodos = filterTodos;
-window.sortTodos = sortTodos;
-window.searchTodos = searchTodos;
-// Make addTodo globally available
-window.addTodo = addTodo;
 
 document.addEventListener('keydown', (e) => {
     if (!shortcuts.enabled) {return;}
@@ -684,14 +872,14 @@ document.addEventListener('keydown', (e) => {
     // Link shortcuts (Ctrl+1-9)
     if (shortcuts.linkShortcuts && e.ctrlKey && e.key >= '1' && e.key <= '9') {
         const links = document.querySelectorAll('#links a');
-        const link = links[parseInt(e.key) - 1];
+        const link = /** @type {HTMLAnchorElement} */ (links[parseInt(e.key) - 1]);
         if (link) {window.open(link.href, '_blank');}
     }
 
     // Search shortcut (Ctrl+/)
     if (shortcuts.searchShortcuts && e.ctrlKey && e.key === '/') {
         e.preventDefault();
-        const searchInput = document.querySelector('input[name="q"]');
+        const searchInput = /** @type {HTMLInputElement} */ (document.querySelector('input[name="q"]'));
         if (searchInput) {searchInput.focus();}
     }
 
