@@ -123,8 +123,8 @@ async function initDeferredServices() {
 }
 
 /**
- * Phase 4: Widget event listeners
- * Setup widget event listeners after widgets are loaded
+ * Phase 4: Widget listeners
+ * Setup event listeners for lazy-loaded widgets
  */
 function initWidgetListeners() {
     performance.mark('widget-listeners-start');
@@ -135,6 +135,19 @@ function initWidgetListeners() {
         quickAddWidget.addEventListener('todoAdded', (e) => {
             const customEvent = /** @type {CustomEvent} */ (e);
             handleQuickAdd(customEvent.detail);
+        });
+    }
+
+    // Add Todo button (secure event listener instead of inline onclick)
+    const addTodoBtn = document.getElementById('add-todo-btn');
+    const todoInput = document.getElementById('new-todo');
+    if (addTodoBtn && todoInput) {
+        addTodoBtn.addEventListener('click', addTodo);
+        // Also allow Enter key in input field
+        todoInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addTodo();
+            }
         });
     }
 
