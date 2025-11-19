@@ -421,7 +421,7 @@ class ReminderWidget extends HTMLElement {
                 <div class="permission-text">
                     Aktivera notifications för att få påminnelser även när fliken är i bakgrunden.
                 </div>
-                <button class="permission-btn" id="requestPermissionBtn">
+                <button class="permission-btn" id="requestPermissionBtn" aria-label="Aktivera notifikationer">
                     Aktivera
                 </button>
             </div>
@@ -459,7 +459,7 @@ class ReminderWidget extends HTMLElement {
                     ` : ''}
                 </div>
                 <div class="reminder-actions">
-                    <button class="action-btn cancel" data-action="cancel">
+                    <button class="action-btn cancel" data-action="cancel" aria-label="Avbryt påminnelse för ${reminder.text}">
                         Avbryt
                     </button>
                 </div>
