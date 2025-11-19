@@ -277,21 +277,21 @@ class PomodoroWidget extends HTMLElement {
                     </svg>
                     
                     <div class="timer-content">
-                        <div class="time-text" id="time-display">25:00</div>
-                        <div class="mode-text" id="mode-display">Focus Time</div>
+                        <div class="time-text" id="time-display" role="timer" aria-live="polite" aria-atomic="true">25:00</div>
+                        <div class="mode-text" id="mode-display" aria-live="polite">Focus Time</div>
                     </div>
                 </div>
                 
                 <div class="controls">
-                    <button class="control-btn" id="start-btn">
+                    <button class="control-btn" id="start-btn" aria-label="Starta timer">
                         <span>▶️</span>
                         <span>Start</span>
                     </button>
-                    <button class="control-btn secondary" id="reset-btn">
+                    <button class="control-btn secondary" id="reset-btn" aria-label="Återställ timer">
                         <span>🔄</span>
                         <span>Reset</span>
                     </button>
-                    <button class="control-btn secondary" id="skip-btn">
+                    <button class="control-btn secondary" id="skip-btn" aria-label="Hoppa över session">
                         <span>⏭️</span>
                         <span>Skip</span>
                     </button>
