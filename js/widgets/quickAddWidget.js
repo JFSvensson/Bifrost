@@ -277,7 +277,7 @@ export class QuickAddWidget extends HTMLElement {
                         autocomplete="off"
                         aria-label="Quick add todo"
                     />
-                    <button class="add-button" id="addButton">
+                    <button class="add-button" id="addButton" aria-label="Lägg till uppgift">
                         Lägg till
                     </button>
                 </div>
