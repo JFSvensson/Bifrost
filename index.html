@@ -3,6 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self';
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' data: https:;
+        font-src 'self' data:;
+        connect-src 'self' http://localhost:8081 https://www.smhi.se https://accounts.google.com https://www.googleapis.com https://oauth2.googleapis.com;
+        frame-src https://accounts.google.com;
+        upgrade-insecure-requests;
+    ">
+    
     <link rel="stylesheet" href="css/styles.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#3498db" id="theme-color">
@@ -46,7 +59,7 @@
                 <ul id="todo-items"></ul>
                 <div class="todo-input">
                     <input type="text" id="new-todo" placeholder="Lägg till en ny uppgift">
-                    <button onclick="addTodo()">Lägg till</button>
+                    <button id="add-todo-btn">Lägg till</button>
                 </div>
             </div>
             
