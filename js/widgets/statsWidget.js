@@ -239,30 +239,30 @@ class StatsWidget extends HTMLElement {
                 }
             </style>
             
-            <div class="stats-container">
+            <div class="stats-container" role="region" aria-label="Statistik över uppgifter">
                 <!-- Quick Stats -->
                 <div class="stats-grid">
                     <div class="stat-card streak-card">
-                        <div class="stat-icon">🔥</div>
-                        <div class="stat-value">${stats.currentStreak}</div>
+                        <div class="stat-icon" aria-hidden="true">🔥</div>
+                        <div class="stat-value" aria-label="${stats.currentStreak} dagars streak">${stats.currentStreak}</div>
                         <div class="stat-label">Dagars streak</div>
                     </div>
                     
                     <div class="stat-card">
-                        <div class="stat-icon">✅</div>
-                        <div class="stat-value">${stats.today.completed}</div>
+                        <div class="stat-icon" aria-hidden="true">✅</div>
+                        <div class="stat-value" aria-label="${stats.today.completed} klara idag">${stats.today.completed}</div>
                         <div class="stat-label">Klara idag</div>
                     </div>
                     
                     <div class="stat-card">
-                        <div class="stat-icon">📝</div>
-                        <div class="stat-value">${stats.activeTodos}</div>
+                        <div class="stat-icon" aria-hidden="true">📝</div>
+                        <div class="stat-value" aria-label="${stats.activeTodos} aktiva uppgifter">${stats.activeTodos}</div>
                         <div class="stat-label">Aktiva</div>
                     </div>
                     
                     <div class="stat-card">
-                        <div class="stat-icon">📊</div>
-                        <div class="stat-value">${stats.completionRate}%</div>
+                        <div class="stat-icon" aria-hidden="true">📊</div>
+                        <div class="stat-value" aria-label="${stats.completionRate} procent slutförda">${stats.completionRate}%</div>
                         <div class="stat-label">Slutförda</div>
                     </div>
                 </div>
