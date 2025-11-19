@@ -381,10 +381,10 @@ export class RecurringWidget extends HTMLElement {
                 <div class="stats-row" id="statsRow"></div>
                 
                 <div class="actions">
-                    <button class="btn btn-primary" id="addPatternBtn">
+                    <button class="btn btn-primary" id="addPatternBtn" aria-label="Skapa ny återkommande uppgift">
                         ➕ Ny återkommande uppgift
                     </button>
-                    <button class="btn btn-secondary" id="checkNowBtn">
+                    <button class="btn btn-secondary" id="checkNowBtn" aria-label="Kontrollera återkommande uppgifter nu">
                         🔄 Kontrollera nu
                     </button>
                 </div>
@@ -396,7 +396,7 @@ export class RecurringWidget extends HTMLElement {
                 <div class="editor-modal">
                     <div class="editor-header">
                         <h3 class="editor-title" id="editorTitle">Ny återkommande uppgift</h3>
-                        <button class="close-btn" id="closeEditorBtn">✕</button>
+                        <button class="close-btn" id="closeEditorBtn" aria-label="Stäng redigeraren">✕</button>
                     </div>
                     
                     <form id="patternForm">
@@ -421,14 +421,14 @@ export class RecurringWidget extends HTMLElement {
                         
                         <div class="form-group hidden" id="weekdaysGroup">
                             <label class="form-label">Veckodagar</label>
-                            <div class="weekdays" id="weekdaysContainer">
-                                <button type="button" class="weekday-btn" data-day="1">Mån</button>
-                                <button type="button" class="weekday-btn" data-day="2">Tis</button>
-                                <button type="button" class="weekday-btn" data-day="3">Ons</button>
-                                <button type="button" class="weekday-btn" data-day="4">Tors</button>
-                                <button type="button" class="weekday-btn" data-day="5">Fre</button>
-                                <button type="button" class="weekday-btn" data-day="6">Lör</button>
-                                <button type="button" class="weekday-btn" data-day="0">Sön</button>
+                            <div class="weekdays" id="weekdaysContainer" role="group" aria-label="Välj veckodagar">
+                                <button type="button" class="weekday-btn" data-day="1" aria-label="Måndag">Mån</button>
+                                <button type="button" class="weekday-btn" data-day="2" aria-label="Tisdag">Tis</button>
+                                <button type="button" class="weekday-btn" data-day="3" aria-label="Onsdag">Ons</button>
+                                <button type="button" class="weekday-btn" data-day="4" aria-label="Torsdag">Tors</button>
+                                <button type="button" class="weekday-btn" data-day="5" aria-label="Fredag">Fre</button>
+                                <button type="button" class="weekday-btn" data-day="6" aria-label="Lördag">Lör</button>
+                                <button type="button" class="weekday-btn" data-day="0" aria-label="Söndag">Sön</button>
                             </div>
                         </div>
                         
@@ -691,11 +691,11 @@ export class RecurringWidget extends HTMLElement {
                 </div>
                 <div class="pattern-actions">
                     ${pattern.active
-        ? `<button class="btn-small btn-pause" id="pause-${pattern.id}">⏸️ Pausa</button>`
-        : `<button class="btn-small btn-resume" id="resume-${pattern.id}">▶️ Återuppta</button>`
+        ? `<button class="btn-small btn-pause" id="pause-${pattern.id}" aria-label="Pausa ${pattern.text}">⏸️ Pausa</button>`
+        : `<button class="btn-small btn-resume" id="resume-${pattern.id}" aria-label="Återuppta ${pattern.text}">▶️ Återuppta</button>`
 }
-                    <button class="btn-small btn-edit" id="edit-${pattern.id}">✏️ Redigera</button>
-                    <button class="btn-small btn-delete" id="delete-${pattern.id}">🗑️ Ta bort</button>
+                    <button class="btn-small btn-edit" id="edit-${pattern.id}" aria-label="Redigera ${pattern.text}">✏️ Redigera</button>
+                    <button class="btn-small btn-delete" id="delete-${pattern.id}" aria-label="Ta bort ${pattern.text}">🗑️ Ta bort</button>
                 </div>
             </div>
         `;
