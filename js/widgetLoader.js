@@ -13,7 +13,8 @@ const widgetLoaders = new Map([
     ['recurring-widget', () => import('./widgets/recurringWidget.js')],
     ['reminder-widget', () => import('./widgets/reminderWidget.js')],
     ['pomodoro-widget', () => import('./widgets/pomodoroWidget.js')],
-    ['calendar-widget', () => import('./widgets/calendarWidget.js')]
+    ['calendar-widget', () => import('./widgets/calendarWidget.js')],
+    ['search-widget', () => import('./widgets/searchWidget.js')]
 ]);
 
 /**
