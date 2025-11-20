@@ -1,0 +1,17 @@
+/* ===== ACCESSIBILITY UTILITIES ===== */
+
+/**
+ * Visually hidden class - hides element visually but keeps it accessible to screen readers
+ * Use for elements that should be read by assistive technologies but not visible on screen
+ */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
