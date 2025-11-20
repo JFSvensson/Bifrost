@@ -67,8 +67,13 @@
             </div>
             
             <div class="search card">
-                <h2 id="search-heading">Sök</h2>
-                <form action="https://duckduckgo.com/" method="get" target="_blank" role="search" aria-labelledby="search-heading">
+                <h2 id="search-heading">🔍 Sök</h2>
+                <search-widget></search-widget>
+            </div>
+            
+            <div class="external-search card">
+                <h2>Sök Externt</h2>
+                <form action="https://duckduckgo.com/" method="get" target="_blank" role="search" aria-label="Extern sökning">
                     <label for="search-input" class="visually-hidden">Sökfråga</label>
                     <input type="text" id="search-input" name="q" placeholder="Sök på DuckDuckGo" aria-label="Sök på DuckDuckGo">
                     <button type="submit" aria-label="Utför sökning">Sök</button>
@@ -129,7 +134,20 @@
         </aside>
     </div>
     
+    <!-- Global Widgets -->
+    <shortcuts-help-widget></shortcuts-help-widget>
+    <backup-widget></backup-widget>
+    
+    <footer class="footer">
+        <button id="backup-btn" class="backup-btn" aria-label="Öppna backup & export">
+            💾 Backup
+        </button>
+    </footer>
+    
     <script type="module" src="js/widgets/clockWidget.js" defer></script>
     <script type="module" src="js/widgets/weatherWidget.js" defer></script>
+    <script type="module" src="js/widgets/searchWidget.js" defer></script>
+    <script type="module" src="js/widgets/shortcutsHelpWidget.js" defer></script>
+    <script type="module" src="js/widgets/backupWidget.js" defer></script>
 </body>
 </html>
