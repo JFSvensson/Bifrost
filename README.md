@@ -7,13 +7,17 @@ En modern startsida med att‑göra‑lista, sök, länkar, väder, klocka samt 
 ✅ **Quick Add** - Natural language parser för snabb todo-skapning (t.ex. "Möt Anna imorgon 14:00 #arbete [!high]")  
 ✅ **Recurring Todos** - Återkommande uppgifter med dagliga/veckovisa/månadsvisa mönster  
 ✅ **Reminders & Snooze** - Schemalagda påminnelser med desktop notifications och snooze-funktionalitet  
+✅ **Global Search** - Multi-source sökning med fuzzy matching och Ctrl+F genväg  
+✅ **Keyboard Shortcuts** - Centraliserad tangentbordshantering med konfliktdetektering  
+✅ **Shortcuts Help** - Modal (Ctrl+?) som visar alla tillgängliga genvägar  
+✅ **Backup & Export** - JSON export/import av all data med Ctrl+Shift+B  
 ✅ **Todo-lista** - Persisterande i localStorage med tangentbordsgenvägar  
 ✅ **Obsidian-synk** - Automatisk synkronisering med Obsidian.md vault  
 ✅ **Statistik Dashboard** - Spårar produktivitet, streaks, och visar grafer  
 ✅ **Deadline Warnings** - Smarta varningar för kommande och försenade todos med notifications  
 ✅ **Pomodoro Timer** - 25/5 min fokus/paus-intervaller med cirkulär progress och notifications  
 ✅ **Google Calendar** - Synka todos med datum till Google Calendar, visa dagens händelser  
-✅ **Snabbsök** - DuckDuckGo med Ctrl+/ för fokus  
+✅ **Extern sökning** - DuckDuckGo med Ctrl+/ för fokus  
 ✅ **Snabblänkar** - Från JSON-fil med Ctrl+1-9 genvägar  
 ✅ **Väderprognos** - SMHI-data med temperatur och nederbördssannolikhet  
 ✅ **Klockwidget** - Aktuell tid och flera tidszoner med arbetstidsindikator  
@@ -101,12 +105,14 @@ Bifrost/
 │   │   ├── clockService.js          # Tidshantering och tidszoner
 │   │   ├── deadlineService.js       # Deadline-analys och notifications
 │   │   ├── googleCalendarService.js # Google Calendar API och OAuth
+│   │   ├── keyboardShortcutService.js # Centraliserad tangentbordshantering
 │   │   ├── linkService.js           # Länkhantering
 │   │   ├── menuService.js           # API-service för skolmat
 │   │   ├── obsidianTodoService.js   # Obsidian-synkronisering
 │   │   ├── pomodoroService.js       # Pomodoro timer-logik
 │   │   ├── recurringService.js      # Recurring todos service
 │   │   ├── reminderService.js       # Reminders & snooze service
+│   │   ├── searchService.js         # Multi-source söktjänst
 │   │   ├── statsService.js          # Statistik-spårning
 │   │   ├── themeService.js          # Tema-hantering (ljust/mörkt)
 │   │   └── weatherService.js        # SMHI API-service
@@ -115,17 +121,20 @@ Bifrost/
 │   │   ├── debounce.js              # Debounce utility
 │   │   └── naturalLanguageParser.js # Natural language parser för Quick Add
 │   └── widgets/
-│       ├── calendarWidget.js  # Calendar-visualisering
-│       ├── clockWidget.js     # Klockkomponent
-│       ├── deadlineWidget.js  # Deadline-visualisering
-│       ├── linkWidget.js      # Snabblänkar widget
-│       ├── pomodoroWidget.js  # Pomodoro timer-widget
-│       ├── quickAddWidget.js  # Quick Add UI-komponent
-│       ├── recurringWidget.js # Recurring todos widget
-│       ├── reminderWidget.js  # Reminders widget
-│       ├── schoolMenu.js      # Skolmatskomponent
-│       ├── statsWidget.js     # Statistik-visualisering
-│       └── weatherWidget.js   # Väderkomponent
+│       ├── backupWidget.js       # Backup & export modal
+│       ├── calendarWidget.js     # Calendar-visualisering
+│       ├── clockWidget.js        # Klockkomponent
+│       ├── deadlineWidget.js     # Deadline-visualisering
+│       ├── linkWidget.js         # Snabblänkar widget
+│       ├── pomodoroWidget.js     # Pomodoro timer-widget
+│       ├── quickAddWidget.js     # Quick Add UI-komponent
+│       ├── recurringWidget.js    # Recurring todos widget
+│       ├── reminderWidget.js     # Reminders widget
+│       ├── schoolMenu.js         # Skolmatskomponent
+│       ├── searchWidget.js       # Global sök-widget
+│       ├── shortcutsHelpWidget.js # Tangentbordsgenvägar hjälp
+│       ├── statsWidget.js        # Statistik-visualisering
+│       └── weatherWidget.js      # Väderkomponent
 ├── scripts/
 │   ├── eslint.config.js       # ESLint configuration
 │   └── generate-favicons.js   # Favicon generation utility
@@ -323,14 +332,18 @@ todos: {
 
 | Genväg | Funktion |
 |--------|----------|
+| `Ctrl + F` | Öppna global sökning |
 | `Ctrl + K` | Fokusera Quick Add input |
+| `Ctrl + ?` (Ctrl + Shift + /) | Visa alla tangentbordsgenvägar |
+| `Ctrl + Shift + B` | Öppna backup & export |
 | `Ctrl + 1-9` | Öppna snabblänk 1-9 |
-| `Ctrl + /` | Fokusera sökfältet |
+| `Ctrl + /` | Fokusera extern sökning (DuckDuckGo) |
 | `Ctrl + Shift + D` | Toggle mörkt/ljust tema |
 | `Ctrl + Shift + P` | Start/Pause Pomodoro timer |
 | `Ctrl + Shift + R` | Reset Pomodoro timer |
-| `Enter` | Submit Quick Add / Lägg till todo |
-| `Escape` | Clear Quick Add input |
+| `Enter` | Submit Quick Add / Lägg till todo / Välj sökresultat |
+| `Escape` | Clear Quick Add / Stäng sökning / Stäng modals |
+| `↑` / `↓` | Navigera i sökresultat |
 
 ## Service Worker & Offline-stöd
 
