@@ -92,17 +92,20 @@ bifrost/
 │   │   ├── clockService.js
 │   │   ├── deadlineService.js
 │   │   ├── googleCalendarService.js
+│   │   ├── keyboardShortcutService.js
 │   │   ├── linkService.js
 │   │   ├── menuService.js
 │   │   ├── obsidianTodoService.js
 │   │   ├── pomodoroService.js
 │   │   ├── recurringService.js
 │   │   ├── reminderService.js
+│   │   ├── searchService.js
 │   │   ├── statsService.js
 │   │   ├── themeService.js
 │   │   └── weatherService.js
 │   │
 │   ├── widgets/            # 🎨 UI Web Components
+│   │   ├── backupWidget.js
 │   │   ├── calendarWidget.js
 │   │   ├── clockWidget.js
 │   │   ├── deadlineWidget.js
@@ -112,6 +115,8 @@ bifrost/
 │   │   ├── recurringWidget.js
 │   │   ├── reminderWidget.js
 │   │   ├── schoolMenu.js
+│   │   ├── searchWidget.js
+│   │   ├── shortcutsHelpWidget.js
 │   │   ├── statsWidget.js
 │   │   └── weatherWidget.js
 │   │
@@ -336,6 +341,8 @@ customElements.define('my-widget', MyWidget);
 
 | Service | Responsibility | Storage Key |
 |---------|---------------|-------------|
+| **keyboardShortcutService** | Centralized keyboard shortcut management | (no storage) |
+| **searchService** | Multi-source search with fuzzy matching | (no storage) |
 | **reminderService** | Scheduled reminders, snooze functionality | `reminders` |
 | **recurringService** | Recurring todo patterns | `recurringPatterns` |
 | **deadlineService** | Deadline management | (uses todos) |
@@ -505,6 +512,10 @@ Events use **namespace:action** format:
 - `weather` - Weather updates
 - `calendar` - Calendar events
 - `obsidian` - Obsidian sync
+- `shortcut` - Keyboard shortcut events
+- `search` - Search operations
+- `backup` - Backup/import operations
+- `shortcuts-help` - Shortcuts help widget events
 - `app` - Application lifecycle
 - `ui` - UI interactions
 - `menu` - School menu
