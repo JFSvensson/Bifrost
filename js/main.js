@@ -13,6 +13,8 @@ import { todos, shortcuts } from './config/config.js';
 import './config/uiConfig.js'; // Initialize UI with config values
 import performanceMonitor from './services/performanceMonitor.js';
 import eventBus from './core/eventBus.js';
+import { keyboardShortcutService } from './services/keyboardShortcutService.js';
+import { searchService } from './services/searchService.js';
 
 // ===== DEFERRED IMPORTS (loaded after critical path) =====
 let ObsidianTodoService;
@@ -166,6 +168,17 @@ function initWidgetListeners() {
         reminderWidget.addEventListener('show-toast', (e) => {
             const customEvent = /** @type {CustomEvent} */ (e);
             showToast(customEvent.detail.message);
+        });
+    }
+
+    // Backup button
+    const backupBtn = document.getElementById('backup-btn');
+    if (backupBtn) {
+        backupBtn.addEventListener('click', () => {
+            const backupWidget = document.querySelector('backup-widget');
+            if (backupWidget && backupWidget.toggle) {
+                backupWidget.toggle();
+            }
         });
     }
 
@@ -882,31 +895,58 @@ window.addTodo = addTodo;
 window.toggleTodo = toggleTodo;
 window.removeTodo = removeTodo;
 
-document.addEventListener('keydown', (e) => {
-    if (!shortcuts.enabled) {return;}
-
-    // Link shortcuts (Ctrl+1-9)
-    if (shortcuts.linkShortcuts && e.ctrlKey && e.key >= '1' && e.key <= '9') {
-        const links = document.querySelectorAll('#links a');
-        const link = /** @type {HTMLAnchorElement} */ (links[parseInt(e.key) - 1]);
-        if (link) {window.open(link.href, '_blank');}
+// ===== KEYBOARD SHORTCUTS REGISTRATION =====
+// Register link shortcuts (Ctrl+1-9)
+if (shortcuts.linkShortcuts) {
+    for (let i = 1; i <= 9; i++) {
+        keyboardShortcutService.register({
+            key: String(i),
+            ctrl: true,
+            description: `Open link ${i}`,
+            category: 'Navigation',
+            priority: 5,
+            handler: () => {
+                const links = document.querySelectorAll('#links a');
+                const link = /** @type {HTMLAnchorElement} */ (links[i - 1]);
+                if (link) { window.open(link.href, '_blank'); }
+            },
+            condition: () => shortcuts.enabled
+        });
     }
+}
 
-    // Search shortcut (Ctrl+/)
-    if (shortcuts.searchShortcuts && e.ctrlKey && e.key === '/') {
-        e.preventDefault();
-        const searchInput = /** @type {HTMLInputElement} */ (document.querySelector('input[name="q"]'));
-        if (searchInput) {searchInput.focus();}
-    }
+// Register external search shortcut (Ctrl+/)
+if (shortcuts.searchShortcuts) {
+    keyboardShortcutService.register({
+        key: '/',
+        ctrl: true,
+        description: 'Focus external search (DuckDuckGo)',
+        category: 'Search',
+        priority: 5,
+        handler: () => {
+            const searchInput = /** @type {HTMLInputElement} */ (document.querySelector('input[name="q"]'));
+            if (searchInput) { searchInput.focus(); }
+        },
+        condition: () => shortcuts.enabled
+    });
+}
 
-    // Todo shortcuts
-    if (shortcuts.todoShortcuts) {
-        const todoInput = document.getElementById('new-todo');
-        if (e.key === 'Enter' && document.activeElement === todoInput) {
-            addTodo();
-        }
-    }
-});
+// Register todo shortcuts
+if (shortcuts.todoShortcuts) {
+    keyboardShortcutService.register({
+        key: 'Enter',
+        description: 'Add new todo',
+        category: 'Todos',
+        priority: 10,
+        handler: () => {
+            const todoInput = document.getElementById('new-todo');
+            if (document.activeElement === todoInput) {
+                addTodo();
+            }
+        },
+        condition: () => shortcuts.enabled && document.activeElement?.id === 'new-todo'
+    });
+}
 
 // Dispatch custom event when todos update
 function dispatchTodosUpdated() {
