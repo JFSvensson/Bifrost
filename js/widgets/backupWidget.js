@@ -55,7 +55,7 @@ class BackupWidget extends HTMLElement {
         const closeBtn = this.shadowRoot.querySelector('#close-btn');
         const exportBtn = this.shadowRoot.querySelector('#export-btn');
         const importBtn = this.shadowRoot.querySelector('#import-btn');
-        const fileInput = this.shadowRoot.querySelector('#file-input');
+        const fileInput = /** @type {HTMLInputElement} */ (this.shadowRoot.querySelector('#file-input'));
 
         // Close on overlay click
         overlay.addEventListener('click', () => {
@@ -79,7 +79,7 @@ class BackupWidget extends HTMLElement {
 
         // File input
         fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
+            const file = /** @type {HTMLInputElement} */ (e.target).files[0];
             if (file) {
                 this.importData(file);
             }
@@ -236,7 +236,7 @@ class BackupWidget extends HTMLElement {
      * @param {string} type
      */
     showMessage(text, type) {
-        const message = this.shadowRoot.querySelector('#message');
+        const message = /** @type {HTMLElement} */ (this.shadowRoot.querySelector('#message'));
         message.textContent = text;
         message.className = `message ${type}`;
         message.style.display = 'block';
