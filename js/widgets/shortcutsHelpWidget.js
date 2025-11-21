@@ -5,6 +5,7 @@
 
 import { keyboardShortcutService } from '../services/keyboardShortcutService.js';
 import eventBus from '../core/eventBus.js';
+import { logger } from '../utils/logger.js';
 
 class ShortcutsHelpWidget extends HTMLElement {
     constructor() {
@@ -17,7 +18,7 @@ class ShortcutsHelpWidget extends HTMLElement {
         this.render();
         this.setupEventListeners();
         this.registerShortcut();
-        console.log('✅ Shortcuts Help Widget initialized');
+        logger.debug('Shortcuts Help Widget initialized');
     }
 
     disconnectedCallback() {
