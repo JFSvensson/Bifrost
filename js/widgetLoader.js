@@ -6,6 +6,8 @@
 
 /* global performance, IntersectionObserver */
 
+import { logger } from './utils/logger.js';
+
 const loadedWidgets = new Set();
 const widgetLoaders = new Map([
     ['stats-widget', () => import('./widgets/statsWidget.js')],
@@ -29,7 +31,7 @@ async function loadWidget(widgetName) {
 
     const loader = widgetLoaders.get(widgetName);
     if (!loader) {
-        console.warn(`No loader found for widget: ${widgetName}`);
+        logger.warn(`No loader found for widget: ${widgetName}`);
         return;
     }
 
@@ -43,9 +45,9 @@ async function loadWidget(widgetName) {
             `widget-load-start-${widgetName}`,
             `widget-load-end-${widgetName}`
         );
-        console.log(`✅ Loaded widget: ${widgetName}`);
+        logger.debug(`✅ Loaded widget: ${widgetName}`);
     } catch (error) {
-        console.error(`Failed to load widget ${widgetName}:`, error);
+        logger.error(`Failed to load widget ${widgetName}`, error);
     }
 }
 
