@@ -22,10 +22,10 @@
     "declarationMap": false,
     "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": "./js",
+    "rootDir": "./src",
     "baseUrl": ".",
     "paths": {
-      "/js/*": ["js/*"],
+      "/src/*": ["src/*"],
       "/css/*": ["css/*"],
       "/data/*": ["data/*"]
     },
@@ -33,9 +33,9 @@
     "noImplicitThis": false
   },
   "include": [
-    "js/**/*",
+    "src/**/*",
     "*.ts",
-    "js/types.d.ts"
+    "src/types.d.ts"
   ],
   "exclude": [
     "node_modules",
