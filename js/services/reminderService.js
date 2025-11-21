@@ -32,6 +32,7 @@
 import eventBus from '../core/eventBus.js';
 import stateManager from '../core/stateManager.js';
 import errorHandler, { ErrorCode } from '../core/errorHandler.js';
+import { logger } from '../utils/logger.js';
 
 class ReminderService {
     /**
@@ -148,7 +149,7 @@ class ReminderService {
 
         // Kontrollera om påminnelsen redan har passerat
         if (remindAt < new Date()) {
-            console.warn('Påminnelse skapas för redan passerat datum:', remindAt);
+            logger.warn('Påminnelse skapas för redan passerat datum:', remindAt);
         }
 
         const reminder = {
@@ -169,7 +170,7 @@ class ReminderService {
         this.saveReminders();
         eventBus.emit('reminder:created', reminder);
 
-        console.log('Påminnelse skapad:', {
+        logger.info('Påminnelse skapad:', {
             text,
             remindAt: remindAt.toLocaleString('sv-SE'),
             type
@@ -275,7 +276,7 @@ class ReminderService {
         }
 
         // Fallback: +1h
-        console.warn('Okänd snooze preset:', preset, '- använder +1h');
+        logger.warn('Okänd snooze preset:', preset, '- använder +1h');
         return new Date(now.getTime() + this.snoozePresets['1h']);
     }
 
@@ -295,7 +296,7 @@ class ReminderService {
      */
     createDeadlineReminder(todo, offset) {
         if (!todo.dueDate) {
-            console.warn('Kan inte skapa deadline-påminnelse - todo saknar dueDate');
+            logger.warn('Kan inte skapa deadline-påminnelse - todo saknar dueDate');
             return null;
         }
 
@@ -311,7 +312,7 @@ class ReminderService {
 
         // Kontrollera att påminnelsen inte redan har passerat
         if (remindAt < new Date()) {
-            console.warn('Deadline-påminnelse skulle vara i det förflutna, skapar inte:', remindAt);
+            logger.warn('Deadline-påminnelse skulle vara i det förflutna, skapar inte:', remindAt);
             return null;
         }
 
@@ -460,7 +461,7 @@ class ReminderService {
      * @returns {Promise<void>}
      */
     async triggerReminder(reminder) {
-        console.log('Triggar påminnelse:', reminder);
+        logger.info('Triggar påminnelse:', reminder);
 
         // Försök med browser notification först
         if (this.notificationPermission === 'granted') {
@@ -521,7 +522,7 @@ class ReminderService {
         const removed = before - this.reminders.length;
         if (removed > 0) {
             this.saveReminders();
-            console.log(`Städade ${removed} gamla påminnelser`);
+            logger.info(`Städade ${removed} gamla påminnelser`);
         }
     }
 
@@ -532,7 +533,7 @@ class ReminderService {
      */
     async checkNotificationPermission() {
         if (!('Notification' in window)) {
-            console.warn('Browser stödjer inte notifications');
+            logger.warn('Browser stöder inte notifications');
             this.notificationPermission = 'denied';
             return 'denied';
         }
@@ -549,7 +550,7 @@ class ReminderService {
      */
     async requestNotificationPermission() {
         if (!('Notification' in window)) {
-            console.warn('Browser stödjer inte notifications');
+            logger.warn('Browser stöder inte notifications');
             return 'denied';
         }
 
@@ -601,7 +602,7 @@ class ReminderService {
             this.cleanupOldReminders();
         }, interval);
 
-        console.log(`ReminderService monitoring startad (intervall: ${interval}ms)`);
+        logger.debug(`ReminderService monitoring startad (intervall: ${interval}ms)`);
     }
 
     /**
@@ -614,7 +615,7 @@ class ReminderService {
         if (this.checkInterval) {
             clearInterval(this.checkInterval);
             this.checkInterval = null;
-            console.log('ReminderService monitoring stoppad');
+            logger.debug('ReminderService monitoring stoppad');
         }
     }
 
