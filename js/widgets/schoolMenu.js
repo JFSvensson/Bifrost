@@ -1,5 +1,6 @@
 import { MenuService } from '../services/menuService.js';
 import { isToday } from '../utils/dateHelpers.js';
+import { logger } from '../utils/logger.js';
 
 class SchoolMenu extends HTMLElement {
     constructor() {
@@ -19,7 +20,7 @@ class SchoolMenu extends HTMLElement {
             const data = await this.menuService.fetchMenu();
             this.render('menu', data);
         } catch (error) {
-            console.error('Menu load failed:', error);
+            logger.error('Menu load failed', error);
             this.render('error');
         }
     }
