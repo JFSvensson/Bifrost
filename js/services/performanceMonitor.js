@@ -5,6 +5,8 @@
 
 /* global performance, PerformanceObserver */
 
+import { logger } from '../utils/logger.js';
+
 class PerformanceMonitor {
     constructor() {
         /** @type {boolean} Debug mode - show detailed metrics */
@@ -46,7 +48,7 @@ class PerformanceMonitor {
                         if (entry.duration > 50) { // Long task threshold
                             this.recordMetric('long-task', entry.duration);
                             if (this.debugMode) {
-                                console.warn(`⚠️ Long task detected: ${entry.duration.toFixed(2)}ms`);
+                                logger.warn(`Long task detected: ${entry.duration.toFixed(2)}ms`);
                             }
                         }
                     }
@@ -86,13 +88,13 @@ class PerformanceMonitor {
                 this.recordMetric(label, measure.duration);
                 
                 if (this.debugMode) {
-                    console.log(`⏱️ ${label}: ${measure.duration.toFixed(2)}ms`);
+                    logger.debug(`${label}: ${measure.duration.toFixed(2)}ms`);
                 }
                 
                 return measure.duration;
             }
         } catch (e) {
-            console.error(`Performance measure error for ${label}:`, e);
+            logger.error(`Performance measure error for ${label}:`, e);
         }
         
         return 0;
@@ -185,16 +187,15 @@ class PerformanceMonitor {
         }
 
         if (this.debugMode) {
-            console.group('📊 Page Load Performance');
-            console.log(`DNS Lookup: ${metrics['dns-lookup']}ms`);
-            console.log(`TCP Connect: ${metrics['tcp-connect']}ms`);
-            console.log(`Request Time: ${metrics['request-time']}ms`);
-            console.log(`Response Time: ${metrics['response-time']}ms`);
-            console.log(`DOM Processing: ${metrics['dom-processing']}ms`);
-            console.log(`DOM Interactive: ${metrics['dom-interactive']}ms`);
-            console.log(`DOM Complete: ${metrics['dom-complete']}ms`);
-            console.log(`Total Load: ${metrics['page-load']}ms`);
-            console.groupEnd();
+            logger.debug('Page Load Performance:');
+            logger.debug(`DNS Lookup: ${metrics['dns-lookup']}ms`);
+            logger.debug(`TCP Connect: ${metrics['tcp-connect']}ms`);
+            logger.debug(`Request Time: ${metrics['request-time']}ms`);
+            logger.debug(`Response Time: ${metrics['response-time']}ms`);
+            logger.debug(`DOM Processing: ${metrics['dom-processing']}ms`);
+            logger.debug(`DOM Interactive: ${metrics['dom-interactive']}ms`);
+            logger.debug(`DOM Complete: ${metrics['dom-complete']}ms`);
+            logger.debug(`Total Load: ${metrics['page-load']}ms`);
         }
 
         // Check for First Contentful Paint
@@ -244,7 +245,7 @@ class PerformanceMonitor {
      */
     setDebugMode(enabled) {
         this.debugMode = enabled;
-        console.log(`Performance debug mode: ${enabled ? 'enabled' : 'disabled'}`);
+        logger.info(`Performance debug mode: ${enabled ? 'enabled' : 'disabled'}`);
     }
 }
 
