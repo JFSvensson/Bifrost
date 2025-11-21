@@ -7,6 +7,8 @@
  * @see https://developer.mozilla.org/en-US/docs/Web/API/HTML_Sanitizer_API
  */
 
+import { logger } from './logger.js';
+
 /**
  * @typedef {Object} SanitizerConfig
  * @property {string[]} [allowElements]
@@ -172,7 +174,7 @@ export function sanitizeHTML(html, options = {}) {
             const fragment = sanitizer.sanitizeFor('div', html);
             return fragment?.innerHTML || '';
         } catch (error) {
-            console.warn('Native Sanitizer API failed, using fallback:', error);
+            logger.warn('Native Sanitizer API failed, using fallback', { error: error.message });
             return fallbackSanitize(html);
         }
     }
