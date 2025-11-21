@@ -41,14 +41,14 @@ class ClockWidget extends HTMLElement {
     startClock() {
         this.intervalId = setInterval(() => {
             this.updateTime();
-        }, this.updateInterval);
+        }, this.updateInterval) as unknown as number;
     }
 
     render(mode, data) {
-        this.shadowRoot.innerHTML = this.getHTML(mode, data);
+        this.shadowRoot.innerHTML = this.renderHTML(mode, data);
     }
 
-    getHTML(mode, data) {
+    renderHTML(mode, data) {
         const styles = this.getStyles();
 
         switch (mode) {
@@ -321,7 +321,7 @@ class ClockWidget extends HTMLElement {
     }
 
     addTimezone(timezone, name) {
-        this.clockService.timezones.push({ timezone, name });
+        (this.clockService as any).timezones.push({ timezone, name });
         if (this.showMultipleTimezones) {
             this.updateTime();
         }

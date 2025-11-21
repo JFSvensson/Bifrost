@@ -3,6 +3,11 @@ import { weather as weatherConfig } from '../config/config.js';
 import { logger } from '../utils/logger.js';
 
 class WeatherWidget extends HTMLElement {
+    shadowRoot!: ShadowRoot;
+    weatherService: any;
+    updateInterval: number;
+    intervalId: number | null;
+
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
@@ -37,14 +42,14 @@ class WeatherWidget extends HTMLElement {
     startAutoUpdate() {
         this.intervalId = setInterval(() => {
             this.loadWeather();
-        }, this.updateInterval);
+        }, this.updateInterval) as unknown as number;
     }
 
     render(state, data = null) {
-        this.shadowRoot.innerHTML = this.getHTML(state, data);
+        this.shadowRoot.innerHTML = this.renderHTML(state, data);
     }
 
-    getHTML(state, data) {
+    renderHTML(state, data) {
         const styles = this.getStyles();
 
         switch (state) {

@@ -1,9 +1,16 @@
 import { recurringService } from '../services/recurringService.js';
+import eventBus from '../core/eventBus.js';
 
 /**
  * Recurring Widget - Manage recurring todo patterns
  */
 export class RecurringWidget extends HTMLElement {
+    shadowRoot!: ShadowRoot;
+    patterns: any[];
+    showEditor: boolean;
+    editingPattern: any;
+    unsubscribe?: () => void;
+
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
@@ -16,9 +23,15 @@ export class RecurringWidget extends HTMLElement {
         this.render();
         this.loadPatterns();
 
-        // Subscribe to recurring service events
-        this.unsubscribe = recurringService.subscribe((event, data) => {
-            this.handleRecurringEvent(event, data);
+        // Subscribe to recurring service events via eventBus
+        eventBus.on('recurring:pattern-created', (data: any) => {
+            this.handleRecurringEvent('pattern-created', data);
+        });
+        eventBus.on('recurring:pattern-updated', (data: any) => {
+            this.handleRecurringEvent('pattern-updated', data);
+        });
+        eventBus.on('recurring:pattern-deleted', (data: any) => {
+            this.handleRecurringEvent('pattern-deleted', data);
         });
     }
 
@@ -526,7 +539,7 @@ export class RecurringWidget extends HTMLElement {
     }
 
     resetEditor() {
-        const form = this.shadowRoot.getElementById('patternForm');
+        const form = this.shadowRoot.getElementById('pattern-form') as HTMLFormElement;
         form.reset();
 
         // Deselect all weekdays
@@ -535,12 +548,12 @@ export class RecurringWidget extends HTMLElement {
     }
 
     populateEditor(pattern) {
-        this.shadowRoot.getElementById('patternText').value = pattern.text;
-        this.shadowRoot.getElementById('patternType').value = pattern.type;
-        this.shadowRoot.getElementById('patternFrequency').value = pattern.frequency;
-        this.shadowRoot.getElementById('patternTime').value = pattern.time || '';
-        this.shadowRoot.getElementById('patternPriority').value = pattern.priority;
-        this.shadowRoot.getElementById('patternTags').value = (pattern.tags || []).join(', ');
+        (this.shadowRoot.getElementById('patternText') as HTMLInputElement).value = pattern.text;
+        (this.shadowRoot.getElementById('patternType') as HTMLSelectElement).value = pattern.type;
+        (this.shadowRoot.getElementById('patternFrequency') as HTMLInputElement).value = pattern.frequency;
+        (this.shadowRoot.getElementById('patternTime') as HTMLInputElement).value = pattern.time || '';
+        (this.shadowRoot.getElementById('patternPriority') as HTMLSelectElement).value = pattern.priority;
+        (this.shadowRoot.getElementById('patternTags') as HTMLInputElement).value = (pattern.tags || []).join(', ');
 
         if (pattern.type === 'weekly' && pattern.daysOfWeek) {
             pattern.daysOfWeek.forEach(day => {
@@ -550,12 +563,12 @@ export class RecurringWidget extends HTMLElement {
         }
 
         if (pattern.type === 'monthly') {
-            this.shadowRoot.getElementById('patternDayOfMonth').value = pattern.dayOfMonth || 1;
+            (this.shadowRoot.getElementById('patternDayOfMonth') as HTMLInputElement).value = (pattern.dayOfMonth || 1).toString();
         }
     }
 
     updateEditorVisibility() {
-        const type = this.shadowRoot.getElementById('patternType').value;
+        const type = (this.shadowRoot.getElementById('patternType') as HTMLSelectElement).value;
         const weekdaysGroup = this.shadowRoot.getElementById('weekdaysGroup');
         const dayOfMonthGroup = this.shadowRoot.getElementById('dayOfMonthGroup');
 
@@ -566,15 +579,15 @@ export class RecurringWidget extends HTMLElement {
     handleSubmit(e) {
         e.preventDefault();
 
-        const text = this.shadowRoot.getElementById('patternText').value.trim();
-        const type = this.shadowRoot.getElementById('patternType').value;
-        const frequency = parseInt(this.shadowRoot.getElementById('patternFrequency').value);
-        const time = this.shadowRoot.getElementById('patternTime').value || null;
-        const priority = this.shadowRoot.getElementById('patternPriority').value;
-        const tagsInput = this.shadowRoot.getElementById('patternTags').value;
+        const text = (this.shadowRoot.getElementById('patternText') as HTMLInputElement).value.trim();
+        const type = (this.shadowRoot.getElementById('patternType') as HTMLSelectElement).value;
+        const frequency = parseInt((this.shadowRoot.getElementById('patternFrequency') as HTMLInputElement).value);
+        const time = (this.shadowRoot.getElementById('patternTime') as HTMLInputElement).value || null;
+        const priority = (this.shadowRoot.getElementById('patternPriority') as HTMLSelectElement).value;
+        const tagsInput = (this.shadowRoot.getElementById('patternTags') as HTMLInputElement).value;
         const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t) : [];
 
-        const pattern = {
+        const pattern: any = {
             text,
             type,
             frequency,
@@ -585,12 +598,12 @@ export class RecurringWidget extends HTMLElement {
 
         if (type === 'weekly') {
             const selectedDays = Array.from(this.shadowRoot.querySelectorAll('.weekday-btn.selected'))
-                .map(btn => parseInt(btn.dataset.day));
+                .map(btn => parseInt((btn as HTMLElement).dataset!.day));
             pattern.daysOfWeek = selectedDays;
         }
 
         if (type === 'monthly') {
-            pattern.dayOfMonth = parseInt(this.shadowRoot.getElementById('patternDayOfMonth').value);
+            pattern.dayOfMonth = parseInt((this.shadowRoot.getElementById('patternDayOfMonth') as HTMLInputElement).value);
         }
 
         if (this.editingPattern) {
@@ -714,7 +727,7 @@ export class RecurringWidget extends HTMLElement {
     formatDate(date) {
         const d = new Date(date);
         const now = new Date();
-        const diffDays = Math.floor((d - now) / (1000 * 60 * 60 * 24));
+        const diffDays = Math.floor((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
         if (diffDays === 0) {return 'Idag';}
         if (diffDays === 1) {return 'Imorgon';}

@@ -7,6 +7,12 @@ import { googleCalendarService } from '../services/googleCalendarService.js';
 import { logger } from '../utils/logger.js';
 
 class CalendarWidget extends HTMLElement {
+    shadowRoot!: ShadowRoot;
+    events: any[];
+    isAuthenticated: boolean;
+    isLoading: boolean;
+    unsubscribe: (() => void) | null;
+
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
@@ -411,7 +417,8 @@ class CalendarWidget extends HTMLElement {
 
     setupEventListeners() {
         this.shadowRoot.addEventListener('click', async (e) => {
-            if (e.target.id === 'sign-in-btn' || e.target.closest('#sign-in-btn')) {
+            const target = e.target as HTMLElement;
+            if (target.id === 'sign-in-btn' || target.closest('#sign-in-btn')) {
                 console.log('Initiating Google Calendar sign-in...');
                 console.log();
                 await googleCalendarService.signIn();

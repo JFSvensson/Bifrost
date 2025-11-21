@@ -6,6 +6,10 @@ import { logger } from '../utils/logger.js';
  * Parses input like "Möt Anna imorgon 14:00 #arbete [!high]"
  */
 export class QuickAddWidget extends HTMLElement {
+    shadowRoot!: ShadowRoot;
+    parsed: any;
+    suggestions: any[];
+
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
@@ -306,7 +310,7 @@ export class QuickAddWidget extends HTMLElement {
 
         // Real-time parsing and preview
         input.addEventListener('input', (e) => {
-            this.handleInput(e.target.value);
+            this.handleInput((e.target as HTMLInputElement).value);
         });
 
         // Enter to submit
@@ -327,7 +331,7 @@ export class QuickAddWidget extends HTMLElement {
 
         // Click outside to close suggestions
         document.addEventListener('click', (e) => {
-            if (!this.contains(e.target)) {
+            if (!this.contains(e.target as Node)) {
                 suggestions.classList.remove('visible');
             }
         });
@@ -432,13 +436,13 @@ export class QuickAddWidget extends HTMLElement {
         // Add click handlers
         suggestionsEl.querySelectorAll('.suggestion-item').forEach(item => {
             item.addEventListener('click', () => {
-                this.applySuggestion(item.dataset.value);
+                this.applySuggestion((item as HTMLElement).dataset!.value!);
             });
         });
     }
 
     applySuggestion(value) {
-        const input = this.shadowRoot.getElementById('quickAddInput');
+        const input = this.shadowRoot.getElementById('quick-add-input') as HTMLInputElement;
         input.value += ' ' + value;
         input.focus();
         this.handleInput(input.value);
@@ -472,7 +476,7 @@ export class QuickAddWidget extends HTMLElement {
     }
 
     clearInput() {
-        const input = this.shadowRoot.getElementById('quickAddInput');
+        const input = this.shadowRoot.getElementById('quick-add-input') as HTMLInputElement;
         input.value = '';
         this.parsed = null;
         this.updatePreview();
@@ -512,7 +516,7 @@ export class QuickAddWidget extends HTMLElement {
     }
 
     setValue(value) {
-        const input = this.shadowRoot.getElementById('quickAddInput');
+        const input = this.shadowRoot.getElementById('quick-add-input') as HTMLInputElement;
         input.value = value;
         this.handleInput(value);
     }

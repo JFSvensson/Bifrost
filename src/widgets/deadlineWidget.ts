@@ -6,6 +6,10 @@ import { DeadlineService } from '../services/deadlineService.js';
 import { escapeHTML } from '../utils/sanitizer.js';
 
 class DeadlineWidget extends HTMLElement {
+    shadowRoot!: ShadowRoot;
+    deadlineService: any;
+    todos: any[];
+
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
@@ -17,10 +21,10 @@ class DeadlineWidget extends HTMLElement {
         this.render();
 
         // Lyssna på todo-uppdateringar
-        window.addEventListener('todosUpdated', (/** @type {CustomEvent} */ e) => {
+        window.addEventListener('todosUpdated', ((e: CustomEvent) => {
             this.todos = e.detail.todos || [];
             this.updateWarnings();
-        });
+        }) as EventListener);
 
         // Lyssna på tema-ändringar
         window.addEventListener('themechange', () => {

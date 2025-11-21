@@ -6,6 +6,10 @@
 import { StatsService } from '../services/statsService.js';
 
 class StatsWidget extends HTMLElement {
+    shadowRoot!: ShadowRoot;
+    statsService: any;
+    currentTodos: any[];
+
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
@@ -17,10 +21,10 @@ class StatsWidget extends HTMLElement {
         this.render();
 
         // Lyssna på todo-ändringar
-        window.addEventListener('todosUpdated', (e) => {
+        window.addEventListener('todosUpdated', ((e: CustomEvent) => {
             this.currentTodos = e.detail.todos || [];
             this.updateStats();
-        });
+        }) as EventListener);
 
         // Lyssna på tema-ändringar
         window.addEventListener('themechange', () => {

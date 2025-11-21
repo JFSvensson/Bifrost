@@ -543,6 +543,14 @@ class ReminderService {
     }
 
     /**
+     * Gets the current notification permission status
+     * @returns {string} Permission status
+     */
+    getNotificationPermission() {
+        return this.notificationPermission;
+    }
+
+    /**
      * Begär notification permission från användaren
      * Publicerar event vid ändring av permission
      *

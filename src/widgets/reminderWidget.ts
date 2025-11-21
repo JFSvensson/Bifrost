@@ -17,8 +17,12 @@
  */
 
 import reminderService from '../services/reminderService.js';
+import eventBus from '../core/eventBus.js';
 
 class ReminderWidget extends HTMLElement {
+    shadowRoot!: ShadowRoot;
+    updateInterval: number | null;
+
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
@@ -31,11 +35,11 @@ class ReminderWidget extends HTMLElement {
         this.startLiveUpdates();
 
         // Subscribe till reminderService events
-        reminderService.subscribe('reminderCreated', () => this.updateReminders());
-        reminderService.subscribe('todoSnoozed', () => this.updateReminders());
-        reminderService.subscribe('reminderCancelled', () => this.updateReminders());
-        reminderService.subscribe('remindersChecked', () => this.updateReminders());
-        reminderService.subscribe('notificationPermissionChanged', () => this.updatePermissionUI());
+        eventBus.on('reminder:created', () => this.updateReminders());
+        eventBus.on('todo:snoozed', () => this.updateReminders());
+        eventBus.on('reminder:cancelled', () => this.updateReminders());
+        eventBus.on('reminders:checked', () => this.updateReminders());
+        eventBus.on('notification:permission-changed', () => this.updatePermissionUI());
     }
 
     disconnectedCallback() {
@@ -45,7 +49,7 @@ class ReminderWidget extends HTMLElement {
     render() {
         const stats = reminderService.getStats();
         const reminders = reminderService.getActiveReminders();
-        const permission = reminderService.notificationPermission;
+        const permission = reminderService.getNotificationPermission();
 
         this.shadowRoot.innerHTML = `
             <style>
@@ -479,7 +483,7 @@ class ReminderWidget extends HTMLElement {
 
     calculateTimeUntil(date) {
         const now = new Date();
-        const diff = date - now;
+        const diff = date.getTime() - now.getTime();
         const totalMinutes = Math.floor(diff / (1000 * 60));
         const totalHours = Math.floor(diff / (1000 * 60 * 60));
         const totalDays = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -550,14 +554,14 @@ class ReminderWidget extends HTMLElement {
 
         // Action buttons
         this.shadowRoot.addEventListener('click', (e) => {
-            const actionBtn = e.target.closest('.action-btn');
+            const actionBtn = (e.target as HTMLElement).closest('.action-btn');
             if (!actionBtn) {return;}
 
-            const card = actionBtn.closest('.reminder-card');
+            const card = actionBtn.closest('.reminder-card') as HTMLElement;
             const reminderId = card?.dataset.reminderId;
             if (!reminderId) {return;}
 
-            const action = actionBtn.dataset.action;
+            const action = (actionBtn as HTMLElement).dataset.action;
 
             if (action === 'cancel') {
                 this.handleCancelReminder(reminderId);
@@ -595,7 +599,7 @@ class ReminderWidget extends HTMLElement {
         // Uppdatera countdown-timers varje minut
         this.updateInterval = setInterval(() => {
             this.updateCountdowns();
-        }, 60000);
+        }, 60000) as unknown as number;
     }
 
     stopLiveUpdates() {

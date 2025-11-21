@@ -86,7 +86,7 @@ class SearchWidget extends HTMLElement {
         }, 300);
 
         input.addEventListener('input', (e) => {
-            this.currentQuery = /** @type {HTMLInputElement} */ (e.target).value;
+            this.currentQuery = (e.target as HTMLInputElement).value;
             if (this.currentQuery.trim()) {
                 this.debouncedSearch(this.currentQuery);
                 this.expand();
@@ -111,7 +111,7 @@ class SearchWidget extends HTMLElement {
         input.addEventListener('keydown', (e) => {
             if (!this.isExpanded || this.results.length === 0) return;
 
-            switch (/** @type {KeyboardEvent} */ (e).key) {
+            switch ((e as KeyboardEvent).key) {
                 case 'ArrowDown':
                     e.preventDefault();
                     this.selectNext();
@@ -176,7 +176,7 @@ class SearchWidget extends HTMLElement {
      * @private
      */
     clearSearch() {
-        const input = /** @type {HTMLInputElement} */ (this.shadowRoot.querySelector('#search-input'));
+        const input = this.shadowRoot.querySelector('#search-input') as HTMLInputElement;
         input.value = '';
         this.currentQuery = '';
         this.clearResults();
@@ -199,7 +199,7 @@ class SearchWidget extends HTMLElement {
      * @private
      */
     focusInput() {
-        const input = /** @type {HTMLInputElement} */ (this.shadowRoot.querySelector('#search-input'));
+        const input = this.shadowRoot.querySelector('#search-input') as HTMLInputElement;
         input?.focus();
     }
 

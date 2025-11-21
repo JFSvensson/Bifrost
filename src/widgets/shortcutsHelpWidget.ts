@@ -8,10 +8,14 @@ import eventBus from '../core/eventBus.js';
 import { logger } from '../utils/logger.js';
 
 class ShortcutsHelpWidget extends HTMLElement {
+    shadowRoot!: ShadowRoot;
+    private _isOpen: boolean;
+    unregister?: () => void;
+
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
-        this.isOpen = false;
+        this._isOpen = false;
     }
 
     connectedCallback() {
@@ -65,13 +69,13 @@ class ShortcutsHelpWidget extends HTMLElement {
 
         // Listen for shortcut registrations to update display
         eventBus.on('shortcut:registered', () => {
-            if (this.isOpen) {
+            if (this._isOpen) {
                 this.renderShortcuts();
             }
         });
 
         eventBus.on('shortcut:unregistered', () => {
-            if (this.isOpen) {
+            if (this._isOpen) {
                 this.renderShortcuts();
             }
         });
@@ -81,7 +85,7 @@ class ShortcutsHelpWidget extends HTMLElement {
      * Toggle modal
      */
     toggle() {
-        if (this.isOpen) {
+        if (this._isOpen) {
             this.close();
         } else {
             this.open();
@@ -92,7 +96,7 @@ class ShortcutsHelpWidget extends HTMLElement {
      * Open modal
      */
     open() {
-        this.isOpen = true;
+        this._isOpen = true;
         const modal = this.shadowRoot.querySelector('#modal');
         const overlay = this.shadowRoot.querySelector('#overlay');
         
@@ -108,7 +112,7 @@ class ShortcutsHelpWidget extends HTMLElement {
      * Close modal
      */
     close() {
-        this.isOpen = false;
+        this._isOpen = false;
         const modal = this.shadowRoot.querySelector('#modal');
         const overlay = this.shadowRoot.querySelector('#overlay');
         

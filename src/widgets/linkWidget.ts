@@ -6,6 +6,9 @@ import linkService from '../services/linkService.js';
  * Uses Shadow DOM for style isolation
  */
 class LinkWidget extends HTMLElement {
+    shadowRoot!: ShadowRoot;
+    links: any[];
+
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });

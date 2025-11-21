@@ -4,8 +4,12 @@
  */
 
 import { pomodoroService } from '../services/pomodoroService.js';
+import eventBus from '../core/eventBus.js';
 
 class PomodoroWidget extends HTMLElement {
+    shadowRoot!: ShadowRoot;
+    unsubscribe: (() => void) | null;
+
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
@@ -16,8 +20,11 @@ class PomodoroWidget extends HTMLElement {
         this.render();
         this.setupEventListeners();
 
-        // Subscribe to timer updates
-        this.unsubscribe = pomodoroService.subscribe((state) => {
+        // Subscribe to timer updates via eventBus
+        eventBus.on('pomodoro:tick', (state: any) => {
+            this.updateDisplay(state);
+        });
+        eventBus.on('pomodoro:state-changed', (state: any) => {
             this.updateDisplay(state);
         });
 
@@ -351,7 +358,7 @@ class PomodoroWidget extends HTMLElement {
         const progress = pomodoroService.getProgress();
         const circumference = 565.48;
         const offset = circumference - (progress / 100) * circumference;
-        progressCircle.style.strokeDashoffset = offset;
+        progressCircle.style.strokeDashoffset = offset.toString();
 
         // Update circle color based on mode
         progressCircle.className = `progress-bar ${state.mode === 'work' ? 'work' : 'break'}`;
@@ -371,9 +378,9 @@ class PomodoroWidget extends HTMLElement {
 
         // Update stats
         const stats = pomodoroService.getTodayStats();
-        this.shadowRoot.getElementById('today-sessions').textContent = stats.totalSessions;
-        this.shadowRoot.getElementById('focus-minutes').textContent = stats.focusMinutes;
-        this.shadowRoot.getElementById('streak-sessions').textContent = stats.streakSessions;
+        this.shadowRoot.getElementById('today-sessions')!.textContent = stats.totalSessions.toString();
+        this.shadowRoot.getElementById('focus-minutes')!.textContent = stats.focusMinutes.toString();
+        this.shadowRoot.getElementById('streak-sessions')!.textContent = stats.streakSessions.toString();
     }
 }
 

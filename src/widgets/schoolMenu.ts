@@ -3,6 +3,9 @@ import { isToday } from '../utils/dateHelpers.js';
 import { logger } from '../utils/logger.js';
 
 class SchoolMenu extends HTMLElement {
+    shadowRoot!: ShadowRoot;
+    menuService: any;
+
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
@@ -26,10 +29,10 @@ class SchoolMenu extends HTMLElement {
     }
 
     render(state, data = null) {
-        this.shadowRoot.innerHTML = this.getHTML(state, data);
+        this.shadowRoot.innerHTML = this.renderHTML(state, data);
     }
 
-    getHTML(state, data) {
+    renderHTML(state, data) {
         const styles = this.getStyles();
 
         switch (state) {

@@ -10,6 +10,10 @@ import errorHandler, { ErrorCode } from '../core/errorHandler.js';
 import { logger } from '../utils/logger.js';
 
 class BackupWidget extends HTMLElement {
+    shadowRoot!: ShadowRoot;
+    isOpen: boolean;
+    unregister?: () => void;
+
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
