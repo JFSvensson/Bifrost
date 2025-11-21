@@ -6,6 +6,7 @@
 import eventBus from '../core/eventBus.js';
 import stateManager from '../core/stateManager.js';
 import errorHandler, { ErrorCode } from '../core/errorHandler.js';
+import { logger } from '../utils/logger.js';
 
 export class PomodoroService {
     constructor() {
@@ -353,7 +354,7 @@ export class PomodoroService {
             oscillator.start(audioContext.currentTime);
             oscillator.stop(audioContext.currentTime + 0.5);
         } catch (error) {
-            console.log('Could not play sound:', error);
+            logger.debug('Could not play sound:', error);
         }
     }
 
