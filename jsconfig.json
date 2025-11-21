@@ -8,18 +8,18 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
     "paths": {
-      "/js/*": ["js/*"],
+      "/src/*": ["src/*"],
       "/css/*": ["css/*"],
       "/data/*": ["data/*"]
     }
   },
   "include": [
-    "js/**/*",
+    "src/**/*",
     "*.js",
-    "js/types.d.ts"
+    "src/types.d.ts"
   ],
   "exclude": [
     "node_modules",
-    "js/sw.js"
+    "src/sw.js"
   ]
 }
