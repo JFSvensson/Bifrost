@@ -10,6 +10,15 @@ import { debounce } from '../utils/debounce.js';
 import { logger } from '../utils/logger.js';
 
 class SearchWidget extends HTMLElement {
+    private isExpanded: boolean;
+    private results: SearchResult[];
+    private selectedIndex: number;
+    private currentQuery: string;
+    private debouncedSearch?: DebouncedFunction<(query: string) => void>;
+    private unregisterSearch?: () => void;
+    private unregisterEscape?: () => void;
+    declare shadowRoot: ShadowRoot;
+
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });

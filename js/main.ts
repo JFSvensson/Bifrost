@@ -958,7 +958,7 @@ function dispatchTodosUpdated() {
 // Service Worker registration
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/js/sw.js')
+        navigator.serviceWorker.register('/dist/sw.js')
             .then(registration => {
                 logger.info('Service Worker registered successfully', { scope: registration.scope });
             })

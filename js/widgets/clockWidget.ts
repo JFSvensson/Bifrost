@@ -2,6 +2,12 @@ import { ClockService } from '../services/clockService.js';
 import { clock as clockConfig } from '../config/config.js';
 
 class ClockWidget extends HTMLElement {
+    private clockService: ClockService;
+    private updateInterval: number;
+    private intervalId: number | null;
+    private showMultipleTimezones: boolean;
+    declare shadowRoot: ShadowRoot;
+
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
