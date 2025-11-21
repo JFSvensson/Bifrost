@@ -7,6 +7,7 @@ import stateManager from '../core/stateManager.js';
 import { keyboardShortcutService } from '../services/keyboardShortcutService.js';
 import eventBus from '../core/eventBus.js';
 import errorHandler, { ErrorCode } from '../core/errorHandler.js';
+import { logger } from '../utils/logger.js';
 
 class BackupWidget extends HTMLElement {
     constructor() {
@@ -19,7 +20,7 @@ class BackupWidget extends HTMLElement {
         this.render();
         this.setupEventListeners();
         this.registerShortcut();
-        console.log('✅ Backup Widget initialized');
+        logger.debug('Backup Widget initialized');
     }
 
     disconnectedCallback() {
