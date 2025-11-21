@@ -51,7 +51,7 @@ class EventBus {
         this.maxHistorySize = 100;
 
         /** @type {boolean} Debug mode - loggar alla events */
-        this.debugMode = false;
+        this.debug = false;
 
         /** @type {Set<string>} Event namespaces för validering */
         this.registeredNamespaces = new Set([
@@ -113,7 +113,7 @@ class EventBus {
             this.listeners[eventName].sort((a, b) => b.priority - a.priority);
         }
 
-        if (this.debugMode) {
+        if (this.debug) {
             console.log(`[EventBus] Subscribed to '${eventName}'`);
         }
 
@@ -149,7 +149,7 @@ class EventBus {
 
             if (index !== -1) {
                 list[eventName].splice(index, 1);
-                if (this.debugMode) {
+                if (this.debug) {
                     console.log(`[EventBus] Unsubscribed from '${eventName}'`);
                 }
             }
@@ -169,7 +169,7 @@ class EventBus {
         delete this.listeners[eventName];
         delete this.onceListeners[eventName];
 
-        if (this.debugMode) {
+        if (this.debug) {
             console.log(`[EventBus] Removed all listeners for '${eventName}'`);
         }
     }
@@ -191,7 +191,7 @@ class EventBus {
         // Spara i historik
         this._addToHistory(eventName, data);
 
-        if (this.debugMode) {
+        if (this.debug) {
             console.log(`[EventBus] Emitted '${eventName}'`, data);
         }
 
@@ -251,7 +251,9 @@ class EventBus {
             try {
                 wrapper.fn(data, eventName);
             } catch (error) {
-                console.error(`[EventBus] Error in listener for '${eventName}':`, error);
+                if (this.debug) {
+                    console.error(`[EventBus] Error in listener for '${eventName}':`, error);
+                }
             }
         });
     }
@@ -272,7 +274,9 @@ class EventBus {
         const [namespace] = eventName.split(':');
 
         if (!this.registeredNamespaces.has(namespace) && namespace !== '*') {
-            console.warn(`[EventBus] Unknown namespace '${namespace}'. Consider registering it.`);
+            if (this.debug) {
+                console.warn(`[EventBus] Unknown namespace '${namespace}'. Consider registering it.`);
+            }
         }
     }
 
@@ -328,7 +332,9 @@ class EventBus {
                 try {
                     callback(event.data, event.eventName, event.timestamp);
                 } catch (error) {
-                    console.error('[EventBus] Error in replay callback:', error);
+                    if (this.debug) {
+                        console.error('[EventBus] Error in replay callback:', error);
+                    }
                 }
             });
     }
@@ -390,7 +396,7 @@ class EventBus {
     registerNamespace(namespace) {
         this.registeredNamespaces.add(namespace);
 
-        if (this.debugMode) {
+        if (this.debug) {
             console.log(`[EventBus] Registered namespace '${namespace}'`);
         }
     }
@@ -434,7 +440,7 @@ class EventBus {
         this.onceListeners = {};
         this.eventHistory = [];
 
-        if (this.debugMode) {
+        if (this.debug) {
             console.log('[EventBus] Cleared all listeners and history');
         }
     }
@@ -446,7 +452,7 @@ class EventBus {
      * @returns {void}
      */
     setDebugMode(enabled) {
-        this.debugMode = enabled;
+        this.debug = enabled;
         console.log(`[EventBus] Debug mode ${enabled ? 'enabled' : 'disabled'}`);
     }
 
