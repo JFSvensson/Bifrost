@@ -6,6 +6,7 @@
 import eventBus from '../core/eventBus.js';
 import stateManager from '../core/stateManager.js';
 import errorHandler, { ErrorCode } from '../core/errorHandler.js';
+import { logger } from '../utils/logger.js';
 
 export class DeadlineService {
     constructor() {
@@ -226,7 +227,7 @@ export class DeadlineService {
      */
     async showNotifications(todos) {
         if (!('Notification' in window)) {
-            console.warn('Browser stöder inte notifications');
+            logger.warn('Browser stöder inte notifications');
             return;
         }
 
