@@ -7,6 +7,7 @@ import { googleCalendarService } from './googleCalendarService.js';
 import eventBus from '../core/eventBus.js';
 import stateManager from '../core/stateManager.js';
 import errorHandler, { ErrorCode } from '../core/errorHandler.js';
+import { logger } from '../utils/logger.js';
 
 export class CalendarSyncService {
     constructor() {
@@ -45,7 +46,7 @@ export class CalendarSyncService {
             const mappings = stateManager.get('calendarSyncMappings');
             if (mappings && Object.keys(mappings).length > 0) {
                 this.syncedTodos = new Map(Object.entries(mappings));
-                console.log(`✅ Loaded ${this.syncedTodos.size} sync mappings`);
+                logger.debug(`Loaded ${this.syncedTodos.size} sync mappings`);
             }
         } catch (error) {
             errorHandler.handle(error, {
@@ -88,7 +89,7 @@ export class CalendarSyncService {
             this.performSync();
         }, this.syncFrequency);
 
-        console.log('✅ Calendar sync enabled');
+        logger.info('Calendar sync enabled');
         eventBus.emit('calendar:syncEnabled', { frequency: this.syncFrequency });
     }
 
@@ -105,7 +106,7 @@ export class CalendarSyncService {
             this.syncInterval = null;
         }
 
-        console.log('✅ Calendar sync disabled');
+        logger.info('Calendar sync disabled');
         eventBus.emit('calendar:syncDisabled', {});
     }
 
@@ -114,17 +115,17 @@ export class CalendarSyncService {
      */
     async performSync() {
         if (!googleCalendarService.isAuthenticated()) {
-            console.log('⚠️ Not authenticated with Google Calendar, skipping sync');
+            logger.warn('Not authenticated with Google Calendar, skipping sync');
             return;
         }
 
         if (!this.getTodosCallback) {
-            console.error('❌ No getTodosCallback provided');
+            logger.error('No getTodosCallback provided');
             return;
         }
 
         try {
-            console.log('🔄 Starting calendar sync...');
+            logger.info('Starting calendar sync...');
 
             const todos = this.getTodosCallback();
 
@@ -135,7 +136,7 @@ export class CalendarSyncService {
             // await this.syncCalendarToTodos();
 
             this.lastSync = new Date();
-            console.log('✅ Calendar sync complete');
+            logger.info('Calendar sync complete');
 
             // Emit sync event
             eventBus.emit('calendar:synced', { timestamp: this.lastSync });
@@ -156,7 +157,7 @@ export class CalendarSyncService {
             todo.dueDate && !todo.completed && todo.source === 'bifrost'
         );
 
-        console.log(`📅 Syncing ${todosWithDates.length} todos to calendar...`);
+        logger.info(`Syncing ${todosWithDates.length} todos to calendar...`);
 
         for (const todo of todosWithDates) {
             try {
@@ -191,7 +192,7 @@ export class CalendarSyncService {
             this.syncedTodos.set(todo.id, event.id);
             this.saveSyncMappings();
 
-            console.log(`✅ Created calendar event for todo "${todo.text}"`);
+            logger.info(`Created calendar event for todo "${todo.text}"`);
 
             // Emit event
             eventBus.emit('calendar:todoSynced', { todo, event });
@@ -227,7 +228,7 @@ export class CalendarSyncService {
             };
 
             await googleCalendarService.updateEvent(eventId, updates);
-            console.log(`✅ Updated calendar event for todo "${todo.text}"`);
+            logger.info(`Updated calendar event for todo "${todo.text}"`);
         } catch (error) {
             // Event might have been deleted, remove mapping
             if (error.status === 404) {
@@ -256,9 +257,9 @@ export class CalendarSyncService {
 
                 try {
                     await googleCalendarService.deleteEvent(eventId);
-                    console.log('✅ Deleted calendar event for removed todo');
+                    logger.info('Deleted calendar event for removed todo');
                 } catch (error) {
-                    console.error('Failed to delete calendar event:', error);
+                    logger.error('Failed to delete calendar event:', error);
                 }
 
                 // Remove mapping
@@ -305,9 +306,9 @@ export class CalendarSyncService {
 
         try {
             await googleCalendarService.deleteEvent(eventId);
-            console.log('✅ Removed calendar event for todo');
+            logger.info('Removed calendar event for todo');
         } catch (error) {
-            console.error('Failed to delete calendar event:', error);
+            logger.error('Failed to delete calendar event:', error);
         }
 
         this.syncedTodos.delete(todoId);
@@ -372,7 +373,7 @@ export class CalendarSyncService {
             const syncedEventIds = new Set(Array.from(this.syncedTodos.values()));
             const newEvents = events.filter(e => !syncedEventIds.has(e.id));
 
-            console.log(`📅 Found ${newEvents.length} new calendar events`);
+            logger.info(`Found ${newEvents.length} new calendar events`);
 
             // Emit event with new calendar events
             if (newEvents.length > 0) {
