@@ -6,6 +6,7 @@
 import eventBus from '../core/eventBus.js';
 import stateManager from '../core/stateManager.js';
 import errorHandler, { ErrorCode } from '../core/errorHandler.js';
+import { logger } from '../utils/logger.js';
 
 export class GoogleCalendarService {
     constructor() {
@@ -42,9 +43,9 @@ export class GoogleCalendarService {
             this.CLIENT_ID = credentials.client_id;
             this.API_KEY = credentials.api_key;
 
-            console.log('✅ Google Calendar credentials loaded');
-            console.log('Client ID:', this.CLIENT_ID);
-            console.log(credentials);
+            logger.debug('Google Calendar credentials loaded');
+            logger.debug('Client ID:', this.CLIENT_ID);
+            logger.debug(credentials);
             return true;
         } catch (error) {
             errorHandler.handle(error, {
@@ -79,7 +80,7 @@ export class GoogleCalendarService {
         // Check if user is already authenticated
         this.checkStoredAuth();
 
-        console.log('✅ Google Calendar Service initialized');
+        logger.debug('Google Calendar Service initialized');
     }
 
     /**
@@ -175,7 +176,7 @@ export class GoogleCalendarService {
                     // @ts-ignore - gapi is loaded dynamically
                     window.gapi.client.setToken({ access_token: token });
                     eventBus.emit('googleCalendar:authenticated', { authenticated: true });
-                    console.log('✅ Restored Google Calendar authentication');
+                    logger.info('Restored Google Calendar authentication');
                     return true;
                 }
             } catch (error) {
@@ -218,7 +219,7 @@ export class GoogleCalendarService {
         if (this.accessToken) {
             // @ts-ignore - google is loaded dynamically
             window.google.accounts.oauth2.revoke(this.accessToken, () => {
-                console.log('Token revoked');
+                logger.debug('Token revoked');
             });
         }
 
@@ -227,7 +228,7 @@ export class GoogleCalendarService {
         // @ts-ignore - gapi is loaded dynamically
         window.gapi.client.setToken(null);
         eventBus.emit('googleCalendar:signedOut', { authenticated: false });
-        console.log('✅ Signed out from Google Calendar');
+        logger.info('Signed out from Google Calendar');
     }
 
     /**
@@ -326,7 +327,7 @@ export class GoogleCalendarService {
                 resource: event
             });
 
-            console.log('✅ Event created:', response.result);
+            logger.info('Event created:', response.result);
             eventBus.emit('googleCalendar:eventCreated', { event: response.result });
             return response.result;
         } catch (error) {
@@ -370,7 +371,7 @@ export class GoogleCalendarService {
                 resource: updatedEvent
             });
 
-            console.log('✅ Event updated:', response.result);
+            logger.info('Event updated:', response.result);
             eventBus.emit('googleCalendar:eventUpdated', { event: response.result });
             return response.result;
         } catch (error) {
@@ -401,7 +402,7 @@ export class GoogleCalendarService {
                 eventId: eventId
             });
 
-            console.log('✅ Event deleted:', eventId);
+            logger.info('Event deleted:', eventId);
             eventBus.emit('googleCalendar:eventDeleted', { eventId });
             return true;
         } catch (error) {
