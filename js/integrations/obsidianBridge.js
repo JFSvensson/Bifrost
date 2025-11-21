@@ -3,6 +3,18 @@ const path = require('path');
 const http = require('http');
 const { URL } = require('url');
 
+/**
+ * NOTE: This file runs in Node.js environment, not the browser.
+ * console.log/warn/error statements are kept for now since this is a standalone Node.js server.
+ * When converting this to a service or integrating with the browser-based logger,
+ * replace console statements with logger utility:
+ * 
+ * import { logger } from '../utils/logger.js';
+ * console.log() → logger.info() or logger.debug()
+ * console.warn() → logger.warn()
+ * console.error() → logger.error()
+ */
+
 class ObsidianBridge {
     constructor(config) {
         this.vaultPath = config.vaultPath;

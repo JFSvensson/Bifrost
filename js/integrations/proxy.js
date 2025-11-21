@@ -2,6 +2,17 @@ const http = require('http');
 const https = require('https');
 const { URL } = require('url');
 
+/**
+ * NOTE: This file runs in Node.js environment, not the browser.
+ * console.log/error statements are kept for now since this is a standalone Node.js proxy server.
+ * When converting this to a service or integrating with the browser-based logger,
+ * replace console statements with logger utility:
+ * 
+ * import { logger } from '../utils/logger.js';
+ * console.log() → logger.info() or logger.debug()
+ * console.error() → logger.error()
+ */
+
 const PORT = 8787;
 const DEFAULT_ID = '6811ef70ccac616726792271_matsedel-grundskola';
 const BASE = 'https://menu.matildaplatform.com/meals/week/';
