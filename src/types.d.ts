@@ -145,7 +145,9 @@ interface CalendarEvent {
 interface SearchResult {
     id: string;
     text: string;
+    title?: string;
     source: 'todo' | 'calendar' | 'link';
+    sourceIcon?: string;
     score: number;
     highlights?: Array<{start: number; end: number}>;
     metadata?: Record<string, unknown>;
