@@ -15,6 +15,7 @@ import performanceMonitor from './services/performanceMonitor.js';
 import eventBus from './core/eventBus.js';
 import { keyboardShortcutService } from './services/keyboardShortcutService.js';
 import { searchService } from './services/searchService.js';
+import { logger } from './utils/logger.js';
 
 // ===== DEFERRED IMPORTS (loaded after critical path) =====
 let ObsidianTodoService;
@@ -71,12 +72,12 @@ async function initEssentialServices() {
     // Initialize Obsidian if enabled
     if (todos.obsidian && todos.obsidian.enabled) {
         obsidianService = new ObsidianTodoService();
-        console.log('🔗 Obsidian integration enabled');
+        logger.info('Obsidian integration enabled');
     }
 
     // Initialize stats service
     statsService = new StatsService();
-    console.log('📊 Statistics tracking enabled');
+    logger.info('Statistics tracking enabled');
 
     // Setup service event listeners via eventBus
     eventBus.on('recurring:todoCreated', (data) => {
@@ -216,16 +217,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         performance.measure('app-total-init', 'app-init-start', 'app-init-end');
 
         // Log performance metrics in development
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        logger.group('Performance Metrics', () => {
             const measures = performance.getEntriesByType('measure');
-            console.group('⚡ Performance Metrics');
             measures.forEach(measure => {
-                console.log(`${measure.name}: ${measure.duration.toFixed(2)}ms`);
+                logger.debug(`${measure.name}: ${measure.duration.toFixed(2)}ms`);
             });
-            console.groupEnd();
-        }
+        });
     } catch (error) {
-        console.error('❌ Initialization error:', error);
+        logger.error('Initialization error', error);
         showToast('Fel vid initialisering av appen', 'error');
     }
 });
@@ -233,7 +232,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Enable calendar sync when authenticated
 window.addEventListener('calendarAuthenticated', () => {
     calendarSyncService.enableSync(() => currentTodos);
-    console.log('📅 Calendar sync enabled');
+    logger.info('Calendar sync enabled');
 });
 
 // Handle Quick Add submissions
@@ -324,7 +323,7 @@ function createReminderFromParsed(todo, reminderData) {
         const [hours, minutes] = reminderData.time.split(':');
         remindAt.setHours(parseInt(hours), parseInt(minutes), 0, 0);
     } else {
-        console.warn('Could not create reminder - invalid data:', reminderData);
+        logger.warn('Could not create reminder - invalid data', { reminderData });
         return;
     }
 
@@ -723,7 +722,7 @@ function snoozeTodo(todo, preset) {
         // Re-render to show snoozed indicator
         renderTodos();
     } catch (error) {
-        console.error('Snooze error:', error);
+        logger.error('Snooze error', error);
         showToast('⚠️ Kunde inte snooze todo');
     }
 }
@@ -791,9 +790,10 @@ async function syncWithObsidian() {
         renderTodos();
         dispatchTodosUpdated();
 
-        console.log(`✅ Synced ${synced.length} todos (${synced.filter(t => t.source === 'obsidian').length} from Obsidian)`);
+        const obsidianCount = synced.filter(t => t.source === 'obsidian').length;
+        logger.info('Obsidian sync completed', { total: synced.length, obsidian: obsidianCount });
     } catch (error) {
-        console.error('❌ Obsidian sync failed:', error);
+        logger.error('Obsidian sync failed', error);
 
         // Show error to user
         showSyncError(error.message);
@@ -960,10 +960,10 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/js/sw.js')
             .then(registration => {
-                console.log('Service Worker registered successfully:', registration);
+                logger.info('Service Worker registered successfully', { scope: registration.scope });
             })
             .catch(registrationError => {
-                console.log('Service Worker registration failed:', registrationError);
+                logger.error('Service Worker registration failed', registrationError);
             });
     });
 }
