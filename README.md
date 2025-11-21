@@ -292,7 +292,7 @@ Surfa till den port din server visar (t.ex. http://localhost:5500 eller http://l
 
 ## Konfiguration
 
-Anpassa inställningar i [`js/config/config.js`](js/config/config.js). Se [CONFIG.md](docs/architecture/CONFIG.md) för detaljer.
+Anpassa inställningar i [`src/config/config.ts`](src/config/config.ts). Se [CONFIG.md](docs/architecture/CONFIG.md) för detaljer.
 
 **Populära anpassningar:**
 ```js
@@ -700,23 +700,23 @@ GET https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geoty
 ## Utveckling
 
 **Lägga till nya komponenter:**
-1. Skapa ny ES6-modul i `js/`
-2. Importera i `main.js` eller `index.html`
-3. Uppdatera Service Worker's `STATIC_ASSETS`
-4. Lägg till konfiguration i `js/config/config.js`
+1. Skapa ny TypeScript-fil i `src/`
+2. Importera i `main.ts` eller lägg till widget i `widgetLoader.ts`
+3. Kompilera med `npm run build`
+4. Lägg till konfiguration i `src/config/config.ts`
 
 **Skapa ny widget:**
-```javascript
-// 1. Skapa service (js/newService.js)
+```typescript
+// 1. Skapa service (src/services/newService.ts)
 export class NewService {
     constructor() {
         // Använd config
     }
 }
 
-// 2. Skapa widget (js/newWidget.js)
-import { NewService } from './newService.js';
-import { newConfig } from './config.js';
+// 2. Skapa widget (src/widgets/newWidget.ts)
+import { NewService } from '../services/newService.js';
+import { newConfig } from '../config/config.js';
 
 class NewWidget extends HTMLElement {
     constructor() {
