@@ -1,6 +1,7 @@
 import { todos as todoConfig } from '../config/config.js';
 import stateManager from '../core/stateManager.js';
 import errorHandler, { ErrorCode } from '../core/errorHandler.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Service for syncing todos with Obsidian via bridge
@@ -40,7 +41,7 @@ export class ObsidianTodoService {
                 const data = await response.json();
                 this.lastSync = new Date();
 
-                console.log(`📥 Synced ${data.count} todos from Obsidian`);
+                logger.info(`Synced ${data.count} todos from Obsidian`);
                 return this.processObsidianTodos(data.todos);
 
             } finally {
