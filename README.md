@@ -1,6 +1,16 @@
 # Bifrost Starting Page
 
-En modern startsida med att‑göra‑lista, sök, länkar, väder, klocka samt veckans skolmat. Byggd med modulär JavaScript, Service Worker för offline-stöd och PWA-funktionalitet.
+En modern startsida med att‑göra‑lista, sök, länkar, väder, klocka samt veckans skolmat. Byggd med TypeScript och modulär JavaScript-arkitektur, Service Worker för offline-stöd och PWA-funktionalitet.
+
+## 🚀 Teknisk Stack
+
+- **TypeScript** - Typ-säkerhet och förbättrad utvecklarupplevelse
+- **ES6 Modules** - Modern import/export och tree-shaking
+- **Web Components** - Custom elements med Shadow DOM
+- **Service Worker** - Offline-stöd och intelligent cachning
+- **PWA** - Installationsbar med manifest
+- **Vitest** - Enhetstestning med 41+ tester
+- **No Dependencies** - Vanilla implementation, inga externa bibliotek
 
 ## Funktioner
 
@@ -36,8 +46,9 @@ Bifrost/
 ├── index.html              # Huvudsida med grid-layout
 ├── manifest.json           # PWA-manifest med nordisk regnbågs-ikon
 ├── package.json            # NPM dependencies och scripts
+├── tsconfig.json           # TypeScript configuration
 ├── vitest.config.js        # Test configuration
-├── jsconfig.json           # JavaScript project config
+├── jsconfig.json           # JavaScript project config (legacy)
 ├── LICENSE                 # MIT License
 ├── README.md               # This file
 ├── assets/
@@ -344,6 +355,68 @@ todos: {
 | `Enter` | Submit Quick Add / Lägg till todo / Välj sökresultat |
 | `Escape` | Clear Quick Add / Stäng sökning / Stäng modals |
 | `↑` / `↓` | Navigera i sökresultat |
+
+## Kom igång (Development)
+
+### Installation
+
+```bash
+# Klona projektet
+git clone https://github.com/yourusername/Bifrost.git
+cd Bifrost
+
+# Installera dependencies
+npm install
+
+# Kompilera TypeScript
+npm run build
+
+# För development (watch mode)
+npm run dev
+```
+
+### Tillgängliga Kommandon
+
+```bash
+# TypeScript
+npm run build          # Kompilera TypeScript till JavaScript
+npm run dev            # Watch mode - kompilera vid ändringar
+npm run type-check     # Type-check utan att generera filer
+
+# Testing
+npm test               # Kör alla tester
+npm run test:ui        # Kör tester med UI
+npm run test:coverage  # Kör tester med coverage-rapport
+
+# Code Quality
+npm run lint           # Kör ESLint
+npm run lint:fix       # Fixa ESLint-problem automatiskt
+npm run format         # Formatera kod med Prettier
+npm run format:check   # Kontrollera formatering
+```
+
+### Starta Utvecklingsserver
+
+```bash
+# Python 3
+python -m http.server 8000
+
+# Node.js
+npx serve .
+
+# PHP
+php -S localhost:8000
+```
+
+Öppna sedan `http://localhost:8000` i din webbläsare.
+
+### TypeScript Migration
+
+Projektet har migrerats från JavaScript till TypeScript för bättre typ-säkerhet och utvecklarupplevelse. Se [TYPESCRIPT_MIGRATION.md](docs/TYPESCRIPT_MIGRATION.md) för:
+- Migration roadmap
+- Känd a typ-fel och fixes
+- Best practices
+- Troubleshooting
 
 ## Service Worker & Offline-stöd
 
@@ -834,6 +907,7 @@ customElements.define('new-widget', NewWidget);
 
 ## Dokumentation
 
+- [TYPESCRIPT_MIGRATION.md](docs/TYPESCRIPT_MIGRATION.md) - TypeScript migration guide och roadmap
 - [CONFIG.md](docs/architecture/CONFIG.md) - Fullständig konfigurationsguide
 - [OBSIDIAN_SETUP.md](docs/guides/OBSIDIAN_SETUP.md) - Steg-för-steg Obsidian-integration
 - [DARK_THEME.md](docs/guides/DARK_THEME.md) - Guide för mörkt tema och anpassning
