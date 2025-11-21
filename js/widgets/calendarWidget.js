@@ -4,6 +4,7 @@
  */
 
 import { googleCalendarService } from '../services/googleCalendarService.js';
+import { logger } from '../utils/logger.js';
 
 class CalendarWidget extends HTMLElement {
     constructor() {
@@ -49,7 +50,7 @@ class CalendarWidget extends HTMLElement {
                 await this.loadEvents();
             }
         } catch (error) {
-            console.error('Failed to initialize calendar service:', error);
+            logger.error('Failed to initialize calendar service', error);
             this.showError(error.message);
         }
     }
