@@ -1,4 +1,5 @@
 import { ui, todos, search } from './config.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Initialize UI elements with config values
@@ -34,7 +35,7 @@ function initializeUI() {
     document.body.classList.toggle('dark-theme', ui.theme === 'dark');
     document.body.classList.toggle('compact-mode', ui.compactMode);
 
-    console.log('Bifrost UI initialized with config');
+    logger.info('Bifrost UI initialized with config');
 }
 
 // Initialize when DOM is ready
