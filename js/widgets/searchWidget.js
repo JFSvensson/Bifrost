@@ -7,6 +7,7 @@ import { searchService } from '../services/searchService.js';
 import { keyboardShortcutService } from '../services/keyboardShortcutService.js';
 import eventBus from '../core/eventBus.js';
 import { debounce } from '../utils/debounce.js';
+import { logger } from '../utils/logger.js';
 
 class SearchWidget extends HTMLElement {
     constructor() {
@@ -22,7 +23,7 @@ class SearchWidget extends HTMLElement {
         this.render();
         this.setupEventListeners();
         this.registerShortcuts();
-        console.log('✅ Search Widget initialized');
+        logger.debug('Search Widget initialized');
     }
 
     disconnectedCallback() {
