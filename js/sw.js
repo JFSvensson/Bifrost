@@ -39,13 +39,33 @@ const SECURITY_HEADERS = {
     'Referrer-Policy': 'strict-origin-when-cross-origin'
 };
 
+// Production-safe logging helper
+const isDevelopment = () => {
+    return self.location.hostname === 'localhost' || 
+           self.location.hostname === '127.0.0.1';
+};
+
+const swLog = (message, ...args) => {
+    if (isDevelopment()) {
+        console.log('[SW]', message, ...args);
+    }
+};
+
+const swWarn = (message, ...args) => {
+    console.warn('[SW]', message, ...args);
+};
+
+const swError = (message, ...args) => {
+    console.error('[SW]', message, ...args);
+};
+
 // Install event - cache static assets
 self.addEventListener('install', event => {
-    console.log('Service Worker installing...');
+    swLog('Service Worker installing...');
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => {
-                console.log('Caching static assets');
+                swLog('Caching static assets');
                 return cache.addAll(STATIC_ASSETS);
             })
             .then(() => self.skipWaiting())
@@ -54,13 +74,13 @@ self.addEventListener('install', event => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', event => {
-    console.log('Service Worker activating...');
+    swLog('Service Worker activating...');
     event.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(
                 cacheNames.map(cacheName => {
                     if (cacheName !== CACHE_NAME) {
-                        console.log('Deleting old cache:', cacheName);
+                        swLog('Deleting old cache:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
@@ -115,7 +135,7 @@ self.addEventListener('fetch', event => {
                 })
                 .catch(() => {
                     // Fallback to cache if network fails
-                    console.log('Weather API failed, serving from cache');
+                    swLog('Weather API failed, serving from cache');
                     return caches.match(request).then(response => 
                         response ? addSecurityHeaders(response) : response
                     );
@@ -140,7 +160,7 @@ self.addEventListener('fetch', event => {
                 })
                 .catch(() => {
                     // Fallback to cache if network fails
-                    console.log('Network failed, serving from cache');
+                    swLog('Network failed, serving from cache');
                     return caches.match(request);
                 })
         );
