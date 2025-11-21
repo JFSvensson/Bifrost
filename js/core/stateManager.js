@@ -35,6 +35,7 @@
 import eventBus from './eventBus.js';
 import errorHandler, { ErrorCode } from './errorHandler.js';
 import { debounce } from '../utils/debounce.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * StateManager class - Singleton för centraliserad state-hantering
@@ -357,7 +358,7 @@ class StateManager {
                         localStorage.setItem(key, serialized);
                         this._keys.add(key); // Track key
                     } catch (retryError) {
-                        console.error(`Failed to flush ${key}:`, retryError);
+                        logger.error(`Failed to flush ${key}`, retryError);
                     }
                 } else {
                     errorHandler.handle(error, {
@@ -503,7 +504,7 @@ class StateManager {
             const targetVersion = this.versions[key];
 
             if (currentVersion < targetVersion) {
-                console.log(`[StateManager] Migrating '${key}' from v${currentVersion} to v${targetVersion}`);
+                logger.info(`[StateManager] Migrating '${key}' from v${currentVersion} to v${targetVersion}`);
 
                 const migratedData = this.schemas[key].migrate(parsed._data || parsed, currentVersion);
 
@@ -541,7 +542,7 @@ class StateManager {
             localStorage.setItem(backupKey, JSON.stringify(backup));
             this._keys.add(backupKey);
 
-            console.log('[StateManager] Backup created:', backupKey);
+            logger.debug('[StateManager] Backup created', { backupKey });
             return true;
 
         } catch (error) {
@@ -585,7 +586,7 @@ class StateManager {
             });
 
             eventBus.emit('state:restored', { backupKey });
-            console.log('[StateManager] Restored from backup:', backupKey);
+            logger.info('[StateManager] Restored from backup', { backupKey });
 
             return true;
 
