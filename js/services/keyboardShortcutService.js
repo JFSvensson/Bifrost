@@ -6,6 +6,7 @@
 import eventBus from '../core/eventBus.js';
 import errorHandler, { ErrorCode } from '../core/errorHandler.js';
 import { config } from '../config/config.js';
+import { logger } from '../utils/logger.js';
 
 export class KeyboardShortcutService {
     constructor() {
@@ -32,7 +33,7 @@ export class KeyboardShortcutService {
             }
         });
 
-        console.log('✅ Keyboard Shortcut Service initialized');
+        logger.debug('Keyboard Shortcut Service initialized');
     }
 
     /**
@@ -52,9 +53,7 @@ export class KeyboardShortcutService {
      */
     register(options) {
         try {
-            errorHandler.validateRequired(options, ['key', 'handler', 'description'], {
-                context: 'KeyboardShortcutService.register'
-            });
+            errorHandler.validateRequired(options, ['key', 'handler', 'description'], 'KeyboardShortcutService.register');
 
             const {
                 key,
@@ -74,7 +73,7 @@ export class KeyboardShortcutService {
             // Check for conflicts
             if (this.shortcuts.has(shortcutKey)) {
                 const existing = this.shortcuts.get(shortcutKey);
-                console.warn(`⚠️ Shortcut conflict: ${shortcutKey} already registered (${existing.description})`);
+                logger.warn(`Shortcut conflict: ${shortcutKey} already registered (${existing.description})`);
                 
                 // If new shortcut has higher priority, replace
                 if (priority <= existing.priority) {
@@ -112,7 +111,7 @@ export class KeyboardShortcutService {
                 category 
             });
 
-            console.log(`✅ Registered shortcut: ${this._formatShortcut(shortcutData)}`);
+            logger.debug(`Registered shortcut: ${this._formatShortcut(shortcutData)}`);
 
             // Return unregister function
             return () => this.unregister(shortcutKey);
@@ -147,7 +146,7 @@ export class KeyboardShortcutService {
         
         eventBus.emit('shortcut:unregistered', { shortcut: shortcutKey });
         
-        console.log(`✅ Unregistered shortcut: ${shortcutKey}`);
+        logger.debug(`Unregistered shortcut: ${shortcutKey}`);
     }
 
     /**
@@ -181,7 +180,7 @@ export class KeyboardShortcutService {
     enable() {
         this.enabled = true;
         eventBus.emit('shortcuts:enabled', {});
-        console.log('✅ Keyboard shortcuts enabled');
+        logger.info('Keyboard shortcuts enabled');
     }
 
     /**
@@ -190,7 +189,7 @@ export class KeyboardShortcutService {
     disable() {
         this.enabled = false;
         eventBus.emit('shortcuts:disabled', {});
-        console.log('✅ Keyboard shortcuts disabled');
+        logger.info('Keyboard shortcuts disabled');
     }
 
     /**
@@ -315,7 +314,7 @@ export class KeyboardShortcutService {
         document.removeEventListener('keydown', this._boundHandler);
         this.shortcuts.clear();
         this.categories.clear();
-        console.log('✅ Keyboard Shortcut Service destroyed');
+        logger.debug('Keyboard Shortcut Service destroyed');
     }
 }
 
