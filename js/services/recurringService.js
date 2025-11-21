@@ -6,6 +6,7 @@
 import eventBus from '../core/eventBus.js';
 import stateManager from '../core/stateManager.js';
 import errorHandler, { ErrorCode } from '../core/errorHandler.js';
+import { logger } from '../utils/logger.js';
 
 export class RecurringService {
     constructor() {
@@ -268,7 +269,7 @@ export class RecurringService {
                 break;
 
             default:
-                console.warn('Unknown recurring pattern type:', pattern.type);
+                logger.warn('Unknown recurring pattern type:', pattern.type);
         }
 
         // Set time if specified
