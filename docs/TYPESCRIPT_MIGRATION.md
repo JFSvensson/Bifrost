@@ -27,7 +27,7 @@ Bifrost has been successfully migrated from JavaScript to TypeScript! This docum
    - ✅ Main entry points: `main.ts`, `widgetLoader.ts`, `sw.ts`
 
 3. **Type Definitions**
-   - Enhanced `js/types.d.ts` with comprehensive interfaces:
+   - Enhanced `src/types.d.ts` with comprehensive interfaces:
      - `Config`, `Todo`, `RecurringConfig`, `ReminderConfig`
      - `WeatherData`, `CalendarEvent`, `SearchResult`, `StatsData`
      - `KeyboardShortcut`, `LogLevel`, `LogContext`
@@ -60,7 +60,7 @@ Bifrost has been successfully migrated from JavaScript to TypeScript! This docum
     "noEmitOnError": false,  // Continue emit even with errors
     "sourceMap": true,
     "outDir": "./dist",      // Compiled JS goes to dist/
-    "rootDir": "./js"        // Source TS in js/
+    "rootDir": "./src"       // Source TS in src/
   }
 }
 ```
@@ -250,7 +250,7 @@ import { logger } from './utils/logger.ts';  // ❌ Wrong
 Also verify `index.html` points to `dist/` folder:
 ```html
 <script type="module" src="dist/main.js"></script>  <!-- ✅ Correct -->
-<script type="module" src="js/main.js"></script>    <!-- ❌ Wrong -->
+<script type="module" src="src/main.js"></script>   <!-- ❌ Wrong -->
 ```
 
 **Q: Source maps not working in DevTools**
