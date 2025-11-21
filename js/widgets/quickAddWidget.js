@@ -1,4 +1,5 @@
 import { naturalLanguageParser } from '../utils/naturalLanguageParser.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Quick Add Widget - Natural language todo input
@@ -451,7 +452,7 @@ export class QuickAddWidget extends HTMLElement {
         // Validate
         const validation = naturalLanguageParser.validate(this.parsed);
         if (!validation.valid) {
-            console.error('Validation errors:', validation.errors);
+            logger.warn('Quick Add validation failed', { errors: validation.errors });
             this.showError(validation.errors.join(', '));
             return;
         }
@@ -501,7 +502,7 @@ export class QuickAddWidget extends HTMLElement {
             input.style.borderColor = '';
         }, 2000);
 
-        console.error('Quick Add Error:', message);
+        logger.error('Quick Add error', new Error(message));
     }
 
     // Public API
