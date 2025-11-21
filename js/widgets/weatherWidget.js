@@ -1,5 +1,6 @@
 import { WeatherService } from '../services/weatherService.js';
 import { weather as weatherConfig } from '../config/config.js';
+import { logger } from '../utils/logger.js';
 
 class WeatherWidget extends HTMLElement {
     constructor() {
@@ -28,7 +29,7 @@ class WeatherWidget extends HTMLElement {
             const data = await this.weatherService.getCurrentWeather();
             this.render('weather', data);
         } catch (error) {
-            console.error('Weather load failed:', error);
+            logger.error('Weather load failed', error);
             this.render('error', error.message);
         }
     }
