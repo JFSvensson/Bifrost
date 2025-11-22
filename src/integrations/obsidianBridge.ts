@@ -232,7 +232,7 @@ class ObsidianBridge {
     getAllTodos() {
         const allTodos = [];
 
-        for (const [fileName, data] of this.cachedTodos) {
+        for (const [_fileName, data] of this.cachedTodos) {
             // Inkludera ALLA todos (både färdiga och ofärdiga)
             allTodos.push(...data.todos);
         }

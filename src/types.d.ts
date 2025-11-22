@@ -8,8 +8,8 @@
 
 interface Window {
     addTodo: () => void;
-    toggleTodo: (id: string) => void;
-    removeTodo: (id: string) => void;
+    toggleTodo: (_id: string) => void;
+    removeTodo: (_id: string) => void;
 }
 
 // ============================================================================
@@ -186,7 +186,7 @@ interface StatsData {
 interface KeyboardShortcut {
     keys: string | string[];
     description: string;
-    action: (event: KeyboardEvent) => void;
+    action: (_event: KeyboardEvent) => void;
     category?: string;
     condition?: () => boolean;
     preventDefault?: boolean;
@@ -206,8 +206,8 @@ interface LogContext {
 // Utility Types
 // ============================================================================
 
-interface DebouncedFunction<T extends (...args: unknown[]) => unknown> {
-    (...args: Parameters<T>): void;
+interface DebouncedFunction<T extends (..._args: unknown[]) => unknown> {
+    (..._args: Parameters<T>): void;
     cancel: () => void;
 }
 

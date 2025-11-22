@@ -55,7 +55,7 @@ class BackupWidget extends HTMLElement {
      * @private
      */
     setupEventListeners() {
-        const modal = this.shadowRoot.querySelector('#modal');
+        const _modal = this.shadowRoot.querySelector('#modal');
         const overlay = this.shadowRoot.querySelector('#overlay');
         const closeBtn = this.shadowRoot.querySelector('#close-btn');
         const exportBtn = this.shadowRoot.querySelector('#export-btn');
@@ -156,7 +156,7 @@ class BackupWidget extends HTMLElement {
                     <span class="stat-value">${this.formatBytes(dataSize)}</span>
                 </div>
             `;
-        } catch (error) {
+        } catch (_error) {
             stats.innerHTML = '<p class="error">Kunde inte hämta statistik</p>';
         }
     }

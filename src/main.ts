@@ -14,14 +14,14 @@ import './config/uiConfig.js'; // Initialize UI with config values
 import performanceMonitor from './services/performanceMonitor.js';
 import eventBus from './core/eventBus.js';
 import { keyboardShortcutService } from './services/keyboardShortcutService.js';
-import { searchService } from './services/searchService.js';
+import { searchService as _searchService } from './services/searchService.js';
 import { logger } from './utils/logger.js';
 
 // ===== DEFERRED IMPORTS (loaded after critical path) =====
 let ObsidianTodoService;
 let StatsService;
 let DeadlineService;
-let pomodoroService;
+let _pomodoroService;
 let calendarSyncService;
 let recurringService;
 let reminderService;
@@ -111,7 +111,7 @@ async function initDeferredServices() {
     ]);
 
     DeadlineService = deadlineModule.DeadlineService;
-    pomodoroService = pomodoroModule.pomodoroService;
+    _pomodoroService = pomodoroModule.pomodoroService;
     calendarSyncService = calendarModule.calendarSyncService;
 
     // Initialize deadline service
@@ -737,7 +737,7 @@ function toggleTodo(todoId) {
         return;
     }
 
-    const wasCompleted = todo.completed;
+    const _wasCompleted = todo.completed;
     todo.completed = !todo.completed;
 
     if (todo.completed) {

@@ -661,7 +661,7 @@ class StateManager {
                 if (parsed._ttl && parsed._ttl < now) {
                     keysToRemove.push(key);
                 }
-            } catch (error) {
+            } catch (_error) {
                 // Ignore parse errors
             }
         });
@@ -700,7 +700,7 @@ class StateManager {
                     percentage: usage
                 });
             }
-        } catch (error) {
+        } catch (_error) {
             // Ignore quota check errors
         }
     }
@@ -719,7 +719,7 @@ class StateManager {
                 const estimate = await navigator.storage.estimate();
                 usage = estimate.usage;
                 quota = estimate.quota;
-            } catch (error) {
+            } catch (_error) {
                 // Ignore
             }
         }
@@ -750,7 +750,7 @@ class StateManager {
                     if (value !== null) {
                         data[key] = JSON.parse(value);
                     }
-                } catch (error) {
+                } catch (_error) {
                     data[key] = localStorage.getItem(key);
                 }
             }

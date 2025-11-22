@@ -47,7 +47,7 @@ export class RecurringWidget extends HTMLElement {
         this.updateStats();
     }
 
-    handleRecurringEvent(event, data) {
+    handleRecurringEvent(event, _data) {
         switch (event) {
             case 'patternCreated':
             case 'patternUpdated':

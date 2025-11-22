@@ -38,7 +38,7 @@ function parseNextDataFromHtml(html) {
     const jsonText = html.slice(jsonStart, end);
     try {
         return JSON.parse(jsonText);
-    } catch (e) {
+    } catch (_e) {
         return null;
     }
 }

@@ -20,7 +20,7 @@ import { logger } from './logger.js';
  * @class
  */
 // @ts-ignore - Sanitizer API is not in TypeScript DOM lib yet
-const NativeSanitizer = typeof window !== 'undefined' && window.Sanitizer;
+const _NativeSanitizer = typeof window !== 'undefined' && window.Sanitizer;
 
 /**
  * Sanitizer configuration
@@ -154,8 +154,8 @@ export function sanitizeHTML(html, options: any = {}) {
     }
 
     const {
-        allowLinks = true,
-        allowFormatting = true
+        allowLinks: _allowLinks = true,
+        allowFormatting: _allowFormatting = true
     } = options;
 
     // Use native Sanitizer API if available (Chrome 105+, Safari 16.4+)

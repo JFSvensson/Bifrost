@@ -5,14 +5,14 @@
 
 import eventBus from '../core/eventBus.js';
 import errorHandler, { ErrorCode } from '../core/errorHandler.js';
-import { config } from '../config/config.js';
+import { config as _config } from '../config/config.js';
 import { logger } from '../utils/logger.js';
 
 export class KeyboardShortcutService {
     shortcuts: Map<string, any>;
     enabled: boolean;
     categories: Map<string, any>;
-    _boundHandler: (e: KeyboardEvent) => void;
+    _boundHandler: (_e: KeyboardEvent) => void;
 
     constructor() {
         this.shortcuts = new Map();

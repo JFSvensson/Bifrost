@@ -53,7 +53,7 @@ class ShortcutsHelpWidget extends HTMLElement {
      * @private
      */
     setupEventListeners() {
-        const modal = this.shadowRoot.querySelector('#modal');
+        const _modal = this.shadowRoot.querySelector('#modal');
         const overlay = this.shadowRoot.querySelector('#overlay');
         const closeBtn = this.shadowRoot.querySelector('#close-btn');
 

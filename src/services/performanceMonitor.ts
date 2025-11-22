@@ -58,7 +58,7 @@ class PerformanceMonitor {
                     }
                 });
                 observer.observe({ entryTypes: ['longtask'] });
-            } catch (e) {
+            } catch (_e) {
                 // longtask not supported in all browsers
             }
         }
@@ -156,7 +156,7 @@ class PerformanceMonitor {
     getAllMetrics() {
         const result = {};
 
-        for (const [name, values] of this.metrics.entries()) {
+        for (const [name, _values] of this.metrics.entries()) {
             result[name] = this.getMetricStats(name);
         }
 

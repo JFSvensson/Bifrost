@@ -51,11 +51,11 @@ const swLog = (message, ...args) => {
     }
 };
 
-const swWarn = (message, ...args) => {
+const _swWarn = (message, ...args) => {
     console.warn('[SW]', message, ...args);
 };
 
-const swError = (message, ...args) => {
+const _swError = (message, ...args) => {
     console.error('[SW]', message, ...args);
 };
 

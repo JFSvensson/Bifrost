@@ -3,7 +3,7 @@
  * Spårar produktivitet, streaks, och annan användbar data
  */
 
-import { todos as todoConfig } from '../config/config.js';
+import { todos as _todoConfig } from '../config/config.js';
 import eventBus from '../core/eventBus.js';
 import stateManager from '../core/stateManager.js';
 import errorHandler, { ErrorCode } from '../core/errorHandler.js';

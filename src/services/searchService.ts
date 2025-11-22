@@ -352,12 +352,12 @@ export class SearchService {
         if (!text || !query) {return 0;}
 
         // Simple substring match score
-        let score = 0;
+        let _score = 0;
         let queryIndex = 0;
 
         for (let i = 0; i < text.length && queryIndex < query.length; i++) {
             if (text[i] === query[queryIndex]) {
-                score++;
+                _score++;
                 queryIndex++;
             }
         }
