@@ -9,6 +9,10 @@ import errorHandler, { ErrorCode } from '../core/errorHandler.js';
 import { logger } from '../utils/logger.js';
 
 export class PomodoroService {
+    duration: any;
+    state: any;
+    interval: number | null;
+
     constructor() {
         this.duration = {
             work: 25 * 60, // 25 minutes in seconds
@@ -66,7 +70,7 @@ export class PomodoroService {
      */
     loadState() {
         try {
-            const savedState = stateManager.get('pomodoroState');
+            const savedState = stateManager.get('pomodoroState', null);
 
             // Check if it's from today
             const today = new Date().toDateString();

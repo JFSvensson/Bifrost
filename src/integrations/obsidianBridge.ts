@@ -16,7 +16,13 @@ const { URL } = require('url');
  */
 
 class ObsidianBridge {
-    constructor(config) {
+    vaultPath: string;
+    todoFiles: string[];
+    port: number;
+    cachedTodos: Map<string, any>;
+    watchedFiles: Set<string>;
+
+    constructor(config: any) {
         this.vaultPath = config.vaultPath;
         this.todoFiles = config.todoFiles || ['TODO.md'];
         this.port = config.port || 8080;

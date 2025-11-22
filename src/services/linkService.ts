@@ -7,6 +7,9 @@ import errorHandler, { ErrorCode } from '../core/errorHandler.js';
  * Loads links from data/links.json and provides API for link operations
  */
 class LinkService {
+    links: any[];
+    storageKey: string;
+
     constructor() {
         this.links = [];
         this.storageKey = 'links';

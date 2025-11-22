@@ -35,6 +35,11 @@ import errorHandler, { ErrorCode } from '../core/errorHandler.js';
 import { logger } from '../utils/logger.js';
 
 class ReminderService {
+    reminders: any[];
+    checkInterval: number | null;
+    notificationPermission: string;
+    snoozePresets: Record<string, number | null>;
+
     /**
      * Initialiserar ReminderService
      * Laddar sparade påminnelser, kontrollerar notifikationsbehörighet och startar övervakning
@@ -83,7 +88,7 @@ class ReminderService {
      */
     loadReminders() {
         try {
-            const stored = stateManager.get('reminders');
+            const stored = stateManager.get('reminders', []);
             if (stored && stored.length > 0) {
                 // Konvertera string dates till Date objects
                 this.reminders = stored.map(r => ({
@@ -276,7 +281,7 @@ class ReminderService {
         }
 
         // Fallback: +1h
-        logger.warn('Okänd snooze preset:', preset, '- använder +1h');
+        logger.warn(`Okänd snooze preset: ${preset} - använder +1h`);
         return new Date(now.getTime() + this.snoozePresets['1h']);
     }
 
@@ -608,7 +613,7 @@ class ReminderService {
         this.checkInterval = setInterval(() => {
             this.checkReminders();
             this.cleanupOldReminders();
-        }, interval);
+        }, interval) as unknown as number;
 
         logger.debug(`ReminderService monitoring startad (intervall: ${interval}ms)`);
     }

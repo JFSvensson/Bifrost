@@ -60,7 +60,7 @@ const swError = (message, ...args) => {
 };
 
 // Install event - cache static assets
-self.addEventListener('install', event => {
+self.addEventListener('install', (event: any) => {
     swLog('Service Worker installing...');
     event.waitUntil(
         caches.open(CACHE_NAME)
@@ -68,12 +68,12 @@ self.addEventListener('install', event => {
                 swLog('Caching static assets');
                 return cache.addAll(STATIC_ASSETS);
             })
-            .then(() => self.skipWaiting())
+            .then(() => (self as any).skipWaiting())
     );
 });
 
 // Activate event - clean up old caches
-self.addEventListener('activate', event => {
+self.addEventListener('activate', (event: any) => {
     swLog('Service Worker activating...');
     event.waitUntil(
         caches.keys().then(cacheNames => {
@@ -85,12 +85,12 @@ self.addEventListener('activate', event => {
                     }
                 })
             );
-        }).then(() => self.clients.claim())
+        }).then(() => (self as any).clients.claim())
     );
 });
 
 // Fetch event - serve from cache, fallback to network
-self.addEventListener('fetch', event => {
+self.addEventListener('fetch', (event: any) => {
     const { request } = event;
     const url = new URL(request.url);
     

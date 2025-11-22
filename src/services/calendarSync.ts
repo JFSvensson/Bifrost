@@ -50,7 +50,7 @@ export class CalendarSyncService {
      */
     loadSyncMappings() {
         try {
-            const mappings = stateManager.get('calendarSyncMappings');
+            const mappings = stateManager.get('calendarSyncMappings', []);
             if (mappings && Object.keys(mappings).length > 0) {
                 this.syncedTodos = new Map(Object.entries(mappings));
                 logger.debug(`Loaded ${this.syncedTodos.size} sync mappings`);

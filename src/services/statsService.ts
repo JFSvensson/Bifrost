@@ -9,6 +9,9 @@ import stateManager from '../core/stateManager.js';
 import errorHandler, { ErrorCode } from '../core/errorHandler.js';
 
 export class StatsService {
+    stats: any;
+    history: any[];
+
     constructor() {
         this._init();
     }
@@ -50,8 +53,8 @@ export class StatsService {
      */
     loadStats() {
         try {
-            this.stats = stateManager.get('stats');
-            this.history = stateManager.get('statsHistory');
+            this.stats = stateManager.get('stats', null);
+            this.history = stateManager.get('statsHistory', []);
         } catch (error) {
             errorHandler.handle(error, {
                 code: ErrorCode.STORAGE_ERROR,

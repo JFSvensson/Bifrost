@@ -82,7 +82,7 @@ export class DeadlineService {
      */
     loadNotificationHistory() {
         try {
-            const data = stateManager.get('deadlineNotifications');
+            const data = stateManager.get('deadlineNotifications', null);
             this.notificationShown = new Set(data.shown || []);
             
             // Reset if it's a new day

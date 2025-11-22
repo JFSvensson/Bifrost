@@ -9,6 +9,11 @@ import { config } from '../config/config.js';
 import { logger } from '../utils/logger.js';
 
 export class KeyboardShortcutService {
+    shortcuts: Map<string, any>;
+    enabled: boolean;
+    categories: Map<string, any>;
+    _boundHandler: (e: KeyboardEvent) => void;
+
     constructor() {
         this.shortcuts = new Map();
         this.enabled = true;

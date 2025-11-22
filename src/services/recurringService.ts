@@ -9,6 +9,10 @@ import errorHandler, { ErrorCode } from '../core/errorHandler.js';
 import { logger } from '../utils/logger.js';
 
 export class RecurringService {
+    storageKey: string;
+    recurringPatterns: any[];
+    checkInterval: number | null;
+
     constructor() {
         this.storageKey = 'recurringPatterns';
         this._init();

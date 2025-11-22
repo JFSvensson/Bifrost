@@ -8,6 +8,10 @@ import stateManager from '../core/stateManager.js';
 import errorHandler, { ErrorCode } from '../core/errorHandler.js';
 
 export class SearchService {
+    indices: Map<string, any>;
+    sources: Map<string, any>;
+    lastIndexUpdate: Date | null;
+
     constructor() {
         this.indices = new Map();
         this.sources = new Map();
@@ -44,7 +48,7 @@ export class SearchService {
             name: 'Tasks',
             icon: '✓',
             fetch: () => {
-                const todos = stateManager.get('bifrost-todos') || [];
+                const todos = stateManager.get('bifrost-todos', []);
                 return todos.map(todo => ({
                     id: todo.id,
                     title: todo.text,
@@ -65,7 +69,7 @@ export class SearchService {
             name: 'Links',
             icon: '🔗',
             fetch: () => {
-                const links = stateManager.get('bifrost-links') || [];
+                const links = stateManager.get('bifrost-links', []);
                 return links.map(link => ({
                     id: link.url,
                     title: link.name,
@@ -83,7 +87,7 @@ export class SearchService {
             name: 'Recurring Tasks',
             icon: '🔄',
             fetch: () => {
-                const recurring = stateManager.get('recurringTasks') || [];
+                const recurring = stateManager.get('recurringTasks', []);
                 return recurring.map(task => ({
                     id: task.id,
                     title: task.text,
@@ -101,7 +105,7 @@ export class SearchService {
             name: 'Deadlines',
             icon: '⏰',
             fetch: () => {
-                const deadlines = stateManager.get('deadlines') || [];
+                const deadlines = stateManager.get('deadlines', []);
                 return deadlines.map(deadline => ({
                     id: deadline.id,
                     title: deadline.text,
@@ -119,7 +123,7 @@ export class SearchService {
             name: 'Reminders',
             icon: '🔔',
             fetch: () => {
-                const reminders = stateManager.get('reminders') || [];
+                const reminders = stateManager.get('reminders', []);
                 return reminders.filter(r => !r.triggered).map(reminder => ({
                     id: reminder.id,
                     title: reminder.text,

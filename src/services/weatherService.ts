@@ -6,6 +6,12 @@ import errorHandler, { ErrorCode } from '../core/errorHandler.js';
  * Free, no API key required
  */
 export class WeatherService {
+    latitude: number;
+    longitude: number;
+    locationName: string;
+    timeout: number;
+    updateInterval: number;
+
     /**
      * Create weather service
      */

@@ -8,6 +8,10 @@
 import { logger } from '../utils/logger.js';
 
 class PerformanceMonitor {
+    debugMode: boolean;
+    metrics: Map<string, number[]>;
+    maxHistorySize: number;
+
     constructor() {
         /** @type {boolean} Debug mode - show detailed metrics */
         this.debugMode = false;

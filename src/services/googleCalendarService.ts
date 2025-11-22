@@ -9,6 +9,15 @@ import errorHandler, { ErrorCode } from '../core/errorHandler.js';
 import { logger } from '../utils/logger.js';
 
 export class GoogleCalendarService {
+    CLIENT_ID: string | null;
+    API_KEY: string | null;
+    DISCOVERY_DOC: string;
+    SCOPES: string;
+    tokenClient: any;
+    gapiInited: boolean;
+    gisInited: boolean;
+    accessToken: string | null;
+
     constructor() {
         this.CLIENT_ID = null;
         this.API_KEY = null;
@@ -167,7 +176,7 @@ export class GoogleCalendarService {
      * @returns {boolean} True if restored successfully
      */
     checkStoredAuth() {
-        const stored = stateManager.get('googleCalendarToken');
+        const stored = stateManager.get('googleCalendarToken', null);
         if (stored) {
             try {
                 const { token, expiry } = stored;

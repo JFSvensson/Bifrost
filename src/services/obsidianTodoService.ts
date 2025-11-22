@@ -7,6 +7,13 @@ import { logger } from '../utils/logger.js';
  * Service for syncing todos with Obsidian via bridge
  */
 export class ObsidianTodoService {
+    bridgeUrl: string;
+    updateInterval: number;
+    showSource: boolean;
+    priorityColors: any;
+    timeout: number;
+    lastSync: Date | null;
+
     /**
      * Create Obsidian todo service
      */
@@ -194,7 +201,7 @@ export class ObsidianTodoService {
      */
     getLocalTodos() {
         try {
-            const todos = stateManager.get('todos') || [];
+            const todos = stateManager.get('todos', []);
             return todos.map(todo => ({
                 ...todo,
                 source: todo.source || 'bifrost',

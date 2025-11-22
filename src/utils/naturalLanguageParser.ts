@@ -4,6 +4,15 @@
  */
 
 export class NaturalLanguageParser {
+    datePatterns: any;
+    timePatterns: any;
+    priorityPatterns: any;
+    recurringPatterns: any;
+    reminderPatterns: any;
+    tagPattern: RegExp;
+    categoryPattern: RegExp;
+    sourcePattern: RegExp;
+
     constructor() {
         // Date patterns (Swedish)
         this.datePatterns = {
@@ -84,7 +93,10 @@ export class NaturalLanguageParser {
         // Tag pattern
         this.tagPattern = /#(\w+)/g;
 
-        // Source indicator
+        // Category pattern
+        this.categoryPattern = /@(\w+)/g;
+        
+        // Source pattern (alias for category)
         this.sourcePattern = /@(\w+)/g;
     }
 
