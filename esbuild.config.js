@@ -94,6 +94,7 @@ async function build() {
   const entryPoints = await getEntryPoints();
   
   // Shared build configuration
+  /** @type {esbuild.BuildOptions} */
   const baseConfig = {
     entryPoints: entryPoints,
     bundle: false,           // Keep module structure (not bundling into single file)
@@ -105,18 +106,20 @@ async function build() {
     loader: {
       '.ts': 'ts'
     },
-    logLevel: 'info',
+    logLevel: 'info'
   };
 
   // Development-specific configuration
+  /** @type {esbuild.BuildOptions} */
   const devConfig = {
     ...baseConfig,
     sourcemap: true,         // Enable source maps for debugging
     minify: false,           // Readable output
-    keepNames: true,         // Keep function/class names
+    keepNames: true          // Keep function/class names
   };
 
   // Production-specific configuration
+  /** @type {esbuild.BuildOptions} */
   const prodConfig = {
     ...baseConfig,
     sourcemap: false,        // No source maps (protect source code)
@@ -124,7 +127,7 @@ async function build() {
     keepNames: false,        // Shorten names for smaller size
     treeShaking: true,       // Remove unused code
     legalComments: 'none',   // Remove all comments
-    drop: ['console', 'debugger'], // Remove console.log and debugger statements
+    drop: ['console', 'debugger'] // Remove console.log and debugger statements
   };
   
   const config = isProduction ? prodConfig : devConfig;
