@@ -52,11 +52,24 @@ export default [
             }
         },
         rules: {
+            '@typescript-eslint/no-explicit-any': 'off',
+            '@typescript-eslint/no-unused-vars': ['warn', {
+                argsIgnorePattern: '^_',
+                varsIgnorePattern: '^_'
+            }],
+            '@typescript-eslint/no-unsafe-function-type': 'off',
+            '@typescript-eslint/no-require-imports': 'off',
+            '@typescript-eslint/ban-ts-comment': 'off',
+            '@typescript-eslint/no-this-alias': 'off',
             'no-unused-vars': ['warn', {
                 argsIgnorePattern: '^_',
                 varsIgnorePattern: '^_'
             }],
             'no-console': 'off',
+            'no-undef': 'off',
+            'no-prototype-builtins': 'off',
+            'no-empty': 'off',
+            'no-case-declarations': 'off',
             'prefer-const': 'warn',
             'no-var': 'error',
             'eqeqeq': ['warn', 'always'],
