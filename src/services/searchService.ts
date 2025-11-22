@@ -178,7 +178,7 @@ export class SearchService {
     registerSource(source) {
         errorHandler.validateRequired(source, ['id', 'name', 'fetch'], {
             context: 'SearchService.registerSource'
-        });
+        } as any);
 
         this.sources.set(source.id, source);
         console.log(`✅ Registered search source: ${source.name}`);

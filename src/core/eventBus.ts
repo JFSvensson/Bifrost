@@ -414,7 +414,7 @@ class EventBus {
      * @param {string} [eventName] - Optional event name to get count for specific event
      * @returns {Object.<string, number>|number} Antal listeners per event, eller antal för specifikt event
      */
-    getListenerCount(eventName) {
+    getListenerCount(eventName?: string): any {
         if (eventName) {
             // Return count for specific event
             const regularListeners = this.listeners[eventName] || [];
@@ -480,7 +480,7 @@ class EventBus {
     getStats() {
         return {
             totalEvents: this.eventHistory.length,
-            listenerCount: Object.values(this.getListenerCount()).reduce((sum, count) => sum + count, 0),
+            listenerCount: Object.values(this.getListenerCount()).reduce((sum: any, count: any) => sum + count, 0),
             namespaces: Array.from(this.registeredNamespaces),
             recentEvents: this.eventHistory.slice(-10)
         };

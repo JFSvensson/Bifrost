@@ -5,6 +5,7 @@
 
 import { googleCalendarService } from '../services/googleCalendarService.js';
 import { logger } from '../utils/logger.js';
+import eventBus from '../core/eventBus.js';
 
 class CalendarWidget extends HTMLElement {
     shadowRoot!: ShadowRoot;
@@ -26,8 +27,8 @@ class CalendarWidget extends HTMLElement {
         this.render();
         this.setupEventListeners();
 
-        // Subscribe to auth changes
-        this.unsubscribe = googleCalendarService.subscribe((data) => {
+        // Subscribe to auth changes via eventBus
+        this.unsubscribe = eventBus.on('googlecalendar:authChanged', (data: any) => {
             this.isAuthenticated = data.authenticated;
             this.render();
 

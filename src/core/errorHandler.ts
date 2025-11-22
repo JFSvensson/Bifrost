@@ -366,7 +366,7 @@ class ErrorHandler {
         this.toastFunction(userMessage, {
             type: errorInfo.level === ErrorLevel.CRITICAL ? 'error' : 'warning',
             duration: errorInfo.level === ErrorLevel.CRITICAL ? 10000 : 5000
-        });
+        } as any);
     }
 
     /**

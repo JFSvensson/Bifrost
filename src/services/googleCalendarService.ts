@@ -106,7 +106,7 @@ export class GoogleCalendarService {
      * Load a script dynamically
      */
     loadScript(src) {
-        return new Promise((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
             if (document.querySelector(`script[src="${src}"]`)) {
                 resolve();
                 return;
@@ -116,8 +116,8 @@ export class GoogleCalendarService {
             script.src = src;
             script.async = true;
             script.defer = true;
-            script.onload = resolve;
-            script.onerror = reject;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error(`Failed to load ${src}`));
             document.head.appendChild(script);
         });
     }
@@ -127,7 +127,7 @@ export class GoogleCalendarService {
      * @returns {Promise<void>}
      */
     async initializeGapi() {
-        return new Promise((resolve) => {
+        return new Promise<void>((resolve) => {
             // @ts-ignore - gapi is loaded dynamically
             window.gapi.load('client', async () => {
                 // @ts-ignore - gapi is loaded dynamically
@@ -146,8 +146,8 @@ export class GoogleCalendarService {
      * @returns {Promise<void>}
      */
     async initializeGis() {
-        return new Promise((resolve) => {
-            // @ts-ignore - google is loaded dynamically
+        return new Promise<void>((resolve) => {
+            // @ts-ignore - google.accounts is loaded dynamically
             this.tokenClient = window.google.accounts.oauth2.initTokenClient({
                 client_id: this.CLIENT_ID,
                 scope: this.SCOPES,
@@ -436,7 +436,7 @@ export class GoogleCalendarService {
         }
 
         const dueDate = new Date(todo.dueDate);
-        const event = {
+        const event: any = {
             summary: todo.text,
             description: `Created from Bifrost todo\nPriority: ${todo.priority || 'normal'}`,
             start: {

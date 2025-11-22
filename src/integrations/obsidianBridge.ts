@@ -1,7 +1,13 @@
+// @ts-ignore - Node.js server file
 const fs: any = require('fs');
+// @ts-ignore
 const path: any = require('path');
+// @ts-ignore
 const http: any = require('http');
-const { URL }: any = require('url');
+// @ts-ignore
+const urlModule: any = require('url');
+// @ts-ignore
+const { URL } = urlModule;
 
 /**
  * NOTE: This file runs in Node.js environment, not the browser.

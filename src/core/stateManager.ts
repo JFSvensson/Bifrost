@@ -291,7 +291,7 @@ class StateManager {
             }
 
             // Bygg storage object
-            const storageObject = {
+            const storageObject: any = {
                 _data: data,
                 _version: this.versions[key] || 1,
                 _updated: Date.now()
@@ -393,7 +393,7 @@ class StateManager {
      * @returns {void}
      */
     flush() {
-        this._debouncedFlush.cancel();
+        (this._debouncedFlush as any).cancel();
         this._flushPendingWrites();
     }
     /**
@@ -767,7 +767,7 @@ class StateManager {
      * @param {boolean} [options.merge=false] - Merge med befintlig data
      * @returns {void}
      */
-    importAll(data, options = {}) {
+    importAll(data, options: any = {}) {
         const { merge = false } = options;
 
         if (!merge) {

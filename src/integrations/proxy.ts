@@ -1,6 +1,11 @@
+// @ts-ignore - Node.js server file
 const http: any = require('http');
+// @ts-ignore
 const https: any = require('https');
-const { URL }: any = require('url');
+// @ts-ignore
+const urlModule: any = require('url');
+// @ts-ignore
+const { URL } = urlModule;
 
 /**
  * NOTE: This file runs in Node.js environment, not the browser.

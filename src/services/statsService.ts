@@ -325,14 +325,17 @@ export class StatsService {
      */
     getTopTags(limit = 5) {
         return Object.entries(this.stats.tagStats)
-            .sort((a, b) => b[1].count - a[1].count)
+            .sort((a, b) => (b[1] as any).count - (a[1] as any).count)
             .slice(0, limit)
-            .map(([tag, stats]) => ({
-                tag,
-                count: stats.count,
-                completed: stats.completed,
-                completionRate: stats.count > 0 ? (stats.completed / stats.count * 100).toFixed(1) : 0
-            }));
+            .map(([tag, stats]) => {
+                const s = stats as any;
+                return {
+                    tag,
+                    count: s.count,
+                    completed: s.completed,
+                    completionRate: s.count > 0 ? (s.completed / s.count * 100).toFixed(1) : 0
+                };
+            });
     }
 
     /**

@@ -203,7 +203,7 @@ class PerformanceMonitor {
         }
 
         // Check for First Contentful Paint
-        const navEntry = /** @type {PerformanceNavigationTiming} */ (navigation);
+        const navEntry = navigation as any;
         if (navEntry && navEntry.loadEventEnd) {
             this.recordMetric('fcp', navEntry.loadEventEnd);
         }
@@ -219,13 +219,14 @@ class PerformanceMonitor {
 
         for (const [name, stats] of Object.entries(allMetrics)) {
             if (stats) {
+                const s = stats as any;
                 report += `${name}:\n`;
-                report += `  Average: ${stats.avg.toFixed(2)}ms\n`;
-                report += `  Min: ${stats.min.toFixed(2)}ms\n`;
-                report += `  Max: ${stats.max.toFixed(2)}ms\n`;
-                report += `  Median: ${stats.median.toFixed(2)}ms\n`;
-                report += `  P95: ${stats.p95.toFixed(2)}ms\n`;
-                report += `  Count: ${stats.count}\n\n`;
+                report += `  Average: ${s.avg.toFixed(2)}ms\n`;
+                report += `  Min: ${s.min.toFixed(2)}ms\n`;
+                report += `  Max: ${s.max.toFixed(2)}ms\n`;
+                report += `  Median: ${s.median.toFixed(2)}ms\n`;
+                report += `  P95: ${s.p95.toFixed(2)}ms\n`;
+                report += `  Count: ${s.count}\n\n`;
             }
         }
 
