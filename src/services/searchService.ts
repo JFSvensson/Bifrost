@@ -16,7 +16,7 @@ export class SearchService {
         this.indices = new Map();
         this.sources = new Map();
         this.lastIndexUpdate = null;
-        
+
         this._init();
     }
 
@@ -27,13 +27,13 @@ export class SearchService {
     _init() {
         // Register search sources
         this._registerSources();
-        
+
         // Build initial index
         this.rebuildIndex();
-        
+
         // Listen for data changes to update index
         this._setupEventListeners();
-        
+
         console.log('✅ Search Service initialized');
     }
 
@@ -189,7 +189,7 @@ export class SearchService {
      */
     rebuildIndex() {
         this.indices.clear();
-        
+
         for (const [sourceId, source] of this.sources) {
             try {
                 const items = source.fetch();
@@ -205,7 +205,7 @@ export class SearchService {
 
         this.lastIndexUpdate = new Date();
         eventBus.emit('search:indexUpdated', { timestamp: this.lastIndexUpdate });
-        
+
         console.log(`✅ Search index rebuilt (${this._getTotalItems()} items)`);
     }
 
@@ -215,16 +215,16 @@ export class SearchService {
      */
     updateIndex(sourceId) {
         const source = this.sources.get(sourceId);
-        if (!source) return;
+        if (!source) {return;}
 
         try {
             const items = source.fetch();
             this.indices.set(sourceId, items);
             this.lastIndexUpdate = new Date();
-            
-            eventBus.emit('search:indexUpdated', { 
+
+            eventBus.emit('search:indexUpdated', {
                 source: sourceId,
-                timestamp: this.lastIndexUpdate 
+                timestamp: this.lastIndexUpdate
             });
         } catch (error) {
             errorHandler.handle(error, {
@@ -267,7 +267,7 @@ export class SearchService {
 
             for (const item of items) {
                 const score = this._calculateScore(item, normalizedQuery, fuzzy, threshold);
-                
+
                 if (score > 0) {
                     results.push({
                         ...item,
@@ -283,11 +283,11 @@ export class SearchService {
 
         // Sort by score (descending) and limit results
         results.sort((a, b) => b.score - a.score);
-        
+
         const limitedResults = results.slice(0, limit);
 
-        eventBus.emit('search:performed', { 
-            query, 
+        eventBus.emit('search:performed', {
+            query,
             resultCount: limitedResults.length,
             totalMatches: results.length
         });
@@ -310,22 +310,22 @@ export class SearchService {
         const tags = (item.tags || []).map(t => t.toLowerCase());
 
         // Exact match in title - highest score
-        if (title === query) return 1000;
+        if (title === query) {return 1000;}
 
         // Starts with query in title
-        if (title.startsWith(query)) return 900;
+        if (title.startsWith(query)) {return 900;}
 
         // Contains query in title
-        if (title.includes(query)) return 800;
+        if (title.includes(query)) {return 800;}
 
         // Exact match in tags
         for (const tag of tags) {
-            if (tag === query) return 700;
-            if (tag.includes(query)) return 600;
+            if (tag === query) {return 700;}
+            if (tag.includes(query)) {return 600;}
         }
 
         // Contains query in content
-        if (content.includes(query)) return 500;
+        if (content.includes(query)) {return 500;}
 
         // Fuzzy matching
         if (fuzzy) {
@@ -349,12 +349,12 @@ export class SearchService {
      * @returns {number} Score between 0-1
      */
     _fuzzyMatch(text, query) {
-        if (!text || !query) return 0;
+        if (!text || !query) {return 0;}
 
         // Simple substring match score
         let score = 0;
         let queryIndex = 0;
-        
+
         for (let i = 0; i < text.length && queryIndex < query.length; i++) {
             if (text[i] === query[queryIndex]) {
                 score++;
@@ -376,7 +376,7 @@ export class SearchService {
     _getHighlights(item, query) {
         const highlights = [];
         const title = (item.title || '').toLowerCase();
-        
+
         let index = title.indexOf(query);
         while (index !== -1) {
             highlights.push({

@@ -111,13 +111,13 @@ class StateManager {
                 }
             }
         } catch (e) {}
-        
+
         try {
             // Method 2: Standard iteration
             if (typeof localStorage.length === 'number') {
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
-                    if (key) this._keys.add(key);
+                    if (key) {this._keys.add(key);}
                 }
             }
         } catch (e) {}
@@ -165,7 +165,7 @@ class StateManager {
         eventBus.on('app:beforeUnload', () => {
             // Flush pending writes before unload
             this.flush();
-            
+
             if (this.autoBackupEnabled) {
                 this._createBackup();
             }
@@ -622,7 +622,7 @@ class StateManager {
     _cleanupOldBackups() {
         // Re-sync keys to catch any backups created outside normal flow (e.g., in tests)
         this._syncKeys();
-        
+
         const cutoffTime = Date.now() - (this.maxBackupAge * 24 * 60 * 60 * 1000);
 
         const keysToRemove = this._getAllKeys()
@@ -631,7 +631,7 @@ class StateManager {
                 const timestamp = parseInt(key.split('_')[1], 10);
                 return timestamp < cutoffTime;
             });
-        
+
         keysToRemove.forEach(key => {
             localStorage.removeItem(key);
             this._keys.delete(key);
@@ -647,7 +647,7 @@ class StateManager {
     _cleanupOldData() {
         // Re-sync keys to ensure we find all stored data
         this._syncKeys();
-        
+
         const now = Date.now();
         const keys = this._getAllKeys();
         const keysToRemove = [];
@@ -665,7 +665,7 @@ class StateManager {
                 // Ignore parse errors
             }
         });
-        
+
         keysToRemove.forEach(key => {
             localStorage.removeItem(key);
             this._keys.delete(key);
@@ -800,12 +800,12 @@ class StateManager {
     getStorageSize() {
         let size = 0;
         const keys = this._getAllKeys();
-        
+
         keys.forEach(key => {
             const value = localStorage.getItem(key);
             size += (value ? value.length : 0) + key.length;
         });
-        
+
         return size;
     }
 

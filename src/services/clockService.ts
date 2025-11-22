@@ -4,9 +4,9 @@ import errorHandler, { ErrorCode } from '../core/errorHandler.js';
 
 /**
  * Clock service for time and timezone management
- * 
+ *
  * Provides time formatting, timezone conversion, and working hours detection.
- * 
+ *
  * @example
  * const clockService = new ClockService();
  * const time = clockService.getCurrentTime('Europe/Stockholm');

@@ -31,7 +31,7 @@ class PerformanceMonitor {
      */
     _init() {
         // Enable debug mode in development
-        if (window.location.hostname === 'localhost' || 
+        if (window.location.hostname === 'localhost' ||
             window.location.hostname === '127.0.0.1' ||
             window.location.search.includes('debug=true')) {
             this.debugMode = true;
@@ -81,26 +81,26 @@ class PerformanceMonitor {
     end(label) {
         const endMark = `${label}-end`;
         const startMark = `${label}-start`;
-        
+
         performance.mark(endMark);
-        
+
         try {
             performance.measure(label, startMark, endMark);
             const measure = performance.getEntriesByName(label).pop();
-            
+
             if (measure) {
                 this.recordMetric(label, measure.duration);
-                
+
                 if (this.debugMode) {
                     logger.debug(`${label}: ${measure.duration.toFixed(2)}ms`);
                 }
-                
+
                 return measure.duration;
             }
         } catch (e) {
             logger.error(`Performance measure error for ${label}:`, e);
         }
-        
+
         return 0;
     }
 
@@ -114,10 +114,10 @@ class PerformanceMonitor {
         if (!this.metrics.has(name)) {
             this.metrics.set(name, []);
         }
-        
+
         const values = this.metrics.get(name);
         values.push(value);
-        
+
         // Keep history size limited
         if (values.length > this.maxHistorySize) {
             values.shift();
@@ -137,7 +137,7 @@ class PerformanceMonitor {
 
         const sorted = [...values].sort((a, b) => a - b);
         const sum = values.reduce((a, b) => a + b, 0);
-        
+
         return {
             avg: sum / values.length,
             min: sorted[0],
@@ -155,11 +155,11 @@ class PerformanceMonitor {
      */
     getAllMetrics() {
         const result = {};
-        
+
         for (const [name, values] of this.metrics.entries()) {
             result[name] = this.getMetricStats(name);
         }
-        
+
         return result;
     }
 
@@ -171,7 +171,7 @@ class PerformanceMonitor {
     _reportPageLoad() {
         const timing = performance.timing;
         const navigation = performance.getEntriesByType('navigation')[0];
-        
+
         const metrics = {
             'dns-lookup': timing.domainLookupEnd - timing.domainLookupStart,
             'tcp-connect': timing.connectEnd - timing.connectStart,

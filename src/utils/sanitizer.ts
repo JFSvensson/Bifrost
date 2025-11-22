@@ -1,9 +1,9 @@
 /**
  * HTML Sanitizer Utility
- * 
+ *
  * Provides secure HTML sanitization using the native Sanitizer API (when available)
  * with a robust fallback implementation.
- * 
+ *
  * @see https://developer.mozilla.org/en-US/docs/Web/API/HTML_Sanitizer_API
  */
 
@@ -47,7 +47,7 @@ function hasNativeSanitizer() {
 /**
  * Fallback sanitizer using DOM manipulation
  * Removes potentially dangerous HTML while preserving safe content
- * 
+ *
  * @param {string} html - HTML string to sanitize
  * @returns {string} Sanitized HTML
  */
@@ -60,13 +60,13 @@ function fallbackSanitize(html) {
     const temp = document.createElement('div');
     temp.textContent = html; // First, escape all HTML
     const text = temp.innerHTML;
-    
+
     // Parse as DOM
     temp.innerHTML = text;
-    
+
     // Recursively clean the DOM tree
     cleanNode(temp);
-    
+
     return temp.innerHTML;
 }
 
@@ -85,7 +85,7 @@ function cleanNode(node) {
     if (node.nodeType === Node.ELEMENT_NODE) {
         const element = /** @type {Element} */ (node);
         const tagName = element.nodeName.toLowerCase();
-        
+
         if (!ALLOWED_TAGS.has(tagName)) {
             // Replace disallowed tag with its text content
             const textNode = document.createTextNode(element.textContent || '');
@@ -97,7 +97,7 @@ function cleanNode(node) {
         const attributes = Array.from(element.attributes || []);
         attributes.forEach((attr: any) => {
             const attrName = attr.name.toLowerCase();
-            
+
             // Remove event handlers
             if (attrName.startsWith('on')) {
                 element.removeAttribute(attr.name);
@@ -108,7 +108,7 @@ function cleanNode(node) {
             const isAllowed = ALLOWED_ATTRIBUTES.has(attrName) ||
                             attrName.startsWith('data-') ||
                             attrName.startsWith('aria-');
-            
+
             if (!isAllowed) {
                 element.removeAttribute(attr.name);
             }
@@ -116,7 +116,7 @@ function cleanNode(node) {
             // Sanitize href to prevent javascript: protocol
             if (attrName === 'href') {
                 const href = attr.value.trim().toLowerCase();
-                if (href.startsWith('javascript:') || 
+                if (href.startsWith('javascript:') ||
                     href.startsWith('data:') ||
                     href.startsWith('vbscript:')) {
                     element.removeAttribute('href');
@@ -133,17 +133,17 @@ function cleanNode(node) {
 /**
  * Sanitize HTML string
  * Uses native Sanitizer API if available, otherwise uses secure fallback
- * 
+ *
  * @param {string} html - HTML string to sanitize
  * @param {Object} [options] - Sanitization options
  * @param {boolean} [options.allowLinks=true] - Allow <a> tags
  * @param {boolean} [options.allowFormatting=true] - Allow formatting tags (strong, em, etc)
  * @returns {string} Sanitized HTML string
- * 
+ *
  * @example
  * const safe = sanitizeHTML('<script>alert("XSS")</script><p>Hello</p>');
  * // Returns: '<p>Hello</p>'
- * 
+ *
  * @example
  * const safe = sanitizeHTML('<a href="javascript:alert(1)">Click</a>', { allowLinks: false });
  * // Returns: 'Click'
@@ -170,7 +170,7 @@ export function sanitizeHTML(html, options: any = {}) {
                     'id': ['*']
                 }
             });
-            
+
             const fragment = sanitizer.sanitizeFor('div', html);
             return fragment?.innerHTML || '';
         } catch (error) {
@@ -186,10 +186,10 @@ export function sanitizeHTML(html, options: any = {}) {
 /**
  * Sanitize text for safe insertion into HTML
  * Escapes HTML entities to prevent XSS
- * 
+ *
  * @param {string} text - Text to escape
  * @returns {string} Escaped text
- * 
+ *
  * @example
  * const safe = escapeHTML('<script>alert("XSS")</script>');
  * // Returns: '&lt;script&gt;alert(&quot;XSS&quot;)&lt;/script&gt;'
@@ -208,7 +208,7 @@ export function escapeHTML(text) {
  * Sanitize URL to prevent javascript: and data: protocols
  * @param {string} url - URL to sanitize
  * @returns {string} Safe URL or empty string
- * 
+ *
  * @example
  * sanitizeURL('javascript:alert(1)') // Returns: ''
  * sanitizeURL('https://example.com') // Returns: 'https://example.com'
@@ -219,7 +219,7 @@ export function sanitizeURL(url) {
     }
 
     const trimmed = url.trim().toLowerCase();
-    
+
     // Block dangerous protocols
     if (trimmed.startsWith('javascript:') ||
         trimmed.startsWith('data:') ||

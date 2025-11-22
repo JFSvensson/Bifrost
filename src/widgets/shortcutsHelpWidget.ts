@@ -99,12 +99,12 @@ class ShortcutsHelpWidget extends HTMLElement {
         this._isOpen = true;
         const modal = this.shadowRoot.querySelector('#modal');
         const overlay = this.shadowRoot.querySelector('#overlay');
-        
+
         overlay.classList.add('visible');
         modal.classList.add('visible');
-        
+
         this.renderShortcuts();
-        
+
         eventBus.emit('shortcuts-help:opened', {});
     }
 
@@ -115,10 +115,10 @@ class ShortcutsHelpWidget extends HTMLElement {
         this._isOpen = false;
         const modal = this.shadowRoot.querySelector('#modal');
         const overlay = this.shadowRoot.querySelector('#overlay');
-        
+
         overlay.classList.remove('visible');
         modal.classList.remove('visible');
-        
+
         eventBus.emit('shortcuts-help:closed', {});
     }
 
@@ -129,17 +129,17 @@ class ShortcutsHelpWidget extends HTMLElement {
     renderShortcuts() {
         const content = this.shadowRoot.querySelector('#shortcuts-content');
         const categories = keyboardShortcutService.getCategories();
-        
+
         if (categories.length === 0) {
             content.innerHTML = '<p class="no-shortcuts">Inga genvägar registrerade</p>';
             return;
         }
 
         const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-        
+
         const html = categories.map(category => {
             const shortcuts = keyboardShortcutService.getByCategory(category);
-            
+
             return `
                 <div class="category">
                     <h3 class="category-title">${category}</h3>
@@ -169,19 +169,19 @@ class ShortcutsHelpWidget extends HTMLElement {
      */
     formatShortcut(shortcut, isMac) {
         const parts = [];
-        
-        if (shortcut.ctrl) parts.push(`<kbd>${isMac ? '⌘' : 'Ctrl'}</kbd>`);
-        if (shortcut.alt) parts.push(`<kbd>${isMac ? '⌥' : 'Alt'}</kbd>`);
-        if (shortcut.shift) parts.push(`<kbd>${isMac ? '⇧' : 'Shift'}</kbd>`);
-        
+
+        if (shortcut.ctrl) {parts.push(`<kbd>${isMac ? '⌘' : 'Ctrl'}</kbd>`);}
+        if (shortcut.alt) {parts.push(`<kbd>${isMac ? '⌥' : 'Alt'}</kbd>`);}
+        if (shortcut.shift) {parts.push(`<kbd>${isMac ? '⇧' : 'Shift'}</kbd>`);}
+
         // Format key name
         let keyName = shortcut.key;
-        if (keyName === ' ') keyName = 'Space';
-        else if (keyName === 'Escape') keyName = 'Esc';
-        else if (keyName.length === 1) keyName = keyName.toUpperCase();
-        
+        if (keyName === ' ') {keyName = 'Space';}
+        else if (keyName === 'Escape') {keyName = 'Esc';}
+        else if (keyName.length === 1) {keyName = keyName.toUpperCase();}
+
         parts.push(`<kbd>${keyName}</kbd>`);
-        
+
         return parts.join(' + ');
     }
 
@@ -190,7 +190,7 @@ class ShortcutsHelpWidget extends HTMLElement {
      * @private
      */
     cleanup() {
-        if (this.unregister) this.unregister();
+        if (this.unregister) {this.unregister();}
     }
 
     /**

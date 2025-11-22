@@ -41,7 +41,7 @@ const SECURITY_HEADERS = {
 
 // Production-safe logging helper
 const isDevelopment = () => {
-    return self.location.hostname === 'localhost' || 
+    return self.location.hostname === 'localhost' ||
            self.location.hostname === '127.0.0.1';
 };
 
@@ -93,32 +93,32 @@ self.addEventListener('activate', (event: any) => {
 self.addEventListener('fetch', (event: any) => {
     const { request } = event;
     const url = new URL(request.url);
-    
+
     // Security: Only handle same-origin requests and allowed external APIs
     const allowedHosts = ['smhi.se', 'accounts.google.com', 'www.googleapis.com', 'oauth2.googleapis.com'];
     const isAllowedExternal = allowedHosts.some(host => url.hostname.includes(host));
     const isSameOrigin = url.origin === self.location.origin;
     const isLocalhost = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
-    
+
     if (!isSameOrigin && !isAllowedExternal && !isLocalhost) {
         // Block requests to unauthorized origins
         return;
     }
-    
+
     // Add security headers to responses
     const addSecurityHeaders = (response) => {
         const newHeaders = new Headers(response.headers);
         Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
             newHeaders.set(key, value);
         });
-        
+
         return new Response(response.body, {
             status: response.status,
             statusText: response.statusText,
             headers: newHeaders
         });
     };
-    
+
     // Handle weather API with cache fallback
     if (request.url.includes('smhi.se')) {
         event.respondWith(
@@ -136,14 +136,14 @@ self.addEventListener('fetch', (event: any) => {
                 .catch(() => {
                     // Fallback to cache if network fails
                     swLog('Weather API failed, serving from cache');
-                    return caches.match(request).then(response => 
+                    return caches.match(request).then(response =>
                         response ? addSecurityHeaders(response) : response
                     );
                 })
         );
         return;
     }
-    
+
     // Handle school menu API with cache fallback
     if (request.url.includes('/api/school-menu')) {
         event.respondWith(
@@ -166,7 +166,7 @@ self.addEventListener('fetch', (event: any) => {
         );
         return;
     }
-    
+
     // Handle static assets - cache first strategy
     if (request.method === 'GET') {
         event.respondWith(

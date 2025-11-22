@@ -172,10 +172,10 @@ export class StatsService {
         const today = new Date().toDateString();
 
         this.stats.totalCompleted++;
-        
+
         // Update streak BEFORE setting lastCompletionDate
         this.updateStreak(today);
-        
+
         this.stats.lastCompletionDate = today;
         this.stats.lastActivityDate = today;
 

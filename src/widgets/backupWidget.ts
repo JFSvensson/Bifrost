@@ -111,12 +111,12 @@ class BackupWidget extends HTMLElement {
         this.isOpen = true;
         const modal = this.shadowRoot.querySelector('#modal');
         const overlay = this.shadowRoot.querySelector('#overlay');
-        
+
         overlay.classList.add('visible');
         modal.classList.add('visible');
-        
+
         this.updateStats();
-        
+
         eventBus.emit('backup:opened', {});
     }
 
@@ -127,10 +127,10 @@ class BackupWidget extends HTMLElement {
         this.isOpen = false;
         const modal = this.shadowRoot.querySelector('#modal');
         const overlay = this.shadowRoot.querySelector('#overlay');
-        
+
         overlay.classList.remove('visible');
         modal.classList.remove('visible');
-        
+
         eventBus.emit('backup:closed', {});
     }
 
@@ -140,12 +140,12 @@ class BackupWidget extends HTMLElement {
      */
     updateStats() {
         const stats = this.shadowRoot.querySelector('#stats');
-        
+
         try {
             const data = stateManager.exportAll();
             const dataSize = new Blob([JSON.stringify(data)]).size;
             const items = Object.keys(data).length;
-            
+
             stats.innerHTML = `
                 <div class="stat-item">
                     <span class="stat-label">Lagrade nyckel-värde par:</span>
@@ -170,20 +170,20 @@ class BackupWidget extends HTMLElement {
             const data = stateManager.exportAll();
             const json = JSON.stringify(data, null, 2);
             const blob = new Blob([json], { type: 'application/json' });
-            
+
             // Create download link
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = `bifrost-backup-${this.getTimestamp()}.json`;
             a.click();
-            
+
             // Cleanup
             URL.revokeObjectURL(url);
-            
+
             this.showMessage('✅ Data exporterad!', 'success');
             eventBus.emit('backup:exported', { size: blob.size });
-            
+
         } catch (error) {
             errorHandler.handle(error, {
                 code: ErrorCode.UNKNOWN_ERROR,
@@ -208,22 +208,22 @@ class BackupWidget extends HTMLElement {
         try {
             const text = await file.text();
             const data = JSON.parse(text);
-            
+
             // Confirm before importing
             if (!confirm('Vill du verkligen importera denna backup? Detta kommer att ersätta all nuvarande data.')) {
                 return;
             }
-            
+
             stateManager.importAll(data);
-            
+
             this.showMessage('✅ Data importerad! Laddar om...', 'success');
             eventBus.emit('backup:imported', { keys: Object.keys(data).length });
-            
+
             // Reload page after short delay
             setTimeout(() => {
                 window.location.reload();
             }, 1500);
-            
+
         } catch (error) {
             errorHandler.handle(error, {
                 code: ErrorCode.VALIDATION_ERROR,
@@ -245,7 +245,7 @@ class BackupWidget extends HTMLElement {
         message.textContent = text;
         message.className = `message ${type}`;
         message.style.display = 'block';
-        
+
         setTimeout(() => {
             message.style.display = 'none';
         }, 3000);
@@ -268,7 +268,7 @@ class BackupWidget extends HTMLElement {
      * @returns {string}
      */
     formatBytes(bytes) {
-        if (bytes === 0) return '0 B';
+        if (bytes === 0) {return '0 B';}
         const k = 1024;
         const sizes = ['B', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -280,7 +280,7 @@ class BackupWidget extends HTMLElement {
      * @private
      */
     cleanup() {
-        if (this.unregister) this.unregister();
+        if (this.unregister) {this.unregister();}
     }
 
     /**

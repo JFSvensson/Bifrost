@@ -19,7 +19,7 @@ export class KeyboardShortcutService {
         this.enabled = true;
         this.categories = new Map();
         this._boundHandler = this._handleKeydown.bind(this);
-        
+
         this._init();
     }
 
@@ -30,7 +30,7 @@ export class KeyboardShortcutService {
     _init() {
         // Listen for keyboard events at document level
         document.addEventListener('keydown', this._boundHandler);
-        
+
         // Listen for config changes
         eventBus.on('config:changed', ({ key, value }) => {
             if (key === 'shortcuts.enabled') {
@@ -79,7 +79,7 @@ export class KeyboardShortcutService {
             if (this.shortcuts.has(shortcutKey)) {
                 const existing = this.shortcuts.get(shortcutKey);
                 logger.warn(`Shortcut conflict: ${shortcutKey} already registered (${existing.description})`);
-                
+
                 // If new shortcut has higher priority, replace
                 if (priority <= existing.priority) {
                     throw new Error(`Shortcut ${shortcutKey} already registered with higher or equal priority`);
@@ -110,10 +110,10 @@ export class KeyboardShortcutService {
             this.categories.get(category).push(shortcutData);
 
             // Emit registration event
-            eventBus.emit('shortcut:registered', { 
-                shortcut: shortcutKey, 
+            eventBus.emit('shortcut:registered', {
+                shortcut: shortcutKey,
                 description,
-                category 
+                category
             });
 
             logger.debug(`Registered shortcut: ${this._formatShortcut(shortcutData)}`);
@@ -136,7 +136,7 @@ export class KeyboardShortcutService {
      */
     unregister(shortcutKey) {
         const shortcut = this.shortcuts.get(shortcutKey);
-        if (!shortcut) return;
+        if (!shortcut) {return;}
 
         // Remove from category
         const categoryShortcuts = this.categories.get(shortcut.category);
@@ -148,9 +148,9 @@ export class KeyboardShortcutService {
         }
 
         this.shortcuts.delete(shortcutKey);
-        
+
         eventBus.emit('shortcut:unregistered', { shortcut: shortcutKey });
-        
+
         logger.debug(`Unregistered shortcut: ${shortcutKey}`);
     }
 
@@ -211,12 +211,12 @@ export class KeyboardShortcutService {
      * @param {KeyboardEvent} event
      */
     _handleKeydown(event) {
-        if (!this.enabled) return;
+        if (!this.enabled) {return;}
 
         // Check if user is typing in an input field
         if (this._isTyping(event.target)) {
             // Allow Escape key even in inputs
-            if (event.key !== 'Escape') return;
+            if (event.key !== 'Escape') {return;}
         }
 
         const key = event.key;
@@ -227,10 +227,10 @@ export class KeyboardShortcutService {
         const shortcutKey = this._generateKey({ key, ctrl, shift, alt });
 
         const shortcut = this.shortcuts.get(shortcutKey);
-        
+
         if (shortcut) {
             // Check condition
-            if (!shortcut.condition()) return;
+            if (!shortcut.condition()) {return;}
 
             // Prevent default browser behavior if specified
             if (shortcut.preventDefault) {
@@ -241,7 +241,7 @@ export class KeyboardShortcutService {
             try {
                 // Execute handler
                 shortcut.handler(event);
-                
+
                 // Emit triggered event
                 eventBus.emit('shortcut:triggered', {
                     shortcut: shortcutKey,
@@ -267,9 +267,9 @@ export class KeyboardShortcutService {
      */
     _generateKey({ key, ctrl, shift, alt }) {
         const parts = [];
-        if (ctrl) parts.push('ctrl');
-        if (alt) parts.push('alt');
-        if (shift) parts.push('shift');
+        if (ctrl) {parts.push('ctrl');}
+        if (alt) {parts.push('alt');}
+        if (shift) {parts.push('shift');}
         parts.push(key.toLowerCase());
         return parts.join('+');
     }
@@ -283,18 +283,18 @@ export class KeyboardShortcutService {
     _formatShortcut(shortcut) {
         const parts = [];
         const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-        
-        if (shortcut.ctrl) parts.push(isMac ? '⌘' : 'Ctrl');
-        if (shortcut.alt) parts.push(isMac ? '⌥' : 'Alt');
-        if (shortcut.shift) parts.push(isMac ? '⇧' : 'Shift');
-        
+
+        if (shortcut.ctrl) {parts.push(isMac ? '⌘' : 'Ctrl');}
+        if (shortcut.alt) {parts.push(isMac ? '⌥' : 'Alt');}
+        if (shortcut.shift) {parts.push(isMac ? '⇧' : 'Shift');}
+
         // Format key name
         let keyName = shortcut.key;
-        if (keyName === ' ') keyName = 'Space';
-        else if (keyName.length === 1) keyName = keyName.toUpperCase();
-        
+        if (keyName === ' ') {keyName = 'Space';}
+        else if (keyName.length === 1) {keyName = keyName.toUpperCase();}
+
         parts.push(keyName);
-        
+
         return parts.join('+');
     }
 
@@ -308,7 +308,7 @@ export class KeyboardShortcutService {
         const tagName = target.tagName.toLowerCase();
         const isEditable = target.isContentEditable;
         const isInput = tagName === 'input' || tagName === 'textarea' || tagName === 'select';
-        
+
         return isInput || isEditable;
     }
 

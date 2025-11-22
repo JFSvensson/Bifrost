@@ -1,12 +1,12 @@
 /**
  * Logger Utility
- * 
+ *
  * Production-safe logging wrapper that respects environment and log levels.
  * Automatically silences debug logs in production and provides structured logging.
- * 
+ *
  * @example
  * import { logger } from './utils/logger.js';
- * 
+ *
  * logger.debug('Service initialized', { serviceName: 'reminderService' });
  * logger.info('User action', { action: 'todo-completed' });
  * logger.warn('Deprecated feature used', { feature: 'oldAPI' });
@@ -32,7 +32,7 @@ const LogLevel = {
  * Check if running in production
  */
 function isProduction() {
-    return window.location.hostname !== 'localhost' && 
+    return window.location.hostname !== 'localhost' &&
            window.location.hostname !== '127.0.0.1' &&
            !window.location.hostname.includes('192.168');
 }
@@ -44,7 +44,7 @@ function getCurrentLogLevel() {
     if (isProduction()) {
         return LogLevel.ERROR; // Only errors in production
     }
-    
+
     const configLevel = dev?.logLevel || 'info';
     const levelMap = {
         'debug': LogLevel.DEBUG,
@@ -54,7 +54,7 @@ function getCurrentLogLevel() {
         'critical': LogLevel.CRITICAL,
         'silent': LogLevel.SILENT
     };
-    
+
     return levelMap[configLevel] || LogLevel.INFO;
 }
 
@@ -64,11 +64,11 @@ function getCurrentLogLevel() {
 function formatMessage(level, message, context) {
     const timestamp = new Date().toISOString();
     const prefix = `[${timestamp}] [${level.toUpperCase()}]`;
-    
+
     if (context && Object.keys(context).length > 0) {
         return `${prefix} ${message}`;
     }
-    
+
     return `${prefix} ${message}`;
 }
 
@@ -93,7 +93,7 @@ class Logger {
             console.debug(formatMessage('debug', message, context), context);
         }
     }
-    
+
     /**
      * Info level logging
      * @param {string} message - Log message
@@ -104,7 +104,7 @@ class Logger {
             console.info(formatMessage('info', message, context), context);
         }
     }
-    
+
     /**
      * Warning level logging
      * @param {string} message - Log message
@@ -114,13 +114,13 @@ class Logger {
         if (shouldLog(LogLevel.WARN)) {
             console.warn(formatMessage('warn', message, context), context);
         }
-        
+
         // Report to errorHandler
         if (errorHandler && typeof errorHandler.log === 'function') {
             errorHandler.log('WARNING', message, context);
         }
     }
-    
+
     /**
      * Error level logging
      * @param {string} message - Log message
@@ -134,10 +134,10 @@ class Logger {
                 fullContext.error = error.message;
                 fullContext.stack = error.stack;
             }
-            
+
             console.error(formatMessage('error', message, fullContext), error || '');
         }
-        
+
         // Always report errors to errorHandler
         if (errorHandler && typeof errorHandler.handle === 'function') {
             errorHandler.handle(error || new Error(message), {
@@ -147,7 +147,7 @@ class Logger {
             });
         }
     }
-    
+
     /**
      * Critical level logging (always logged)
      * @param {string} message - Log message
@@ -161,15 +161,15 @@ class Logger {
             fullContext.error = error.message;
             fullContext.stack = error.stack;
         }
-        
+
         console.error('🚨 CRITICAL:', formatMessage('critical', message, fullContext), error || '');
-        
+
         // Report to errorHandler with toast
         if (errorHandler && typeof errorHandler.critical === 'function') {
             errorHandler.critical('CRITICAL_ERROR', message, context);
         }
     }
-    
+
     /**
      * Group related logs
      * @param {string} label - Group label
@@ -184,7 +184,7 @@ class Logger {
             callback();
         }
     }
-    
+
     /**
      * Performance measurement
      * @param {string} label - Performance label
@@ -201,7 +201,7 @@ class Logger {
         }
         return callback();
     }
-    
+
     /**
      * Table logging for structured data
      * @param {Array|Object} data - Data to display
@@ -211,7 +211,7 @@ class Logger {
             console.table(data);
         }
     }
-    
+
     /**
      * Get current environment info
      */

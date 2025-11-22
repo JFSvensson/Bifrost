@@ -445,11 +445,11 @@ function setupTodoListDelegation() {
         const target = e.target;
         const action = target.dataset.action;
         const todoItem = target.closest('.todo-item');
-        
+
         if (!todoItem) {return;}
-        
+
         const todoId = todoItem.dataset.todoId;
-        
+
         switch (action) {
             case 'toggle':
                 toggleTodo(todoId);
@@ -471,7 +471,7 @@ function setupTodoListDelegation() {
 
 function renderTodos() {
     performanceMonitor.start('render-todos');
-    
+
     const todoList = document.getElementById('todo-items');
     todoList.innerHTML = '';
 
@@ -665,7 +665,7 @@ function showSnoozeDropdown(button, todo) {
     dropdown.className = 'snooze-dropdown';
     // Store reference using data attribute instead of custom property
     dropdown.dataset.buttonId = button.id || `btn-${Date.now()}`;
-    if (!button.id) button.id = dropdown.dataset.buttonId;
+    if (!button.id) {button.id = dropdown.dataset.buttonId;}
 
     const presets = [
         { label: '10 minuter', value: '10min' },

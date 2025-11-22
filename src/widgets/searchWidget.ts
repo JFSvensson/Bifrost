@@ -109,7 +109,7 @@ class SearchWidget extends HTMLElement {
 
         // Keyboard navigation in input
         input.addEventListener('keydown', (e) => {
-            if (!this.isExpanded || this.results.length === 0) return;
+            if (!this.isExpanded || this.results.length === 0) {return;}
 
             switch ((e as KeyboardEvent).key) {
                 case 'ArrowDown':
@@ -208,7 +208,7 @@ class SearchWidget extends HTMLElement {
      * @private
      */
     selectNext() {
-        if (this.results.length === 0) return;
+        if (this.results.length === 0) {return;}
         this.selectedIndex = (this.selectedIndex + 1) % this.results.length;
         this.updateSelection();
     }
@@ -218,9 +218,9 @@ class SearchWidget extends HTMLElement {
      * @private
      */
     selectPrevious() {
-        if (this.results.length === 0) return;
-        this.selectedIndex = this.selectedIndex <= 0 
-            ? this.results.length - 1 
+        if (this.results.length === 0) {return;}
+        this.selectedIndex = this.selectedIndex <= 0
+            ? this.results.length - 1
             : this.selectedIndex - 1;
         this.updateSelection();
     }
@@ -284,7 +284,7 @@ class SearchWidget extends HTMLElement {
      */
     renderResults() {
         const resultsContainer = this.shadowRoot.querySelector('#results-list');
-        
+
         if (this.results.length === 0) {
             if (this.currentQuery.trim()) {
                 resultsContainer.innerHTML = '<div class="no-results">Inga resultat hittades</div>';
@@ -383,8 +383,8 @@ class SearchWidget extends HTMLElement {
      * @private
      */
     cleanup() {
-        if (this.unregisterSearch) this.unregisterSearch();
-        if (this.unregisterEscape) this.unregisterEscape();
+        if (this.unregisterSearch) {this.unregisterSearch();}
+        if (this.unregisterEscape) {this.unregisterEscape();}
     }
 
     /**

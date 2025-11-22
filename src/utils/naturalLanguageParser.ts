@@ -95,7 +95,7 @@ export class NaturalLanguageParser {
 
         // Category pattern
         this.categoryPattern = /@(\w+)/g;
-        
+
         // Source pattern (alias for category)
         this.sourcePattern = /@(\w+)/g;
     }
@@ -583,7 +583,7 @@ export class NaturalLanguageParser {
             const day = parseInt(parts[0]);
             const month = parseInt(parts[1]) - 1; // 0-indexed
             let year = parts[2] ? parseInt(parts[2]) : today.getFullYear();
-            
+
             // Handle 2-digit years: assume 2000-2099
             if (year < 100) {
                 year += 2000;
@@ -606,7 +606,7 @@ export class NaturalLanguageParser {
             const day = parseInt(parts[0]);
             const month = parseInt(parts[1]) - 1;
             let year = parts[2] ? parseInt(parts[2]) : today.getFullYear();
-            
+
             // Handle 2-digit years: assume 2000-2099
             if (year < 100) {
                 year += 2000;

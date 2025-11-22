@@ -84,7 +84,7 @@ export class DeadlineService {
         try {
             const data = stateManager.get('deadlineNotifications', null);
             this.notificationShown = new Set(data.shown || []);
-            
+
             // Reset if it's a new day
             const lastReset = new Date(data.lastReset);
             const now = new Date();
