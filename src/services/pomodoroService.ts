@@ -152,7 +152,7 @@ export class PomodoroService {
 
         this.interval = setInterval(() => {
             this.tick();
-        }, 1000);
+        }, 1000) as unknown as number;
 
         eventBus.emit('pomodoro:started', { state: this.getState() });
     }

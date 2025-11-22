@@ -127,7 +127,7 @@ class Logger {
      * @param {Error} [error] - Error object
      * @param {Object} [context] - Additional context
      */
-    error(message, error = null, context = {}) {
+    error(message, error: any = null, context: any = {}) {
         if (shouldLog(LogLevel.ERROR)) {
             const fullContext = { ...context };
             if (error) {
@@ -154,7 +154,7 @@ class Logger {
      * @param {Error} [error] - Error object
      * @param {Object} [context] - Additional context
      */
-    critical(message, error = null, context = {}) {
+    critical(message, error: any = null, context: any = {}) {
         // Always log critical errors
         const fullContext = { ...context };
         if (error) {

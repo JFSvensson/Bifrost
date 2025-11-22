@@ -14,7 +14,7 @@
  * @param {number} [options.maxWait] - Maximum time to wait before forcing execution
  * @returns {Function} Debounced function with cancel() and flush() methods
  */
-export function debounce(func, wait = 0, options = {}) {
+export function debounce(func, wait = 0, options: any = {}) {
     const {
         leading = false,
         trailing = true,

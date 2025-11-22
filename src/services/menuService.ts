@@ -5,6 +5,9 @@ import errorHandler, { ErrorCode } from '../core/errorHandler.js';
  * Simple service for school menu API calls
  */
 export class MenuService {
+    apiUrl: string;
+    timeout: number;
+
     /**
      * Create menu service
      * @param {string} [apiUrl] - Override API URL from config

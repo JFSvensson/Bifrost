@@ -245,7 +245,7 @@ export class SearchService {
      * @param {number} [options.threshold=0.4] - Fuzzy match threshold (0-1, lower is stricter)
      * @returns {Array} Search results
      */
-    search(query, options = {}) {
+    search(query, options: any = {}) {
         if (!query || query.trim().length === 0) {
             return [];
         }

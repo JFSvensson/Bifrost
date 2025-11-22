@@ -413,7 +413,7 @@ class ErrorHandler {
      * @param {number} [filters.since] - Timestamp att filtrera från
      * @returns {Array<Object>} Filtrerad errorhistorik
      */
-    getHistory(filters = {}) {
+    getHistory(filters: any = {}) {
         let filtered = [...this.errorHistory];
 
         if (filters.level) {

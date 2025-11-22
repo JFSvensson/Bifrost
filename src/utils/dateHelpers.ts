@@ -21,7 +21,7 @@ export function getTodayIndex(startDate, weekLength) {
 
     const start = normalizeDate(startDate);
     const today = normalizeDate(new Date());
-    const daysDiff = Math.floor((today - start) / 86400000);
+    const daysDiff = Math.floor((today.getTime() - start.getTime()) / 86400000);
 
     return daysDiff >= 0 && daysDiff < weekLength ? daysDiff : -1;
 }

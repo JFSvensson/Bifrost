@@ -26,7 +26,7 @@ class ThemeService {
         });
 
         // Ladda sparad preferens eller använd systempreferens
-        const savedTheme = stateManager.get('theme');
+        const savedTheme = stateManager.get('theme', null);
 
         if (savedTheme) {
             this.setTheme(savedTheme);
@@ -39,7 +39,7 @@ class ThemeService {
         // Lyssna på systempreferens-ändringar
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
             // Byt bara automatiskt om användaren inte har valt manuellt
-            if (!stateManager.get('theme')) {
+            if (!stateManager.get('theme', null)) {
                 this.setTheme(e.matches ? 'dark' : 'light');
             }
         });

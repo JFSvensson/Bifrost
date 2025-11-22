@@ -79,17 +79,17 @@ class BackupWidget extends HTMLElement {
 
         // Import button
         importBtn.addEventListener('click', () => {
-            fileInput.click();
+            (fileInput as HTMLInputElement).click();
         });
 
         // File input
         fileInput.addEventListener('change', (e) => {
-            const file = /** @type {HTMLInputElement} */ (e.target).files[0];
+            const file = (e.target as HTMLInputElement).files?.[0];
             if (file) {
                 this.importData(file);
             }
             // Reset input so same file can be selected again
-            fileInput.value = '';
+            (fileInput as HTMLInputElement).value = '';
         });
     }
 
@@ -241,7 +241,7 @@ class BackupWidget extends HTMLElement {
      * @param {string} type
      */
     showMessage(text, type) {
-        const message = /** @type {HTMLElement} */ (this.shadowRoot.querySelector('#message'));
+        const message = this.shadowRoot!.querySelector('#message') as HTMLElement;
         message.textContent = text;
         message.className = `message ${type}`;
         message.style.display = 'block';

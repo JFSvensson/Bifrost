@@ -12,6 +12,7 @@ export class RecurringService {
     storageKey: string;
     recurringPatterns: any[];
     checkInterval: number | null;
+    monitoringInterval: number | null;
 
     constructor() {
         this.storageKey = 'recurringPatterns';
@@ -409,7 +410,7 @@ export class RecurringService {
         // Then check periodically
         this.monitoringInterval = setInterval(() => {
             this.checkDuePatterns();
-        }, interval);
+        }, interval) as unknown as number;
     }
 
     /**

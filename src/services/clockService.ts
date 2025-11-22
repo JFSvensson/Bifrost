@@ -55,7 +55,7 @@ export class ClockService {
 
         this.updateIntervalId = setInterval(() => {
             this._emitTimeUpdate();
-        }, this.updateInterval);
+        }, this.updateInterval) as unknown as number;
     }
 
     /**

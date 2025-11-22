@@ -190,7 +190,7 @@ class EventBus {
      * @param {boolean} [options.async=false] - Kör callbacks asynkront
      * @returns {void}
      */
-    emit(eventName, data, options = {}) {
+    emit(eventName, data, options: any = {}) {
         this._validateEventName(eventName);
 
         const { async = false } = options;
@@ -375,7 +375,7 @@ class EventBus {
      * @param {number} [filters.limit] - Max antal events att returnera
      * @returns {Array<Object>} Filtrerad eventhistorik
      */
-    getHistory(filters = {}) {
+    getHistory(filters: any = {}) {
         let filtered = [...this.eventHistory];
 
         if (filters.eventName) {

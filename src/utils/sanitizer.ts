@@ -95,7 +95,7 @@ function cleanNode(node) {
 
         // Clean attributes
         const attributes = Array.from(element.attributes || []);
-        attributes.forEach(attr => {
+        attributes.forEach((attr: any) => {
             const attrName = attr.name.toLowerCase();
             
             // Remove event handlers
@@ -148,7 +148,7 @@ function cleanNode(node) {
  * const safe = sanitizeHTML('<a href="javascript:alert(1)">Click</a>', { allowLinks: false });
  * // Returns: 'Click'
  */
-export function sanitizeHTML(html, options = {}) {
+export function sanitizeHTML(html, options: any = {}) {
     if (!html || typeof html !== 'string') {
         return '';
     }

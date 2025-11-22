@@ -274,7 +274,7 @@ class StateManager {
      * @param {boolean} [options.immediate=false] - Skip debouncing and save immediately
      * @returns {boolean} True om spara lyckades
      */
-    set(key, data, options = {}) {
+    set(key, data, options: any = {}) {
         const {
             ttl,
             validate = true,
@@ -404,7 +404,7 @@ class StateManager {
      * @param {boolean} [options.notify=true] - Notifiera subscribers
      * @returns {void}
      */
-    remove(key, options = {}) {
+    remove(key, options: any = {}) {
         const { notify = true } = options;
 
         localStorage.removeItem(key);
@@ -434,8 +434,8 @@ class StateManager {
      * @param {boolean} [options.keepSchemas=true] - Behåll schema registreringar
      * @returns {void}
      */
-    clear(options = {}) {
-        const { keepSchemas = true } = options;
+    clear(options: any = {}) {
+        const { keepSchemas = false } = options;
 
         // Backup före clear
         if (this.autoBackupEnabled) {

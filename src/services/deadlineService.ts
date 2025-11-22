@@ -350,7 +350,7 @@ export class DeadlineService {
             if (urgent.length > 0) {
                 this.showNotifications(currentTodos);
             }
-        }, interval);
+        }, interval) as unknown as number;
     }
 
     /**

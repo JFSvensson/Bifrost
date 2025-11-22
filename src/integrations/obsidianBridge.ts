@@ -1,7 +1,7 @@
-const fs = require('fs');
-const path = require('path');
-const http = require('http');
-const { URL } = require('url');
+const fs: any = require('fs');
+const path: any = require('path');
+const http: any = require('http');
+const { URL }: any = require('url');
 
 /**
  * NOTE: This file runs in Node.js environment, not the browser.

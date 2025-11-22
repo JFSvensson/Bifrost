@@ -94,7 +94,7 @@ export class CalendarSyncService {
         // Set up periodic sync
         this.syncInterval = setInterval(() => {
             this.performSync();
-        }, this.syncFrequency);
+        }, this.syncFrequency) as unknown as number;
 
         logger.info('Calendar sync enabled');
         eventBus.emit('calendar:syncEnabled', { frequency: this.syncFrequency });

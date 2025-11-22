@@ -1,6 +1,6 @@
-const http = require('http');
-const https = require('https');
-const { URL } = require('url');
+const http: any = require('http');
+const https: any = require('https');
+const { URL }: any = require('url');
 
 /**
  * NOTE: This file runs in Node.js environment, not the browser.

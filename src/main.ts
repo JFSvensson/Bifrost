@@ -136,7 +136,7 @@ function initWidgetListeners() {
     const quickAddWidget = document.querySelector('quick-add-widget');
     if (quickAddWidget) {
         quickAddWidget.addEventListener('todoAdded', (e) => {
-            const customEvent = /** @type {CustomEvent} */ (e);
+            const customEvent = e as CustomEvent;
             handleQuickAdd(customEvent.detail);
         });
     }
@@ -158,7 +158,7 @@ function initWidgetListeners() {
     const recurringWidget = document.querySelector('recurring-widget');
     if (recurringWidget) {
         recurringWidget.addEventListener('toast', (e) => {
-            const customEvent = /** @type {CustomEvent} */ (e);
+            const customEvent = e as CustomEvent;
             showToast(customEvent.detail.message);
         });
     }
@@ -167,7 +167,7 @@ function initWidgetListeners() {
     const reminderWidget = document.querySelector('reminder-widget');
     if (reminderWidget) {
         reminderWidget.addEventListener('show-toast', (e) => {
-            const customEvent = /** @type {CustomEvent} */ (e);
+            const customEvent = e as CustomEvent;
             showToast(customEvent.detail.message);
         });
     }
@@ -176,7 +176,7 @@ function initWidgetListeners() {
     const backupBtn = document.getElementById('backup-btn');
     if (backupBtn) {
         backupBtn.addEventListener('click', () => {
-            const backupWidget = document.querySelector('backup-widget');
+            const backupWidget = document.querySelector('backup-widget') as any;
             if (backupWidget && backupWidget.toggle) {
                 backupWidget.toggle();
             }
@@ -385,7 +385,7 @@ function handleReminderTriggered(reminder) {
 
 
 function addTodo() {
-    const newTodoInput = /** @type {HTMLInputElement} */ (document.getElementById('new-todo'));
+    const newTodoInput = document.getElementById('new-todo') as HTMLInputElement;
     const todoText = newTodoInput.value;
     if (todoText === '') {return;}
 
@@ -907,7 +907,7 @@ if (shortcuts.linkShortcuts) {
             priority: 5,
             handler: () => {
                 const links = document.querySelectorAll('#links a');
-                const link = /** @type {HTMLAnchorElement} */ (links[i - 1]);
+                const link = links[i - 1] as HTMLAnchorElement;
                 if (link) { window.open(link.href, '_blank'); }
             },
             condition: () => shortcuts.enabled
@@ -924,7 +924,7 @@ if (shortcuts.searchShortcuts) {
         category: 'Search',
         priority: 5,
         handler: () => {
-            const searchInput = /** @type {HTMLInputElement} */ (document.querySelector('input[name="q"]'));
+            const searchInput = document.querySelector('input[name="q"]') as HTMLInputElement;
             if (searchInput) { searchInput.focus(); }
         },
         condition: () => shortcuts.enabled
