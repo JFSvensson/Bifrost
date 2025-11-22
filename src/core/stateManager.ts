@@ -41,6 +41,19 @@ import { logger } from '../utils/logger.js';
  * StateManager class - Singleton för centraliserad state-hantering
  */
 class StateManager {
+    schemas: Record<string, any>;
+    versions: Record<string, number>;
+    subscribers: Record<string, Array<Function>>;
+    quotaWarningThreshold: number;
+    autoBackupEnabled: boolean;
+    _backupCounter: number;
+    maxBackupAge: number;
+    pendingWrites: Map<string, any>;
+    debounceDelay: number;
+    testMode: boolean;
+    _debouncedFlush: () => void;
+    _keys: Set<string>;
+
     /**
      * Initialiserar StateManager
      */

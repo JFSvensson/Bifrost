@@ -9,6 +9,10 @@ import errorHandler, { ErrorCode } from '../core/errorHandler.js';
 import { logger } from '../utils/logger.js';
 
 export class DeadlineService {
+    warningLevels: any;
+    notificationShown: Set<string>;
+    checkInterval: number | null;
+
     constructor() {
         this.warningLevels = {
             overdue: {

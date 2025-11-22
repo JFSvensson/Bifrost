@@ -10,6 +10,13 @@ import errorHandler, { ErrorCode } from '../core/errorHandler.js';
 import { logger } from '../utils/logger.js';
 
 export class CalendarSyncService {
+    syncEnabled: boolean;
+    syncInterval: number | null;
+    syncFrequency: number;
+    lastSync: Date | null;
+    syncedTodos: Map<string, string>;
+    getTodosCallback: (() => any[]) | null;
+
     constructor() {
         this.syncEnabled = false;
         this.syncInterval = null;

@@ -14,19 +14,19 @@ function initializeUI() {
     }
 
     // Update todo input placeholder
-    const todoInput = document.getElementById('new-todo');
+    const todoInput = document.getElementById('new-todo') as HTMLInputElement;
     if (todoInput) {
         todoInput.placeholder = todos.placeholder;
     }
 
     // Update search input placeholder
-    const searchInput = document.querySelector('input[name="q"]');
+    const searchInput = document.querySelector('input[name="q"]') as HTMLInputElement;
     if (searchInput) {
         searchInput.placeholder = search.placeholder;
     }
 
     // Update search form action
-    const searchForm = document.querySelector('.search form');
+    const searchForm = document.querySelector('.search form') as HTMLFormElement;
     if (searchForm) {
         searchForm.action = search.defaultEngine;
     }

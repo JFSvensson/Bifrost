@@ -34,6 +34,13 @@
  * EventBus class - Singleton för centraliserad event-hantering
  */
 class EventBus {
+    listeners: Record<string, Array<{fn: Function, priority: number, id: string}>>;
+    onceListeners: Record<string, Array<{fn: Function, priority: number, id: string}>>;
+    eventHistory: any[];
+    maxHistorySize: number;
+    debug: boolean;
+    registeredNamespaces: Set<string>;
+
     /**
      * Initialiserar EventBus
      */
@@ -80,7 +87,7 @@ class EventBus {
      * @param {number} [options.priority=0] - Högre prioritet körs först
      * @returns {Function} Unsubscribe-funktion
      */
-    on(eventName, callback, options = {}) {
+    on(eventName, callback, options: any = {}) {
         if (typeof callback !== 'function') {
             throw new Error('Callback must be a function');
         }

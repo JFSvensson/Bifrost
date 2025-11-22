@@ -81,6 +81,12 @@ export const ErrorCode = {
  * ErrorHandler class - Singleton för centraliserad felhantering
  */
 class ErrorHandler {
+    errorHistory: any[];
+    maxHistorySize: number;
+    logLevel: string;
+    errorCounts: Record<string, number>;
+    toastFunction: ((message: string, type: string) => void) | null;
+
     /**
      * Initialiserar ErrorHandler
      */
@@ -141,7 +147,7 @@ class ErrorHandler {
      * @param {Object} [options.metadata] - Extra metadata
      * @returns {Object} ErrorInfo-objekt
      */
-    handle(error, options = {}) {
+    handle(error, options: any = {}) {
         const {
             code = ErrorCode.UNKNOWN_ERROR,
             context = '',

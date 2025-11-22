@@ -13,6 +13,12 @@ import errorHandler, { ErrorCode } from '../core/errorHandler.js';
  * console.log(time.time); // "14:30"
  */
 export class ClockService {
+    timezones: any[];
+    format: string;
+    updateInterval: number;
+    showSeconds: boolean;
+    updateIntervalId: number | null;
+
     /**
      * Create clock service
      */
@@ -127,7 +133,7 @@ export class ClockService {
      */
     formatTime(date, timezone) {
         /** @type {Intl.DateTimeFormatOptions} */
-        const options = {
+        const options: Intl.DateTimeFormatOptions = {
             timeZone: timezone,
             hour: '2-digit',
             minute: '2-digit',

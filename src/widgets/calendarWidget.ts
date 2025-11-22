@@ -424,13 +424,13 @@ class CalendarWidget extends HTMLElement {
                 await googleCalendarService.signIn();
             }
 
-            if (e.target.id === 'sign-out-btn' || e.target.closest('#sign-out-btn')) {
+            if (target.id === 'sign-out-btn' || target.closest('#sign-out-btn')) {
                 googleCalendarService.signOut();
                 this.events = [];
                 this.render();
             }
 
-            if (e.target.id === 'refresh-btn' || e.target.closest('#refresh-btn')) {
+            if (target.id === 'refresh-btn' || target.closest('#refresh-btn')) {
                 await this.loadEvents();
             }
         });
