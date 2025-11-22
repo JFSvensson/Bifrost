@@ -85,9 +85,9 @@ När du väl har bytt manuellt, kommer ditt val att sparas och systempreferensen
 
 ### ThemeService
 
-```javascript
+```typescript
 // Auto-initieras vid sidladdning
-import themeService from './js/themeService.js';
+import themeService from './dist/services/themeService.js';
 
 // Byta tema programmatiskt
 themeService.setTheme('dark'); // eller 'light'
@@ -99,7 +99,7 @@ themeService.toggleTheme();
 const currentTheme = themeService.getTheme();
 
 // Lyssna på temaändringar
-window.addEventListener('themechange', (e) => {
+window.addEventListener('themechange', (e: CustomEvent) => {
     console.log('New theme:', e.detail.theme);
 });
 ```

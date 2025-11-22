@@ -166,8 +166,8 @@ deadlineService.startMonitoring(() => currentTodos, 30000);
 
 ### DeadlineService
 
-```javascript
-import { DeadlineService } from './js/deadlineService.js';
+```typescript
+import { DeadlineService } from './dist/services/deadlineService.js';
 
 const deadlineService = new DeadlineService();
 

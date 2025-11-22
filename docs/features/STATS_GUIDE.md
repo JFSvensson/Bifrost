@@ -109,8 +109,8 @@ Bifrost har nu ett komplett statistik-dashboard som spårar din produktivitet oc
 
 ### StatsService
 
-```javascript
-import { StatsService } from './js/statsService.js';
+```typescript
+import { StatsService } from './dist/services/statsService.js';
 
 const statsService = new StatsService();
 

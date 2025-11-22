@@ -306,8 +306,8 @@ Parsed reminder-objekt innehåller:
 
 Skapa påminnelser via JavaScript:
 
-```javascript
-import reminderService from './js/reminderService.js';
+```typescript
+import reminderService from './dist/services/reminderService.js';
 
 // Skapa tidbaserad påminnelse
 const reminder = reminderService.createReminder({

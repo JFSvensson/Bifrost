@@ -149,8 +149,8 @@ Klicka "Sign Out" för att logga ut från Google Calendar.
 
 ### GoogleCalendarService
 
-```javascript
-import { googleCalendarService } from './js/googleCalendarService.js';
+```typescript
+import { googleCalendarService } from './dist/services/googleCalendarService.js';
 
 // ===== AUTHENTICATION =====
 

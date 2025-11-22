@@ -292,8 +292,8 @@ In the widget:
 
 For advanced users, create custom patterns programmatically:
 
-```javascript
-import { recurringService } from './js/recurringService.js';
+```typescript
+import { recurringService } from './dist/services/recurringService.js';
 
 // Create custom pattern
 const pattern = recurringService.createPattern({
@@ -661,8 +661,8 @@ The parser recognizes these Swedish and English patterns:
 - `varje månad den N:e`, `every month the Nth`
 
 **Examples:**
-```javascript
-import { naturalLanguageParser } from './js/naturalLanguageParser.js';
+```typescript
+import { naturalLanguageParser } from './dist/utils/naturalLanguageParser.js';
 
 const result = naturalLanguageParser.parse('Träna varje måndag 18:00 #gym');
 // result.recurring = {

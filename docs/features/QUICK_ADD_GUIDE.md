@@ -244,8 +244,8 @@ Parses natural language input into structured todo data.
 ```
 
 **Example:**
-```javascript
-import { naturalLanguageParser } from './js/naturalLanguageParser.js';
+```typescript
+import { naturalLanguageParser } from './dist/utils/naturalLanguageParser.js';
 
 const result = naturalLanguageParser.parse('Möt Anna imorgon 14:00 #arbete [!high]');
 console.log(result);

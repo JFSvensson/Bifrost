@@ -77,7 +77,20 @@ Bifrost/
 │   ├── links.json          # Länkdata (skapas av användaren)
 │   └── examples/
 │       └── example-TODO.md # Exempel på Obsidian todo-format
+├── dist/                   # 📦 Kompilerad JavaScript (genereras från src/)
+│   ├── main.js             # Huvudlogik + todo-hantering
+│   ├── sw.js               # Service Worker (v2 cache)
+│   ├── widgetLoader.js     # Widget initialization
+│   ├── config/             # Konfigurationsfiler (3 filer)
+│   ├── core/               # Kärnfunktionalitet (3 filer)
+│   ├── integrations/       # Externa integrationer (2 filer)
+│   ├── services/           # Affärslogik services (16 filer)
+│   ├── utils/              # Hjälpfunktioner (5 filer)
+│   └── widgets/            # UI-komponenter (14 filer)
 ├── docs/
+│   ├── TYPESCRIPT_MIGRATION.md      # TypeScript migration guide
+│   ├── PRODUCTION_READINESS.md     # Production deployment guide
+│   ├── SECURITY.md                 # Security guidelines
 │   ├── architecture/
 │   │   ├── ARCHITECTURE.md          # Full technical architecture
 │   │   └── CONFIG.md                # Konfigurationsdokumentation
@@ -96,56 +109,60 @@ Bifrost/
 │       ├── FAVICON_README.md        # Favicon generation guide
 │       ├── GOOGLE_CALENDAR_GUIDE.md # Google Calendar integration
 │       └── OBSIDIAN_SETUP.md        # Obsidian integration guide
-├── js/
-│   ├── main.js             # Huvudlogik + todo-hantering
-│   ├── sw.js               # Service Worker (v2 cache)
-│   ├── widgetLoader.js     # Widget initialization
+├── src/                    # 📝 TypeScript källkod
+│   ├── main.ts             # Huvudlogik + todo-hantering
+│   ├── sw.ts               # Service Worker (v2 cache)
+│   ├── widgetLoader.ts     # Widget initialization
+│   ├── types.d.ts          # Global type definitions
 │   ├── config/
-│   │   ├── config.js       # Centraliserad konfiguration
-│   │   ├── types.js        # Type definitions
-│   │   └── uiConfig.js     # UI-initialisering
+│   │   ├── config.ts       # Centraliserad konfiguration
+│   │   ├── types.ts        # Type definitions
+│   │   └── uiConfig.ts     # UI-initialisering
 │   ├── core/
-│   │   ├── errorHandler.js # Global error handling
-│   │   ├── eventBus.js     # Pub/sub event system
-│   │   └── stateManager.js # LocalStorage state manager
+│   │   ├── errorHandler.ts # Global error handling
+│   │   ├── eventBus.ts     # Pub/sub event system
+│   │   └── stateManager.ts # LocalStorage state manager
 │   ├── integrations/
-│   │   ├── obsidianBridge.js # Node.js bridge för Obsidian-synk
-│   │   └── proxy.js          # CORS-proxy för skolmat (Node.js)
+│   │   ├── obsidianBridge.ts # Node.js bridge för Obsidian-synk
+│   │   └── proxy.ts          # CORS-proxy för skolmat (Node.js)
 │   ├── services/
-│   │   ├── calendarSync.js          # Bilateral sync todos ↔ calendar
-│   │   ├── clockService.js          # Tidshantering och tidszoner
-│   │   ├── deadlineService.js       # Deadline-analys och notifications
-│   │   ├── googleCalendarService.js # Google Calendar API och OAuth
-│   │   ├── keyboardShortcutService.js # Centraliserad tangentbordshantering
-│   │   ├── linkService.js           # Länkhantering
-│   │   ├── menuService.js           # API-service för skolmat
-│   │   ├── obsidianTodoService.js   # Obsidian-synkronisering
-│   │   ├── pomodoroService.js       # Pomodoro timer-logik
-│   │   ├── recurringService.js      # Recurring todos service
-│   │   ├── reminderService.js       # Reminders & snooze service
-│   │   ├── searchService.js         # Multi-source söktjänst
-│   │   ├── statsService.js          # Statistik-spårning
-│   │   ├── themeService.js          # Tema-hantering (ljust/mörkt)
-│   │   └── weatherService.js        # SMHI API-service
+│   │   ├── calendarSync.ts          # Bilateral sync todos ↔ calendar
+│   │   ├── clockService.ts          # Tidshantering och tidszoner
+│   │   ├── deadlineService.ts       # Deadline-analys och notifications
+│   │   ├── googleCalendarService.ts # Google Calendar API och OAuth
+│   │   ├── keyboardShortcutService.ts # Centraliserad tangentbordshantering
+│   │   ├── linkService.ts           # Länkhantering
+│   │   ├── menuService.ts           # API-service för skolmat
+│   │   ├── obsidianTodoService.ts   # Obsidian-synkronisering
+│   │   ├── performanceMonitor.ts    # Performance monitoring
+│   │   ├── pomodoroService.ts       # Pomodoro timer-logik
+│   │   ├── recurringService.ts      # Recurring todos service
+│   │   ├── reminderService.ts       # Reminders & snooze service
+│   │   ├── searchService.ts         # Multi-source söktjänst
+│   │   ├── statsService.ts          # Statistik-spårning
+│   │   ├── themeService.ts          # Tema-hantering (ljust/mörkt)
+│   │   └── weatherService.ts        # SMHI API-service
 │   ├── utils/
-│   │   ├── dateHelpers.js           # Datumfunktioner
-│   │   ├── debounce.js              # Debounce utility
-│   │   └── naturalLanguageParser.js # Natural language parser för Quick Add
+│   │   ├── dateHelpers.ts           # Datumfunktioner
+│   │   ├── debounce.ts              # Debounce utility
+│   │   ├── logger.ts                # Logging utility
+│   │   ├── naturalLanguageParser.ts # Natural language parser för Quick Add
+│   │   └── sanitizer.ts             # Input sanitization
 │   └── widgets/
-│       ├── backupWidget.js       # Backup & export modal
-│       ├── calendarWidget.js     # Calendar-visualisering
-│       ├── clockWidget.js        # Klockkomponent
-│       ├── deadlineWidget.js     # Deadline-visualisering
-│       ├── linkWidget.js         # Snabblänkar widget
-│       ├── pomodoroWidget.js     # Pomodoro timer-widget
-│       ├── quickAddWidget.js     # Quick Add UI-komponent
-│       ├── recurringWidget.js    # Recurring todos widget
-│       ├── reminderWidget.js     # Reminders widget
-│       ├── schoolMenu.js         # Skolmatskomponent
-│       ├── searchWidget.js       # Global sök-widget
-│       ├── shortcutsHelpWidget.js # Tangentbordsgenvägar hjälp
-│       ├── statsWidget.js        # Statistik-visualisering
-│       └── weatherWidget.js      # Väderkomponent
+│       ├── backupWidget.ts       # Backup & export modal
+│       ├── calendarWidget.ts     # Calendar-visualisering
+│       ├── clockWidget.ts        # Klockkomponent
+│       ├── deadlineWidget.ts     # Deadline-visualisering
+│       ├── linkWidget.ts         # Snabblänkar widget
+│       ├── pomodoroWidget.ts     # Pomodoro timer-widget
+│       ├── quickAddWidget.ts     # Quick Add UI-komponent
+│       ├── recurringWidget.ts    # Recurring todos widget
+│       ├── reminderWidget.ts     # Reminders widget
+│       ├── schoolMenu.ts         # Skolmatskomponent
+│       ├── searchWidget.ts       # Global sök-widget
+│       ├── shortcutsHelpWidget.ts # Tangentbordsgenvägar hjälp
+│       ├── statsWidget.ts        # Statistik-visualisering
+│       └── weatherWidget.ts      # Väderkomponent
 ├── scripts/
 │   ├── eslint.config.js       # ESLint configuration
 │   └── generate-favicons.js   # Favicon generation utility
@@ -259,14 +276,15 @@ Skapa `data/links.json`:
 
 ### 2. Starta proxyn för skolmat
 ```bash
-node js/integrations/proxy.js
+node dist/integrations/proxy.js
 ```
 Proxyn kör på: http://localhost:8787/api/school-menu
 
 ### 3. (Valfritt) Starta Obsidian Bridge för todo-synk
 ```bash
-# Ändra vault-sökväg i js/integrations/obsidianBridge.js först
-node js/integrations/obsidianBridge.js
+# Ändra vault-sökväg i src/integrations/obsidianBridge.ts först
+# Kompilera TypeScript med 'npm run build' sedan kör:
+node dist/integrations/obsidianBridge.js
 ```
 Bridge kör på: http://localhost:8081/obsidian/todos  
 Se [OBSIDIAN_SETUP.md](docs/guides/OBSIDIAN_SETUP.md) för fullständig guide
@@ -395,6 +413,109 @@ npm run format         # Formatera kod med Prettier
 npm run format:check   # Kontrollera formatering
 ```
 
+## 🔷 TypeScript Development Workflow
+
+### Projektstruktur efter Migration
+```
+src/        →  TypeScript källkod (.ts filer)
+dist/       →  Kompilerad JavaScript (.js filer)
+index.html  →  Laddar JavaScript från dist/
+```
+
+### Development Workflow
+
+**1. Editera TypeScript-filer i `src/`**
+```bash
+# Starta watch mode för automatisk kompilering
+npm run dev
+```
+
+**2. TypeScript kompileras automatiskt till `dist/`**
+- Källkod: `src/services/themeService.ts`
+- Output: `dist/services/themeService.js`
+- Source maps: `dist/services/themeService.js.map`
+
+**3. Testa i webbläsaren**
+```bash
+# Starta lokal server
+python -m http.server 8000
+# eller
+npx serve .
+```
+
+**4. Type-check innan commit**
+```bash
+npm run type-check
+```
+
+### TypeScript-specifika Tips
+
+**Importera moduler:**
+```typescript
+// ALLTID använd .js-extension i imports (även för .ts filer)
+import { ThemeService } from './services/themeService.js';
+import eventBus from './core/eventBus.js';
+```
+
+**Type-säkerhet:**
+```typescript
+// Använd interfaces för komplex data
+interface Todo {
+  id: string;
+  text: string;
+  completed: boolean;
+  priority?: 'high' | 'medium' | 'low';
+}
+
+// Type guards för runtime-säkerhet
+function isTodo(obj: any): obj is Todo {
+  return obj && typeof obj.id === 'string';
+}
+```
+
+**Pragmatisk any-användning:**
+```typescript
+// Använd 'any' när typer är för komplexa eller externa
+const stats: any = performance.getEntriesByType('navigation')[0];
+```
+
+**Promise-hantering:**
+```typescript
+// Explicit Promise<void> för async funktioner utan return
+async function loadData(): Promise<void> {
+  const data = await fetch('/api/data');
+  // Inget return statement
+}
+```
+
+### Felsökning
+
+**TypeScript-kompileringsfel:**
+```bash
+# Se alla fel
+npm run build
+
+# Type-check utan att generera filer
+npm run type-check
+```
+
+**Import-fel:**
+- Använd ALLTID `.js` extension, även för `.ts` filer
+- Kontrollera att filen finns i `dist/` efter kompilering
+
+**Type-fel vid körning:**
+- Kolla browser console för runtime-fel
+- Använd source maps för att debug TypeScript-kod direkt
+
+### Migration Status
+
+✅ **100% Complete** - 0 TypeScript errors  
+✅ **46 kompilerade filer** i `dist/`  
+✅ **Full typ-säkerhet** för alla komponenter  
+✅ **Source maps** för enkel debugging  
+
+Se [TYPESCRIPT_MIGRATION.md](docs/TYPESCRIPT_MIGRATION.md) för detaljer.
+
 ### Starta Utvecklingsserver
 
 ```bash
@@ -514,8 +635,8 @@ GET http://localhost:8081/health
 ```
 
 ### ThemeService
-```javascript
-import themeService from './js/themeService.js';
+```typescript
+import themeService from './dist/services/themeService.js';
 
 // Byta tema
 themeService.setTheme('dark'); // 'light' eller 'dark'
@@ -527,14 +648,15 @@ themeService.toggleTheme();
 const theme = themeService.getTheme(); // 'light' eller 'dark'
 
 // Lyssna på temaändringar
-window.addEventListener('themechange', (e) => {
+window.addEventListener('themechange', (e: CustomEvent) => {
     console.log('Nytt tema:', e.detail.theme);
 });
 ```
 
 ### StatsService
-```javascript
-import { StatsService } from './js/statsService.js';
+```typescript
+import { StatsService } from './dist/services/statsService.js';
+import type { Todo } from './src/types.d.ts';
 
 const statsService = new StatsService();
 
@@ -630,8 +752,8 @@ GET https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geoty
 ## Felsökning
 
 **Obsidian-synk fungerar inte:**
-- Kontrollera att `node js/integrations/obsidianBridge.js` körs
-- Verifiera vault-sökväg i `js/integrations/obsidianBridge.js`
+- Kontrollera att `node dist/integrations/obsidianBridge.js` körs
+- Verifiera vault-sökväg i `src/integrations/obsidianBridge.ts`
 - Kolla att TODO.md finns i vault med rätt format
 - Se konsolen för sync-meddelanden
 - Kontrollera att port 8081 inte är blockerad
@@ -639,21 +761,21 @@ GET https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geoty
 **Todos från Obsidian visas inte:**
 - Kontrollera format: `- [ ] Text` (mellanslag viktigt!)
 - Verifiera att bridge är igång och tillgänglig
-- Kolla `todos.obsidian.enabled: true` i js/config/config.js
+- Kolla `todos.obsidian.enabled: true` i src/config/config.ts
 - Se Network-fliken i DevTools för API-anrop
 
 **Väder laddas inte:**
 - Kontrollera internetanslutning (SMHI API kräver internet)
 - Kolla nätverksflik i DevTools för CORS-fel
-- Verifiera att koordinater är korrekta i js/config/config.js
+- Verifiera att koordinater är korrekta i src/config/config.ts
 
 **Klockan visar fel tid:**
 - Kontrollera systemtid på datorn
-- Verifiera tidszonsinställningar in js/config/config.js
+- Verifiera tidszonsinställningar i src/config/config.ts
 - Kolla att `Intl.DateTimeFormat` stöds i webbläsaren
 
 **Skolmat laddas inte:**
-- Kontrollera att proxyn körs: `node js/integrations/proxy.js`
+- Kontrollera att proxyn körs: `node dist/integrations/proxy.js`
 - Kolla proxyn på: http://localhost:8787/api/school-menu
 - Verifiera att rätt skolmeny-ID används
 
@@ -672,7 +794,7 @@ GET https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geoty
 
 **Todo-listan sparas inte:**
 - Kontrollera localStorage i DevTools
-- Kolla att `todos.autoSave: true` i js/config/config.js
+- Kolla att `todos.autoSave: true` i src/config/config.ts
 
 **Responsiv design fungerar inte:**
 - Kontrollera att viewport meta-tag finns i HTML
@@ -709,30 +831,52 @@ GET https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geoty
 ```typescript
 // 1. Skapa service (src/services/newService.ts)
 export class NewService {
+    private config: any;
+    
     constructor() {
         // Använd config
+        import('../config/config.js').then(module => {
+            this.config = module.default.newFeature;
+        });
+    }
+    
+    async fetchData(): Promise<any> {
+        // Service logic
+        return {};
     }
 }
 
 // 2. Skapa widget (src/widgets/newWidget.ts)
 import { NewService } from '../services/newService.js';
-import { newConfig } from '../config/config.js';
 
 class NewWidget extends HTMLElement {
+    private service: NewService;
+    private shadowRoot: ShadowRoot;
+    
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
         this.service = new NewService();
     }
     
-    connectedCallback() {
+    connectedCallback(): void {
         this.render();
     }
     
-    render() {
+    render(): void {
+        if (!this.shadowRoot) return;
+        
         this.shadowRoot.innerHTML = `
-            <style>/* CSS */</style>
-            <div>/* HTML */</div>
+            <style>
+                :host {
+                    display: block;
+                    padding: 1rem;
+                }
+                /* CSS */
+            </style>
+            <div class="new-widget">
+                <!-- HTML -->
+            </div>
         `;
     }
 }
@@ -742,17 +886,18 @@ customElements.define('new-widget', NewWidget);
 // 3. Lägg till i HTML
 <new-widget></new-widget>
 
-// 4. Uppdatera config.js och sw.js
+// 4. Kompilera och uppdatera config.ts samt sw.ts
+npm run build
 ```
 
 **Anpassa befintliga komponenter:**
-- **Väder**: Ändra `weatherConfig.location` eller lägg till nya parametrar
+- **Väder**: Ändra `weatherConfig.location` i `src/config/config.ts`
 - **Klocka**: Modifiera `clockConfig.timezones` eller format
-- **Skolmat**: Uppdatera `DEFAULT_ID` i `js/integrations/proxy.js`
-- **Layout**: Justera CSS Grid i `styles.css`
+- **Skolmat**: Uppdatera `DEFAULT_ID` i `src/integrations/proxy.ts`
+- **Layout**: Justera CSS Grid i `css/layouts/grid.css`
 
 **Nya konfigurationsalternativ:**
-1. Lägg till i `js/config/config.js`
+1. Lägg till i `src/config/config.ts`
 2. Använd i relevanta komponenter via import
 3. Dokumentera i `docs/architecture/CONFIG.md`
 

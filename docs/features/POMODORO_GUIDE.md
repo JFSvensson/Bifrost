@@ -189,8 +189,8 @@ Tips: Lägg till shortcuts i muscle memory för snabb kontroll!
 
 ### PomodoroService
 
-```javascript
-import { pomodoroService } from './js/pomodoroService.js';
+```typescript
+import { pomodoroService } from './dist/services/pomodoroService.js';
 
 // ===== TIMER CONTROLS =====
 
