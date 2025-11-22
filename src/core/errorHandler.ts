@@ -85,7 +85,7 @@ class ErrorHandler {
     maxHistorySize: number;
     logLevel: string;
     errorCounts: Record<string, number>;
-    toastFunction: ((message: string, type: string) => void) | null;
+    toastFunction: ((_message: string, _type: string) => void) | null;
 
     /**
      * Initialiserar ErrorHandler
@@ -377,7 +377,7 @@ class ErrorHandler {
      * @returns {string} Användarvänligt meddelande
      */
     _getUserFriendlyMessage(errorInfo) {
-        const { code, message, context } = errorInfo;
+        const { code, message: _message, context } = errorInfo;
 
         // Mapping av felkoder till användarvänliga meddelanden
         const friendlyMessages = {

@@ -110,7 +110,7 @@ class StateManager {
                     this._keys.add(key);
                 }
             }
-        } catch (e) {}
+        } catch (_e) {}
 
         try {
             // Method 2: Standard iteration
@@ -120,7 +120,7 @@ class StateManager {
                     if (key) {this._keys.add(key);}
                 }
             }
-        } catch (e) {}
+        } catch (_e) {}
     }
 
     /**
