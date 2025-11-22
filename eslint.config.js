@@ -98,6 +98,28 @@ export default [
         }
     },
     {
+        files: ['*.config.js', 'scripts/**/*.js'],
+        languageOptions: {
+            ecmaVersion: 2022,
+            sourceType: 'module',
+            globals: {
+                console: 'readonly',
+                process: 'readonly',
+                Buffer: 'readonly',
+                __dirname: 'readonly',
+                __filename: 'readonly',
+                require: 'readonly',
+                module: 'readonly',
+                exports: 'readonly',
+                global: 'readonly'
+            }
+        },
+        rules: {
+            'no-console': 'off',
+            'no-undef': 'off'
+        }
+    },
+    {
         ignores: [
             '**/node_modules/',
             '**/*.log',
