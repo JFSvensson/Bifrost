@@ -55,7 +55,8 @@ export default [
             '@typescript-eslint/no-explicit-any': 'off',
             '@typescript-eslint/no-unused-vars': ['warn', {
                 argsIgnorePattern: '^_',
-                varsIgnorePattern: '^_'
+                varsIgnorePattern: '^_',
+                caughtErrorsIgnorePattern: '^_'
             }],
             '@typescript-eslint/no-unsafe-function-type': 'off',
             '@typescript-eslint/no-require-imports': 'off',
@@ -63,7 +64,8 @@ export default [
             '@typescript-eslint/no-this-alias': 'off',
             'no-unused-vars': ['warn', {
                 argsIgnorePattern: '^_',
-                varsIgnorePattern: '^_'
+                varsIgnorePattern: '^_',
+                caughtErrorsIgnorePattern: '^_'
             }],
             'no-console': 'off',
             'no-undef': 'off',
@@ -75,7 +77,7 @@ export default [
             'eqeqeq': ['warn', 'always'],
             'curly': ['warn', 'all'],
             'no-debugger': 'warn',
-            'no-alert': 'warn',
+            'no-alert': 'off',
             'semi': ['warn', 'always'],
             'quotes': ['warn', 'single', { avoidEscape: true }],
             'indent': ['warn', 4, { SwitchCase: 1 }],
