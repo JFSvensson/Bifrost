@@ -88,7 +88,7 @@ export class ObsidianTodoService {
      * @returns {Array<Object>} Processed todos
      * @private
      */
-    processObsidianTodos(obsidianTodos) {
+    processObsidianTodos(obsidianTodos: Array<Record<string, any>>) {
         return obsidianTodos.map(todo => ({
             text: this.formatTodoText(todo),
             completed: todo.completed,
@@ -110,7 +110,7 @@ export class ObsidianTodoService {
      * @returns {string} Formatted text
      * @private
      */
-    formatTodoText(todo) {
+    formatTodoText(todo: Record<string, any>) {
         let text = todo.text;
 
         // Ta bort prioritets-markeringar från text
@@ -139,9 +139,9 @@ export class ObsidianTodoService {
      * @returns {string} Unique ID
      * @private
      */
-    generateTodoId(todo) {
+    generateTodoId(todo: { source?: string; lineNumber?: number }) {
         // Skapa unikt ID baserat på fil + rad
-        return `obsidian-${todo.source}-${todo.lineNumber}`;
+        return `obsidian-${todo.source || 'unknown'}-${todo.lineNumber || 0}`;
     }
 
     /**
@@ -177,7 +177,7 @@ export class ObsidianTodoService {
      * @param {Array<Object>} todos - Todos to sort
      * @returns {Array<Object>} Sorted todos
      */
-    sortTodos(todos) {
+    sortTodos(todos: Array<Record<string, any>>) {
         const priorityOrder = { high: 4, medium: 3, normal: 2, low: 1 };
 
         return todos.sort((a, b) => {
@@ -187,8 +187,8 @@ export class ObsidianTodoService {
             }
 
             // Först efter prioritet
-            const aPriority = priorityOrder[a.priority] || 2;
-            const bPriority = priorityOrder[b.priority] || 2;
+            const aPriority = priorityOrder[(a.priority as keyof typeof priorityOrder)] || 2;
+            const bPriority = priorityOrder[(b.priority as keyof typeof priorityOrder)] || 2;
 
             if (aPriority !== bPriority) {
                 return bPriority - aPriority; // Hög prioritet först
@@ -231,7 +231,7 @@ export class ObsidianTodoService {
      * @param {string} text - Todo text
      * @returns {Object} Created todo
      */
-    addLocalTodo(text) {
+    addLocalTodo(text: string) {
         const todos = this.getLocalTodos();
         const newTodo = {
             text: text,
@@ -253,7 +253,7 @@ export class ObsidianTodoService {
      * @param {string} todoId - Todo ID to remove
      * @returns {Array<Object>} Remaining todos
      */
-    removeLocalTodo(todoId) {
+    removeLocalTodo(todoId: string) {
         const todos = this.getLocalTodos();
         const filtered = todos.filter(todo => todo.id !== todoId);
         stateManager.set('todos', filtered);
@@ -290,8 +290,8 @@ export class ObsidianTodoService {
      * @param {string} priority - Priority level
      * @returns {string} Color code
      */
-    getPriorityColor(priority) {
-        return this.priorityColors[priority] || this.priorityColors.normal;
+    getPriorityColor(priority: string) {
+        return this.priorityColors[priority as keyof typeof this.priorityColors] || this.priorityColors.normal;
     }
 
     /**
