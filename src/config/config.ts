@@ -4,6 +4,20 @@
  */
 
 export const config = {
+    // Application mode settings
+    appMode: {
+        network: 'online', // 'online' or 'no-network'
+        allowLocalhost: true // Allow localhost integrations in no-network mode
+    },
+
+    // Integration capability flags
+    integrations: {
+        schoolMenu: true,
+        weather: true,
+        googleCalendar: true,
+        obsidian: true
+    },
+
     // School menu settings
     schoolMenu: {
         apiUrl: 'http://localhost:8787/api/school-menu',
@@ -136,6 +150,8 @@ export function updateConfig(path, value) {
 
 // Export individual sections for convenience
 export const {
+    appMode,
+    integrations,
     schoolMenu,
     todos,
     links,
