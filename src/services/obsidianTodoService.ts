@@ -156,7 +156,7 @@ export class ObsidianTodoService {
             // Merge: Obsidian todos + lokala Bifrost todos
             const merged = [
                 ...obsidianTodos,
-                ...localTodos.filter(todo => todo.source !== 'obsidian')
+                ...localTodos.filter((todo: Record<string, any>) => todo.source !== 'obsidian')
             ];
 
             // Sortera efter prioritet
@@ -212,7 +212,7 @@ export class ObsidianTodoService {
     getLocalTodos() {
         try {
             const todos = stateManager.get('todos', []);
-            return todos.map(todo => ({
+            return todos.map((todo: Record<string, any>) => ({
                 ...todo,
                 source: todo.source || 'bifrost',
                 priority: todo.priority || 'normal'
@@ -255,7 +255,7 @@ export class ObsidianTodoService {
      */
     removeLocalTodo(todoId: string) {
         const todos = this.getLocalTodos();
-        const filtered = todos.filter(todo => todo.id !== todoId);
+        const filtered = todos.filter((todo: Record<string, any>) => todo.id !== todoId);
         stateManager.set('todos', filtered);
 
         return filtered;
