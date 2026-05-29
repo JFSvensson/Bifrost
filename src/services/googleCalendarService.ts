@@ -7,6 +7,7 @@ import eventBus from '../core/eventBus.js';
 import stateManager from '../core/stateManager.js';
 import errorHandler, { ErrorCode } from '../core/errorHandler.js';
 import { logger } from '../utils/logger.js';
+import { networkPolicyService } from './networkPolicyService.js';
 
 export class GoogleCalendarService {
     CLIENT_ID: string | null;
@@ -30,7 +31,21 @@ export class GoogleCalendarService {
         this.accessToken = null;
 
         // Load credentials from config
-        this.loadCredentials();
+        if (networkPolicyService.shouldInitIntegration('googleCalendar')) {
+            this.loadCredentials();
+        }
+    }
+
+    private ensureIntegrationAvailable() {
+        if (!networkPolicyService.shouldInitIntegration('googleCalendar')) {
+            throw new Error('Google Calendar integration is disabled');
+        }
+    }
+
+    private ensureNetworkAllowed(url?: string) {
+        if (!networkPolicyService.isNetworkAllowed(url)) {
+            throw new Error('Network is disabled in current mode');
+        }
     }
 
     /**
@@ -39,6 +54,9 @@ export class GoogleCalendarService {
      */
     async loadCredentials() {
         try {
+            this.ensureIntegrationAvailable();
+            this.ensureNetworkAllowed('/google-credentials.json');
+
             const response = await fetch('/google-credentials.json');
             if (!response.ok) {
                 errorHandler.warning(
@@ -70,6 +88,8 @@ export class GoogleCalendarService {
      * @throws {Error} If credentials not configured
      */
     async initialize() {
+        this.ensureIntegrationAvailable();
+
         if (!this.CLIENT_ID) {
             const loaded = await this.loadCredentials();
             if (!loaded) {
@@ -96,6 +116,9 @@ export class GoogleCalendarService {
      * Load Google API scripts dynamically
      */
     async loadGoogleScripts() {
+        this.ensureNetworkAllowed('https://apis.google.com/js/api.js');
+        this.ensureNetworkAllowed('https://accounts.google.com/gsi/client');
+
         return Promise.all([
             this.loadScript('https://apis.google.com/js/api.js'),
             this.loadScript('https://accounts.google.com/gsi/client')
@@ -127,6 +150,8 @@ export class GoogleCalendarService {
      * @returns {Promise<void>}
      */
     async initializeGapi() {
+        this.ensureNetworkAllowed(this.DISCOVERY_DOC);
+
         return new Promise<void>((resolve) => {
             // @ts-ignore - gapi is loaded dynamically
             window.gapi.load('client', async () => {
@@ -213,6 +238,8 @@ export class GoogleCalendarService {
      * Sign in to Google Calendar
      */
     async signIn() {
+        this.ensureIntegrationAvailable();
+
         if (!this.gisInited) {
             await this.initialize();
         }
@@ -292,6 +319,8 @@ export class GoogleCalendarService {
      * @throws {Error} If not authenticated or fetch fails
      */
     async getEvents(startDate, endDate, maxResults = 50) {
+        this.ensureIntegrationAvailable();
+
         if (!this.isAuthenticated()) {
             throw new Error('Not authenticated');
         }
@@ -325,6 +354,8 @@ export class GoogleCalendarService {
      * @throws {Error} If not authenticated or creation fails
      */
     async createEvent(event) {
+        this.ensureIntegrationAvailable();
+
         if (!this.isAuthenticated()) {
             throw new Error('Not authenticated');
         }
@@ -357,6 +388,8 @@ export class GoogleCalendarService {
      * @throws {Error} If not authenticated or update fails
      */
     async updateEvent(eventId, updates) {
+        this.ensureIntegrationAvailable();
+
         if (!this.isAuthenticated()) {
             throw new Error('Not authenticated');
         }
@@ -400,6 +433,8 @@ export class GoogleCalendarService {
      * @throws {Error} If not authenticated or deletion fails
      */
     async deleteEvent(eventId) {
+        this.ensureIntegrationAvailable();
+
         if (!this.isAuthenticated()) {
             throw new Error('Not authenticated');
         }
