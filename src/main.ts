@@ -14,6 +14,7 @@ import './config/uiConfig.js'; // Initialize UI with config values
 import performanceMonitor from './services/performanceMonitor.js';
 import eventBus from './core/eventBus.js';
 import { networkPolicyService } from './services/networkPolicyService.js';
+import { todoRepository } from './services/todoRepository.js';
 import { keyboardShortcutService } from './services/keyboardShortcutService.js';
 import { searchService as _searchService } from './services/searchService.js';
 import { logger } from './utils/logger.js';
@@ -31,6 +32,36 @@ let obsidianService;
 let statsService;
 let deadlineService;
 let currentTodos = [];
+
+function syncTodoSnapshot() {
+    currentTodos = todoRepository.getAll();
+    return currentTodos;
+}
+
+function replaceTodos(nextTodos, persist = true) {
+    todoRepository.replaceAll(nextTodos, { persist });
+    return syncTodoSnapshot();
+}
+
+function appendTodo(todo, persist = true) {
+    todoRepository.append(todo, { persist });
+    return syncTodoSnapshot();
+}
+
+function appendTodos(todosToAppend, persist = true) {
+    todoRepository.appendMany(todosToAppend, { persist });
+    return syncTodoSnapshot();
+}
+
+function updateTodo(todoId, updater, persist = true) {
+    todoRepository.update(todoId, updater, { persist });
+    return syncTodoSnapshot();
+}
+
+function removeTodoById(todoId, persist = true) {
+    todoRepository.remove(todoId, { persist });
+    return syncTodoSnapshot();
+}
 
 // ===== INITIALIZATION PHASES =====
 
@@ -244,7 +275,7 @@ window.addEventListener('calendarAuthenticated', () => {
         return;
     }
 
-    calendarSyncService.enableSync(() => currentTodos);
+    calendarSyncService.enableSync(() => todoRepository.getAll());
     logger.info('Calendar sync enabled');
 });
 
@@ -290,14 +321,13 @@ function handleQuickAdd(parsed) {
         const newTodo = obsidianService.addLocalTodo(todoData.text);
         // Merge parsed data
         Object.assign(newTodo, todoData);
-        currentTodos.push(newTodo);
+        appendTodo(newTodo);
 
         // Track in stats with tags
         statsService.trackTodoCreated(newTodo);
     } else {
         // Legacy mode
-        currentTodos.push(todoData);
-        saveTodos();
+        appendTodo(todoData);
 
         // Track in stats
         statsService.trackTodoCreated(todoData);
@@ -354,24 +384,23 @@ function createReminderFromParsed(todo, reminderData) {
 function handleRecurringEvent(event, data) {
     if (event === 'todoCreated' || event === 'duePatterns') {
         // Add todos created by recurring service to the list
-        const todos = Array.isArray(data) ? data : [data.todo];
+        const createdTodos = Array.isArray(data) ? data : [data.todo];
 
-        todos.forEach(todo => {
-            currentTodos.push(todo);
+        createdTodos.forEach(todo => {
             statsService.trackTodoCreated(todo);
         });
 
+        appendTodos(createdTodos);
+
         renderTodos();
         dispatchTodosUpdated();
-        saveTodos();
     } else if (event === 'nextInstanceCreated') {
         // Handle auto-creation on completion
         const { nextTodo } = data;
-        currentTodos.push(nextTodo);
+        appendTodo(nextTodo);
         statsService.trackTodoCreated(nextTodo);
         renderTodos();
         dispatchTodosUpdated();
-        saveTodos();
 
         showToast('🔄 Nästa återkommande uppgift skapad!');
     }
@@ -412,7 +441,7 @@ function addTodo() {
         // Add to local storage (Bifrost todos)
         const newTodo = obsidianService.addLocalTodo(todoText);
         newTodo.createdAt = new Date();
-        currentTodos.push(newTodo);
+        appendTodo(newTodo);
 
         // Track in stats
         statsService.trackTodoCreated(newTodo);
@@ -426,8 +455,7 @@ function addTodo() {
             id: Date.now().toString(),
             createdAt: new Date()
         };
-        currentTodos.push(newTodo);
-        saveTodos();
+        appendTodo(newTodo);
 
         // Track in stats
         statsService.trackTodoCreated(newTodo);
@@ -750,23 +778,26 @@ function toggleTodo(todoId) {
         return;
     }
 
-    const _wasCompleted = todo.completed;
-    todo.completed = !todo.completed;
+    const updatedTodo = {
+        ...todo,
+        completed: !todo.completed
+    };
 
-    if (todo.completed) {
-        todo.completedAt = new Date();
+    if (updatedTodo.completed) {
+        updatedTodo.completedAt = new Date();
         // Track completion in stats
-        statsService.trackTodoCompleted(todo);
+        statsService.trackTodoCompleted(updatedTodo);
 
         // Handle recurring todos - create next instance
-        if (todo.recurringPatternId) {
-            recurringService.onTodoCompleted(todo);
+        if (updatedTodo.recurringPatternId) {
+            recurringService.onTodoCompleted(updatedTodo);
         }
     } else {
-        delete todo.completedAt;
+        delete updatedTodo.completedAt;
     }
 
-    saveTodos();
+    updateTodo(todoId, () => updatedTodo);
+
     renderTodos();
     dispatchTodosUpdated();
 }
@@ -774,10 +805,9 @@ function toggleTodo(todoId) {
 function removeTodo(todoId) {
     if (obsidianService) {
         obsidianService.removeLocalTodo(todoId);
-        currentTodos = currentTodos.filter(todo => todo.id !== todoId);
+        removeTodoById(todoId);
     } else {
-        currentTodos = currentTodos.filter(todo => todo.id !== todoId);
-        saveTodos();
+        removeTodoById(todoId);
     }
     renderTodos();
 }
@@ -799,7 +829,7 @@ async function syncWithObsidian() {
 
     try {
         const synced = await obsidianService.syncWithLocal();
-        currentTodos = synced;
+        replaceTodos(synced);
         renderTodos();
         dispatchTodosUpdated();
 
@@ -831,9 +861,7 @@ function showSyncError(message) {
 
 function saveTodos() {
     performanceMonitor.start('save-todos');
-    // Only save Bifrost todos to localStorage
-    const bifrostTodos = currentTodos.filter(todo => todo.source === 'bifrost');
-    localStorage.setItem(todos.storageKey, JSON.stringify(bifrostTodos));
+    todoRepository.persistBifrostTodos();
     performanceMonitor.end('save-todos');
 }
 
@@ -846,15 +874,10 @@ async function loadTodos() {
         // Set up auto-sync
         setInterval(syncWithObsidian, todos.obsidian.updateInterval);
     } else {
-        // Legacy mode - load from localStorage
-        const saved = localStorage.getItem(todos.storageKey);
-        if (saved) {
-            currentTodos = JSON.parse(saved).map(todo => ({
-                ...todo,
-                source: 'bifrost',
-                priority: todo.priority || 'normal'
-            }));
-            renderTodos();
+        // Repository mode - load via state abstraction with legacy fallback
+        await todoRepository.load();
+        syncTodoSnapshot();
+        if (currentTodos.length > 0) {
             dispatchTodosUpdated();
         }
     }
