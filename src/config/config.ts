@@ -137,14 +137,14 @@ export const config = {
 };
 
 // Helper functions for config access
-export function getConfig(path) {
-    return path.split('.').reduce((obj, key) => obj?.[key], config);
+export function getConfig(path: string) {
+    return path.split('.').reduce((obj: any, key: string) => obj?.[key], config as any);
 }
 
-export function updateConfig(path, value) {
+export function updateConfig(path: string, value: unknown) {
     const keys = path.split('.');
-    const lastKey = keys.pop();
-    const target = keys.reduce((obj, key) => obj[key], config);
+    const lastKey = keys.pop() as string;
+    const target = keys.reduce((obj: any, key: string) => obj[key], config as any);
     target[lastKey] = value;
 }
 
