@@ -71,8 +71,8 @@ export class GoogleCalendarService {
             this.API_KEY = credentials.api_key;
 
             logger.debug('Google Calendar credentials loaded');
-            logger.debug('Client ID:', this.CLIENT_ID);
-            logger.debug(credentials);
+            logger.debug('Client ID loaded', { hasClientId: Boolean(this.CLIENT_ID) });
+            logger.debug('Credentials object loaded', credentials as Record<string, unknown>);
             return true;
         } catch (error) {
             errorHandler.handle(error, {
@@ -186,8 +186,10 @@ export class GoogleCalendarService {
                         return;
                     }
 
-                    this.accessToken = response.access_token;
-                    this.saveAuthToken(response.access_token);
+                    this.accessToken = response.access_token || null;
+                    if (response.access_token) {
+                        this.saveAuthToken(response.access_token);
+                    }
                     eventBus.emit('googleCalendar:authenticated', { authenticated: true });
                 }
             });
@@ -446,7 +448,7 @@ export class GoogleCalendarService {
                 eventId: eventId
             });
 
-            logger.info('Event deleted:', eventId);
+            logger.info('Event deleted', { eventId });
             eventBus.emit('googleCalendar:eventDeleted', { eventId });
             return true;
         } catch (error) {
@@ -532,13 +534,15 @@ export class GoogleCalendarService {
     }) {
         const start = event.start.dateTime || event.start.date;
         const end = event.end.dateTime || event.end.date;
+        const startDate = new Date(start || Date.now());
+        const endDate = new Date(end || Date.now());
 
         return {
             id: event.id,
             title: event.summary || '(No title)',
             description: event.description || '',
-            start: new Date(start),
-            end: new Date(end),
+            start: startDate,
+            end: endDate,
             allDay: !event.start.dateTime,
             location: event.location || null,
             link: event.htmlLink,
