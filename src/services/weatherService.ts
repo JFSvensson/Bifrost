@@ -235,7 +235,7 @@ export class WeatherService {
      * @param {number} lon - Longitude
      * @param {string} [name=null] - Location name
      */
-    setLocation(lat, lon, name = null) {
+    setLocation(lat: number, lon: number, name: string | null = null) {
         this.latitude = lat;
         this.longitude = lon;
         if (name) {
