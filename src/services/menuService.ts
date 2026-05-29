@@ -1,5 +1,6 @@
 import { schoolMenu } from '../config/config.js';
 import errorHandler, { ErrorCode } from '../core/errorHandler.js';
+import { networkPolicyService } from './networkPolicyService.js';
 
 /**
  * Simple service for school menu API calls
@@ -23,6 +24,14 @@ export class MenuService {
      * @throws {Error} If fetch fails or data is invalid
      */
     async fetchMenu() {
+        if (!networkPolicyService.shouldInitIntegration('schoolMenu')) {
+            return this.getFallbackData();
+        }
+
+        if (!networkPolicyService.isNetworkAllowed(this.apiUrl)) {
+            return this.getFallbackData();
+        }
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
@@ -61,5 +70,14 @@ export class MenuService {
             throw new Error('Invalid menu data');
         }
         return data;
+    }
+
+    /**
+     * Return deterministic fallback payload for local/no-network mode
+     * @returns {Object} Fallback menu model
+     * @private
+     */
+    getFallbackData() {
+        return this.validateData(schoolMenu.fallbackData);
     }
 }
