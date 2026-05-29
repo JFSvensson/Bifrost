@@ -55,17 +55,17 @@ function getCurrentLogLevel() {
         'silent': LogLevel.SILENT
     };
 
-    return levelMap[configLevel] || LogLevel.INFO;
+    return levelMap[configLevel as keyof typeof levelMap] || LogLevel.INFO;
 }
 
 /**
  * Format log message with context
  */
-function formatMessage(level, message, context) {
+function formatMessage(level: string, message: string, context: unknown) {
     const timestamp = new Date().toISOString();
     const prefix = `[${timestamp}] [${level.toUpperCase()}]`;
 
-    if (context && Object.keys(context).length > 0) {
+    if (context && typeof context === 'object' && Object.keys(context as Record<string, unknown>).length > 0) {
         return `${prefix} ${message}`;
     }
 
@@ -75,7 +75,7 @@ function formatMessage(level, message, context) {
 /**
  * Should log at this level?
  */
-function shouldLog(level) {
+function shouldLog(level: number) {
     return level >= getCurrentLogLevel();
 }
 
@@ -88,7 +88,7 @@ class Logger {
      * @param {string} message - Log message
      * @param {Object} [context] - Additional context
      */
-    debug(message, context = {}) {
+    debug(message: string, context: unknown = {}) {
         if (shouldLog(LogLevel.DEBUG)) {
             console.debug(formatMessage('debug', message, context), context);
         }
@@ -99,7 +99,7 @@ class Logger {
      * @param {string} message - Log message
      * @param {Object} [context] - Additional context
      */
-    info(message, context = {}) {
+    info(message: string, context: unknown = {}) {
         if (shouldLog(LogLevel.INFO)) {
             console.info(formatMessage('info', message, context), context);
         }
@@ -110,14 +110,18 @@ class Logger {
      * @param {string} message - Log message
      * @param {Object} [context] - Additional context
      */
-    warn(message, context = {}) {
+    warn(message: string, context: unknown = {}) {
         if (shouldLog(LogLevel.WARN)) {
             console.warn(formatMessage('warn', message, context), context);
         }
 
         // Report to errorHandler
         if (errorHandler && typeof errorHandler.log === 'function') {
-            errorHandler.log('WARNING', message, context);
+            errorHandler.log(
+                'WARNING',
+                message,
+                context && typeof context === 'object' ? (context as Record<string, unknown>) : {}
+            );
         }
     }
 
@@ -127,9 +131,11 @@ class Logger {
      * @param {Error} [error] - Error object
      * @param {Object} [context] - Additional context
      */
-    error(message, error: any = null, context: any = {}) {
+    error(message: string, error: any = null, context: unknown = {}) {
         if (shouldLog(LogLevel.ERROR)) {
-            const fullContext = { ...context };
+            const fullContext: Record<string, unknown> = context && typeof context === 'object'
+                ? { ...(context as Record<string, unknown>) }
+                : {};
             if (error) {
                 fullContext.error = error.message;
                 fullContext.stack = error.stack;
@@ -142,7 +148,7 @@ class Logger {
         if (errorHandler && typeof errorHandler.handle === 'function') {
             errorHandler.handle(error || new Error(message), {
                 context: message,
-                metadata: context,
+                metadata: context && typeof context === 'object' ? context : {},
                 showToast: false // Don't show toast for logged errors
             });
         }
@@ -154,9 +160,11 @@ class Logger {
      * @param {Error} [error] - Error object
      * @param {Object} [context] - Additional context
      */
-    critical(message, error: any = null, context: any = {}) {
+    critical(message: string, error: any = null, context: unknown = {}) {
         // Always log critical errors
-        const fullContext = { ...context };
+        const fullContext: Record<string, unknown> = context && typeof context === 'object'
+            ? { ...(context as Record<string, unknown>) }
+            : {};
         if (error) {
             fullContext.error = error.message;
             fullContext.stack = error.stack;
@@ -166,7 +174,11 @@ class Logger {
 
         // Report to errorHandler with toast
         if (errorHandler && typeof errorHandler.critical === 'function') {
-            errorHandler.critical('CRITICAL_ERROR', message, context);
+            errorHandler.critical(
+                'CRITICAL_ERROR',
+                message,
+                context && typeof context === 'object' ? (context as Record<string, unknown>) : {}
+            );
         }
     }
 
@@ -175,7 +187,7 @@ class Logger {
      * @param {string} label - Group label
      * @param {Function} callback - Function to execute in group
      */
-    group(label, callback) {
+    group(label: string, callback: Function) {
         if (shouldLog(LogLevel.DEBUG)) {
             console.group(label);
             callback();
@@ -191,7 +203,7 @@ class Logger {
      * @param {Function} callback - Function to measure
      * @returns {Promise<any>} Result of callback
      */
-    async measure(label, callback) {
+    async measure(label: string, callback: Function) {
         if (shouldLog(LogLevel.DEBUG)) {
             const start = performance.now();
             const result = await callback();
@@ -206,7 +218,7 @@ class Logger {
      * Table logging for structured data
      * @param {Array|Object} data - Data to display
      */
-    table(data) {
+    table(data: Array<unknown> | Record<string, unknown>) {
         if (shouldLog(LogLevel.DEBUG)) {
             console.table(data);
         }
