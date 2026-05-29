@@ -114,7 +114,7 @@ class CalendarWidget extends HTMLElement {
 
         try {
             const events = await googleCalendarService.getTodaysEvents();
-            this.events = events.map(e => googleCalendarService.formatEvent(e));
+            this.events = events.map((e: any) => googleCalendarService.formatEvent(e));
             this.isLoading = false;
             this.render();
         } catch (error) {
@@ -447,7 +447,7 @@ class CalendarWidget extends HTMLElement {
         `;
     }
 
-    renderEvent(event) {
+    renderEvent(event: { allDay: boolean; start: Date; end: Date; title: string; description?: string; location?: string }) {
         const timeStr = event.allDay
             ? 'All day'
             : `${this.formatTime(event.start)} - ${this.formatTime(event.end)}`;
@@ -462,11 +462,11 @@ class CalendarWidget extends HTMLElement {
         `;
     }
 
-    formatTime(date) {
+    formatTime(date: Date) {
         return date.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
     }
 
-    escapeHtml(text) {
+    escapeHtml(text: string) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
@@ -495,13 +495,15 @@ class CalendarWidget extends HTMLElement {
         });
     }
 
-    showError(message) {
+    showError(message: string) {
         const errorDiv = document.createElement('div');
         errorDiv.className = 'error-message';
         errorDiv.textContent = `⚠️ ${message}`;
 
         const container = this.shadowRoot.querySelector('.calendar-container');
-        container.appendChild(errorDiv);
+        if (container) {
+            container.appendChild(errorDiv);
+        }
 
         setTimeout(() => errorDiv.remove(), 5000);
     }
