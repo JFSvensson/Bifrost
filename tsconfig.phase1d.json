@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noImplicitThis": true
+  },
+  "include": [
+    "src/services/networkPolicyService.ts",
+    "src/services/weatherService.ts",
+    "src/services/menuService.ts",
+    "src/services/googleCalendarService.ts",
+    "src/services/obsidianTodoService.ts",
+    "src/widgets/calendarWidget.ts"
+  ]
+}
