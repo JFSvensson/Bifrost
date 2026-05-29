@@ -128,7 +128,7 @@ export class GoogleCalendarService {
     /**
      * Load a script dynamically
      */
-    loadScript(src) {
+    loadScript(src: string) {
         return new Promise<void>((resolve, reject) => {
             if (document.querySelector(`script[src="${src}"]`)) {
                 resolve();
@@ -176,7 +176,7 @@ export class GoogleCalendarService {
             this.tokenClient = window.google.accounts.oauth2.initTokenClient({
                 client_id: this.CLIENT_ID,
                 scope: this.SCOPES,
-                callback: (response) => {
+                callback: (response: { error?: string; access_token?: string }) => {
                     if (response.error) {
                         errorHandler.handle(new Error(response.error), {
                             code: ErrorCode.VALIDATION_ERROR,
@@ -227,7 +227,7 @@ export class GoogleCalendarService {
      * Save authentication token
      * @param {string} token - Access token
      */
-    saveAuthToken(token) {
+    saveAuthToken(token: string) {
         const expiry = Date.now() + (3600 * 1000); // 1 hour
         stateManager.set('googleCalendarToken', { token, expiry });
         // @ts-ignore - gapi is loaded dynamically
@@ -318,7 +318,7 @@ export class GoogleCalendarService {
      * @returns {Promise<Array<Object>>} Calendar events
      * @throws {Error} If not authenticated or fetch fails
      */
-    async getEvents(startDate, endDate, maxResults = 50) {
+    async getEvents(startDate: Date, endDate: Date, maxResults = 50) {
         this.ensureIntegrationAvailable();
 
         if (!this.isAuthenticated()) {
@@ -353,7 +353,7 @@ export class GoogleCalendarService {
      * @returns {Promise<Object>} Created event
      * @throws {Error} If not authenticated or creation fails
      */
-    async createEvent(event) {
+    async createEvent(event: Record<string, unknown>) {
         this.ensureIntegrationAvailable();
 
         if (!this.isAuthenticated()) {
@@ -387,7 +387,7 @@ export class GoogleCalendarService {
      * @returns {Promise<Object>} Updated event
      * @throws {Error} If not authenticated or update fails
      */
-    async updateEvent(eventId, updates) {
+    async updateEvent(eventId: string, updates: Record<string, unknown>) {
         this.ensureIntegrationAvailable();
 
         if (!this.isAuthenticated()) {
@@ -432,7 +432,7 @@ export class GoogleCalendarService {
      * @returns {Promise<boolean>} True if deleted
      * @throws {Error} If not authenticated or deletion fails
      */
-    async deleteEvent(eventId) {
+    async deleteEvent(eventId: string) {
         this.ensureIntegrationAvailable();
 
         if (!this.isAuthenticated()) {
@@ -465,7 +465,13 @@ export class GoogleCalendarService {
      * @returns {Promise<Object>} Created event
      * @throws {Error} If todo missing due date
      */
-    async createEventFromTodo(todo) {
+    async createEventFromTodo(todo: {
+        dueDate?: string | Date;
+        text: string;
+        priority?: string;
+        tags?: string[];
+        id?: string;
+    }) {
         if (!todo.dueDate) {
             throw new Error('Todo must have a due date');
         }
@@ -515,7 +521,15 @@ export class GoogleCalendarService {
      * @property {string} link - Calendar link
      * @property {Object} raw - Raw event object
      */
-    formatEvent(event) {
+    formatEvent(event: {
+        id: string;
+        summary?: string;
+        description?: string;
+        start: { dateTime?: string; date?: string };
+        end: { dateTime?: string; date?: string };
+        location?: string;
+        htmlLink?: string;
+    }) {
         const start = event.start.dateTime || event.start.date;
         const end = event.end.dateTime || event.end.date;
 
