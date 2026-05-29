@@ -65,7 +65,7 @@ export class MenuService {
      * @throws {Error} If data is invalid
      * @private
      */
-    validateData(data) {
+    validateData(data: { days?: unknown[] } & Record<string, unknown>) {
         if (!data?.days?.length) {
             throw new Error('Invalid menu data');
         }
