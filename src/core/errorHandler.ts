@@ -85,7 +85,7 @@ class ErrorHandler {
     maxHistorySize: number;
     logLevel: string;
     errorCounts: Record<string, number>;
-    toastFunction: ((_message: string, _type: string) => void) | null;
+    toastFunction: ((_message: string, _options?: unknown) => void) | null;
 
     /**
      * Initialiserar ErrorHandler
@@ -147,7 +147,7 @@ class ErrorHandler {
      * @param {Object} [options.metadata] - Extra metadata
      * @returns {Object} ErrorInfo-objekt
      */
-    handle(error, options: any = {}) {
+    handle(error: unknown, options: any = {}) {
         const {
             code = ErrorCode.UNKNOWN_ERROR,
             context = '',
@@ -192,7 +192,7 @@ class ErrorHandler {
      * @param {Object} [metadata={}] - Extra metadata
      * @returns {void}
      */
-    log(code, message, metadata = {}) {
+    log(code: string, message: string, metadata: Record<string, unknown> = {}) {
         this.handle(new Error(message), {
             code,
             level: ErrorLevel.WARNING,
@@ -208,7 +208,7 @@ class ErrorHandler {
      * @param {Object} [metadata={}] - Extra metadata
      * @returns {void}
      */
-    info(message, metadata = {}) {
+    info(message: string, metadata: Record<string, unknown> = {}) {
         const errorInfo = {
             code: 'INFO',
             message,
@@ -229,7 +229,7 @@ class ErrorHandler {
      * @param {Object} [metadata={}] - Extra metadata
      * @returns {void}
      */
-    warning(code, message, metadata = {}) {
+    warning(code: string, message: string, metadata: Record<string, unknown> = {}) {
         this.handle(new Error(message), {
             code,
             level: ErrorLevel.WARNING,
@@ -246,7 +246,7 @@ class ErrorHandler {
      * @param {Object} [metadata={}] - Extra metadata
      * @returns {void}
      */
-    critical(code, message, metadata = {}) {
+    critical(code: string, message: string, metadata: Record<string, unknown> = {}) {
         this.handle(new Error(message), {
             code,
             level: ErrorLevel.CRITICAL,
@@ -264,8 +264,8 @@ class ErrorHandler {
      * @throws {Error} Om required fields saknas
      * @returns {void}
      */
-    validateRequired(data, requiredFields, context = 'Validation') {
-        const missing = requiredFields.filter(field => !data[field]);
+    validateRequired(data: Record<string, unknown>, requiredFields: string[], context = 'Validation') {
+        const missing = requiredFields.filter((field: string) => !data[field]);
 
         if (missing.length > 0) {
             const error = new Error(`Missing required fields: ${missing.join(', ')}`);
@@ -286,7 +286,7 @@ class ErrorHandler {
      * @param {Object} errorInfo - ErrorInfo-objekt
      * @returns {void}
      */
-    _logToConsole(errorInfo) {
+    _logToConsole(errorInfo: any) {
         const { level, code, message, context, metadata, stack } = errorInfo;
 
         const logMessage = [
@@ -324,7 +324,7 @@ class ErrorHandler {
      * @param {Object} errorInfo - ErrorInfo-objekt
      * @returns {void}
      */
-    _addToHistory(errorInfo) {
+    _addToHistory(errorInfo: any) {
         this.errorHistory.push(errorInfo);
 
         // Begränsa historikstorlek
@@ -340,7 +340,7 @@ class ErrorHandler {
      * @param {string} code - Felkod
      * @returns {void}
      */
-    _updateStats(code) {
+    _updateStats(code: string) {
         this.errorCounts[code] = (this.errorCounts[code] || 0) + 1;
     }
 
@@ -351,7 +351,7 @@ class ErrorHandler {
      * @param {Object} errorInfo - ErrorInfo-objekt
      * @returns {void}
      */
-    _showToast(errorInfo) {
+    _showToast(errorInfo: any) {
         if (!this.toastFunction) {
             // Fallback: använd alert för kritiska fel
             if (errorInfo.level === ErrorLevel.CRITICAL) {
@@ -376,7 +376,7 @@ class ErrorHandler {
      * @param {Object} errorInfo - ErrorInfo-objekt
      * @returns {string} Användarvänligt meddelande
      */
-    _getUserFriendlyMessage(errorInfo) {
+    _getUserFriendlyMessage(errorInfo: any) {
         const { code, message: _message, context } = errorInfo;
 
         // Mapping av felkoder till användarvänliga meddelanden
@@ -400,7 +400,7 @@ class ErrorHandler {
      * @param {Function} toastFn - Toast-funktion (message, options) => void
      * @returns {void}
      */
-    registerToastFunction(toastFn) {
+    registerToastFunction(toastFn: (_message: string, _options?: unknown) => void) {
         this.toastFunction = toastFn;
     }
 
@@ -464,7 +464,7 @@ class ErrorHandler {
      * @param {string} level - ErrorLevel
      * @returns {void}
      */
-    setLogLevel(level) {
+    setLogLevel(level: string) {
         if (Object.values(ErrorLevel).includes(level)) {
             this.logLevel = level;
         } else {
@@ -478,7 +478,7 @@ class ErrorHandler {
      * @param {Function} toastFn - Funktion som tar emot errorInfo-objekt
      * @returns {void}
      */
-    setToastFunction(toastFn) {
+    setToastFunction(toastFn: (_message: string, _options?: unknown) => void) {
         if (typeof toastFn === 'function') {
             this.toastFunction = toastFn;
         }
@@ -490,7 +490,7 @@ class ErrorHandler {
      * @param {string} code - Felkod
      * @returns {string} Recovery suggestion
      */
-    getRecoverySuggestion(code) {
+    getRecoverySuggestion(code: string) {
         const suggestions = {
             [ErrorCode.STORAGE_ERROR]: 'Try clearing browser data or use a different browser.',
             [ErrorCode.STORAGE_QUOTA_EXCEEDED]: 'Storage is full. Clear old data to free up space.',
