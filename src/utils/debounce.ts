@@ -14,21 +14,21 @@
  * @param {number} [options.maxWait] - Maximum time to wait before forcing execution
  * @returns {Function} Debounced function with cancel() and flush() methods
  */
-export function debounce(func, wait = 0, options: any = {}) {
+export function debounce(func: (...args: any[]) => any, wait = 0, options: any = {}) {
     const {
         leading = false,
         trailing = true,
         maxWait
     } = options;
 
-    let timeoutId = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     let lastCallTime = 0;
     let lastInvokeTime = 0;
-    let lastArgs = null;
-    let lastThis = null;
-    let result;
+    let lastArgs: any[] | null = null;
+    let lastThis: any = null;
+    let result: any;
 
-    function invokeFunc(time) {
+    function invokeFunc(time: number) {
         const args = lastArgs;
         const thisArg = lastThis;
 
@@ -38,7 +38,7 @@ export function debounce(func, wait = 0, options: any = {}) {
         return result;
     }
 
-    function shouldInvoke(time) {
+    function shouldInvoke(time: number) {
         const timeSinceLastCall = time - lastCallTime;
         const timeSinceLastInvoke = time - lastInvokeTime;
 
@@ -50,13 +50,13 @@ export function debounce(func, wait = 0, options: any = {}) {
         );
     }
 
-    function leadingEdge(time) {
+    function leadingEdge(time: number) {
         lastInvokeTime = time;
         timeoutId = setTimeout(timerExpired, wait);
         return leading ? invokeFunc(time) : result;
     }
 
-    function remainingWait(time) {
+    function remainingWait(time: number) {
         const timeSinceLastCall = time - lastCallTime;
         const timeSinceLastInvoke = time - lastInvokeTime;
         const timeWaiting = wait - timeSinceLastCall;
@@ -74,7 +74,7 @@ export function debounce(func, wait = 0, options: any = {}) {
         timeoutId = setTimeout(timerExpired, remainingWait(time));
     }
 
-    function trailingEdge(time) {
+    function trailingEdge(time: number) {
         timeoutId = null;
 
         if (trailing && lastArgs) {
@@ -89,7 +89,10 @@ export function debounce(func, wait = 0, options: any = {}) {
             clearTimeout(timeoutId);
         }
         lastInvokeTime = 0;
-        lastArgs = lastCallTime = lastThis = timeoutId = null;
+        lastArgs = null;
+        lastCallTime = 0;
+        lastThis = null;
+        timeoutId = null;
     }
 
     function flush() {
@@ -100,7 +103,7 @@ export function debounce(func, wait = 0, options: any = {}) {
         return timeoutId !== null;
     }
 
-    function debounced(...args) {
+    function debounced(this: any, ...args: any[]) {
         const time = Date.now();
         const isInvoking = shouldInvoke(time);
 
@@ -137,7 +140,7 @@ export function debounce(func, wait = 0, options: any = {}) {
  * @param {number} wait - Wait time in milliseconds
  * @returns {Function} Throttled function
  */
-export function throttle(func, wait = 0) {
+export function throttle(func: (...args: any[]) => any, wait = 0) {
     return debounce(func, wait, {
         leading: true,
         trailing: true,
@@ -152,9 +155,9 @@ export function throttle(func, wait = 0) {
  * @param {number} wait - Wait time in milliseconds
  * @returns {Function} Batched function
  */
-export function batch(func, wait = 0) {
-    const pending = [];
-    let timeoutId = null;
+export function batch(func: (items: any[][]) => void, wait = 0) {
+    const pending: any[][] = [];
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     function executeBatch() {
         const items = pending.splice(0);
@@ -164,7 +167,7 @@ export function batch(func, wait = 0) {
         timeoutId = null;
     }
 
-    return function (...args) {
+    return function (...args: any[]) {
         pending.push(args);
         if (timeoutId === null) {
             timeoutId = setTimeout(executeBatch, wait);
