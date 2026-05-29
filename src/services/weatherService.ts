@@ -105,7 +105,7 @@ export class WeatherService {
      * @returns {Object} Parsed weather data
      * @private
      */
-    parseWeatherData(data) {
+    parseWeatherData(data: { timeSeries?: Array<{ validTime: string; parameters: Array<{ name: string; values: number[] }> }> }) {
         if (!data.timeSeries || data.timeSeries.length === 0) {
             throw new Error('Ingen väderdata tillgänglig');
         }
@@ -114,7 +114,7 @@ export class WeatherService {
         const currentHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours());
 
         // Find current weather (closest to current hour)
-        const current = data.timeSeries.find(ts => {
+        const current = data.timeSeries.find((ts) => {
             const tsDate = new Date(ts.validTime);
             return tsDate >= currentHour;
         }) || data.timeSeries[0];
@@ -123,14 +123,14 @@ export class WeatherService {
         const endOfDay = new Date(currentHour);
         endOfDay.setHours(23, 59, 59);
 
-        const todayForecast = data.timeSeries.filter(ts => {
+        const todayForecast = data.timeSeries.filter((ts) => {
             const tsDate = new Date(ts.validTime);
             return tsDate <= endOfDay;
         });
 
         return {
             current: this.parseTimeSeriesEntry(current),
-            forecast: todayForecast.map(ts => this.parseTimeSeriesEntry(ts)),
+            forecast: todayForecast.map((ts) => this.parseTimeSeriesEntry(ts)),
             location: this.locationName,
             lastUpdated: new Date()
         };
@@ -142,7 +142,7 @@ export class WeatherService {
      * @returns {Object} Parsed weather parameters
      * @private
      */
-    parseTimeSeriesEntry(entry) {
+    parseTimeSeriesEntry(entry: { validTime: string; parameters: Array<{ name: string; values: number[] }> }) {
         const params = entry.parameters;
 
         return {
@@ -165,8 +165,8 @@ export class WeatherService {
      * @returns {number|null} Parameter value
      * @private
      */
-    getParameter(params, name) {
-        const param = params.find(p => p.name === name);
+    getParameter(params: Array<{ name: string; values: number[] }>, name: string) {
+        const param = params.find((p) => p.name === name);
         return param ? param.values[0] : null;
     }
 
@@ -175,7 +175,7 @@ export class WeatherService {
      * @param {number} category - SMHI precipitation category (0-6)
      * @returns {number} Probability percentage
      */
-    getPrecipitationProbability(category) {
+    getPrecipitationProbability(category: number) {
         // SMHI precipitation category to probability mapping
         const probabilities = {
             0: 0, // No precipitation
@@ -187,7 +187,7 @@ export class WeatherService {
             6: 95 // Extreme precipitation
         };
 
-        return probabilities[category] || 0;
+        return probabilities[category as keyof typeof probabilities] || 0;
     }
 
     /**
@@ -195,7 +195,7 @@ export class WeatherService {
      * @param {number} symbolCode - SMHI weather symbol code
      * @returns {string} Weather emoji
      */
-    getWeatherIcon(symbolCode) {
+    getWeatherIcon(symbolCode: number) {
         const icons = {
             1: '☀️', // Clear sky
             2: '🌤️', // Nearly clear sky
@@ -226,7 +226,7 @@ export class WeatherService {
             27: '❄️' // Heavy snowfall
         };
 
-        return icons[symbolCode] || '🌡️';
+        return icons[symbolCode as keyof typeof icons] || '🌡️';
     }
 
     /**
