@@ -192,7 +192,7 @@ class StateManager {
      * @param {*} [schema.default] - Default value
      * @returns {void}
      */
-    registerSchema(key, schema) {
+    registerSchema(key: string, schema: any) {
         const { version, validate, migrate, default: defaultValue } = schema;
 
         if (!version || typeof version !== 'number') {
@@ -202,7 +202,7 @@ class StateManager {
         this.schemas[key] = {
             version,
             validate: validate || (() => true),
-            migrate: migrate || ((data) => data),
+            migrate: migrate || ((data: any) => data),
             default: defaultValue
         };
 
@@ -219,7 +219,7 @@ class StateManager {
      * @param {*} [defaultValue] - Default value om key saknas
      * @returns {*} Sparad data eller default value
      */
-    get(key, defaultValue) {
+    get(key: string, defaultValue: any) {
         try {
             const stored = localStorage.getItem(key);
 
@@ -274,7 +274,7 @@ class StateManager {
      * @param {boolean} [options.immediate=false] - Skip debouncing and save immediately
      * @returns {boolean} True om spara lyckades
      */
-    set(key, data, options: any = {}) {
+    set(key: string, data: any, options: any = {}) {
         const {
             ttl,
             validate = true,
@@ -404,7 +404,7 @@ class StateManager {
      * @param {boolean} [options.notify=true] - Notifiera subscribers
      * @returns {void}
      */
-    remove(key, options: any = {}) {
+    remove(key: string, options: any = {}) {
         const { notify = true } = options;
 
         localStorage.removeItem(key);
@@ -423,7 +423,7 @@ class StateManager {
      * @param {string} key - Storage key
      * @returns {boolean} True om key finns
      */
-    has(key) {
+    has(key: string) {
         return localStorage.getItem(key) !== null;
     }
 
@@ -460,7 +460,7 @@ class StateManager {
      * @param {Function} callback - Callback (data, key) => void
      * @returns {Function} Unsubscribe-funktion
      */
-    subscribe(key, callback) {
+    subscribe(key: string, callback: Function) {
         if (!this.subscribers[key]) {
             this.subscribers[key] = [];
         }
@@ -484,9 +484,9 @@ class StateManager {
      * @param {*} data - Uppdaterad data
      * @returns {void}
      */
-    _notifySubscribers(key, data) {
+    _notifySubscribers(key: string, data: any) {
         if (this.subscribers[key]) {
-            this.subscribers[key].forEach(callback => {
+            this.subscribers[key].forEach((callback: Function) => {
                 try {
                     callback(data, key);
                 } catch (error) {
@@ -507,7 +507,7 @@ class StateManager {
      * @param {string} key - Storage key
      * @returns {void}
      */
-    _checkAndMigrate(key) {
+    _checkAndMigrate(key: string) {
         const stored = localStorage.getItem(key);
         if (!stored) {return;}
 
@@ -542,7 +542,7 @@ class StateManager {
      */
     _createBackup() {
         try {
-            const backup = {};
+            const backup: Record<string, string | null> = {};
             const keys = this._getAllKeys();
 
             keys.forEach(key => {
@@ -574,7 +574,7 @@ class StateManager {
      * @param {string} [backupKey] - Backup key, senaste om inte specificerad
      * @returns {boolean} True om restore lyckades
      */
-    restoreFromBackup(backupKey) {
+    restoreFromBackup(backupKey: string | undefined) {
         try {
             // Hitta senaste backup om ingen specificerad
             if (!backupKey) {
@@ -590,11 +590,20 @@ class StateManager {
                 backupKey = backupKeys[0];
             }
 
-            const backup = JSON.parse(localStorage.getItem(backupKey));
+            const rawBackup = localStorage.getItem(backupKey);
+            if (!rawBackup) {
+                throw new Error('Backup data not found');
+            }
+            const backup = JSON.parse(rawBackup) as Record<string, string | null>;
 
             // Återställ alla keys
-            Object.keys(backup).forEach(key => {
-                localStorage.setItem(key, backup[key]);
+            Object.keys(backup).forEach((key: string) => {
+                const value = backup[key];
+                if (value === null) {
+                    localStorage.removeItem(key);
+                } else {
+                    localStorage.setItem(key, value);
+                }
                 this._keys.add(key); // Track restored key
             });
 
@@ -650,11 +659,14 @@ class StateManager {
 
         const now = Date.now();
         const keys = this._getAllKeys();
-        const keysToRemove = [];
+        const keysToRemove: string[] = [];
 
         keys.forEach(key => {
             try {
                 const stored = localStorage.getItem(key);
+                if (!stored) {
+                    return;
+                }
                 const parsed = JSON.parse(stored);
 
                 // Ta bort om TTL passerat
@@ -685,6 +697,9 @@ class StateManager {
 
         try {
             const estimate = await navigator.storage.estimate();
+            if (estimate.usage === undefined || estimate.quota === undefined || estimate.quota === 0) {
+                return;
+            }
             const usage = estimate.usage / estimate.quota;
 
             if (usage > this.quotaWarningThreshold) {
@@ -740,7 +755,7 @@ class StateManager {
      * @returns {Object} All sparad data
      */
     exportAll() {
-        const data = {};
+        const data: Record<string, unknown> = {};
         const keys = this._getAllKeys();
 
         keys.forEach(key => {
@@ -767,14 +782,14 @@ class StateManager {
      * @param {boolean} [options.merge=false] - Merge med befintlig data
      * @returns {void}
      */
-    importAll(data, options: any = {}) {
+    importAll(data: Record<string, any>, options: any = {}) {
         const { merge = false } = options;
 
         if (!merge) {
             this.clear({ keepSchemas: true });
         }
 
-        Object.keys(data).forEach(key => {
+        Object.keys(data).forEach((key: string) => {
             try {
                 // Always JSON.stringify to ensure consistent storage format
                 const value = JSON.stringify(data[key]);
@@ -821,7 +836,7 @@ class StateManager {
      * Add a key to the internal registry (for test environments)
      * @param {string} key - Key to track
      */
-    _trackKey(key) {
+    _trackKey(key: string) {
         this._keys.add(key);
     }
 
@@ -841,7 +856,7 @@ class StateManager {
      * @param {Object} [options={}] - Konfiguration
      * @returns {void}
      */
-    importState(data, options = {}) {
+    importState(data: Record<string, any>, options: any = {}) {
         return this.importAll(data, options);
     }
 }
