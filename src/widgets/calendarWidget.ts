@@ -4,6 +4,7 @@
  */
 
 import { googleCalendarService } from '../services/googleCalendarService.js';
+import { networkPolicyService } from '../services/networkPolicyService.js';
 import { logger } from '../utils/logger.js';
 import eventBus from '../core/eventBus.js';
 
@@ -12,7 +13,10 @@ class CalendarWidget extends HTMLElement {
     events: any[];
     isAuthenticated: boolean;
     isLoading: boolean;
-    unsubscribe: (() => void) | null;
+    isAvailable: boolean;
+    availabilityMessage: string;
+    unsubscribeAuth: (() => void) | null;
+    unsubscribeSignedOut: (() => void) | null;
 
     constructor() {
         super();
@@ -20,15 +24,25 @@ class CalendarWidget extends HTMLElement {
         this.events = [];
         this.isAuthenticated = false;
         this.isLoading = false;
-        this.unsubscribe = null;
+        this.isAvailable = true;
+        this.availabilityMessage = '';
+        this.unsubscribeAuth = null;
+        this.unsubscribeSignedOut = null;
     }
 
     connectedCallback() {
         this.render();
         this.setupEventListeners();
 
+        this.isAvailable = this.checkAvailability();
+
+        if (!this.isAvailable) {
+            this.render();
+            return;
+        }
+
         // Subscribe to auth changes via eventBus
-        this.unsubscribe = eventBus.on('googlecalendar:authChanged', (data: any) => {
+        this.unsubscribeAuth = eventBus.on('googleCalendar:authenticated', (data: any) => {
             this.isAuthenticated = data.authenticated;
             this.render();
 
@@ -37,17 +51,46 @@ class CalendarWidget extends HTMLElement {
             }
         });
 
+        this.unsubscribeSignedOut = eventBus.on('googleCalendar:signedOut', () => {
+            this.isAuthenticated = false;
+            this.events = [];
+            this.render();
+        });
+
         // Initialize service
         this.initializeService();
     }
 
+    checkAvailability() {
+        if (!networkPolicyService.shouldInitIntegration('googleCalendar')) {
+            this.availabilityMessage = 'Google Calendar integration is disabled in settings.';
+            return false;
+        }
+
+        if (networkPolicyService.isNoNetworkMode()) {
+            this.availabilityMessage = 'Google Calendar is unavailable in no-network mode.';
+            return false;
+        }
+
+        this.availabilityMessage = '';
+        return true;
+    }
+
     disconnectedCallback() {
-        if (this.unsubscribe) {
-            this.unsubscribe();
+        if (this.unsubscribeAuth) {
+            this.unsubscribeAuth();
+            this.unsubscribeAuth = null;
+        }
+
+        if (this.unsubscribeSignedOut) {
+            this.unsubscribeSignedOut();
+            this.unsubscribeSignedOut = null;
         }
     }
 
     async initializeService() {
+        if (!this.isAvailable) {return;}
+
         try {
             await googleCalendarService.initialize();
 
@@ -63,6 +106,7 @@ class CalendarWidget extends HTMLElement {
     }
 
     async loadEvents() {
+        if (!this.isAvailable) {return;}
         if (!this.isAuthenticated) {return;}
 
         this.isLoading = true;
@@ -328,6 +372,18 @@ class CalendarWidget extends HTMLElement {
     }
 
     renderContent() {
+        if (!this.isAvailable) {
+            return `
+                <div class="auth-section">
+                    <div class="empty-icon">📵</div>
+                    <h3 style="margin-bottom: 1rem; color: #2c3e50;">Google Calendar unavailable</h3>
+                    <p style="color: #7f8c8d; margin-bottom: 1rem;">
+                        ${this.escapeHtml(this.availabilityMessage || 'Calendar integration is currently unavailable.')}
+                    </p>
+                </div>
+            `;
+        }
+
         if (!this.isAuthenticated) {
             return `
                 <div class="auth-section">
@@ -418,10 +474,12 @@ class CalendarWidget extends HTMLElement {
 
     setupEventListeners() {
         this.shadowRoot.addEventListener('click', async (e) => {
+            if (!this.isAvailable) {
+                return;
+            }
+
             const target = e.target as HTMLElement;
             if (target.id === 'sign-in-btn' || target.closest('#sign-in-btn')) {
-                console.log('Initiating Google Calendar sign-in...');
-                console.log();
                 await googleCalendarService.signIn();
             }
 
