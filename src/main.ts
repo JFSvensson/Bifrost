@@ -13,6 +13,7 @@ import { todos, shortcuts } from './config/config.js';
 import './config/uiConfig.js'; // Initialize UI with config values
 import performanceMonitor from './services/performanceMonitor.js';
 import eventBus from './core/eventBus.js';
+import { networkPolicyService } from './services/networkPolicyService.js';
 import { keyboardShortcutService } from './services/keyboardShortcutService.js';
 import { searchService as _searchService } from './services/searchService.js';
 import { logger } from './utils/logger.js';
@@ -70,9 +71,11 @@ async function initEssentialServices() {
     reminderService = reminderModule.default;
 
     // Initialize Obsidian if enabled
-    if (todos.obsidian && todos.obsidian.enabled) {
+    if (todos.obsidian && todos.obsidian.enabled && networkPolicyService.shouldInitIntegration('obsidian')) {
         obsidianService = new ObsidianTodoService();
         logger.info('Obsidian integration enabled');
+    } else if (todos.obsidian && todos.obsidian.enabled) {
+        logger.info('Obsidian integration disabled by policy');
     }
 
     // Initialize stats service
@@ -231,6 +234,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Enable calendar sync when authenticated
 window.addEventListener('calendarAuthenticated', () => {
+    if (!networkPolicyService.shouldInitIntegration('googleCalendar') || networkPolicyService.isNoNetworkMode()) {
+        logger.info('Calendar sync blocked by integration policy');
+        return;
+    }
+
+    if (!calendarSyncService) {
+        logger.warn('Calendar sync service is not initialized yet');
+        return;
+    }
+
     calendarSyncService.enableSync(() => currentTodos);
     logger.info('Calendar sync enabled');
 });
