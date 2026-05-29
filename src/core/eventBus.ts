@@ -87,7 +87,7 @@ class EventBus {
      * @param {number} [options.priority=0] - Högre prioritet körs först
      * @returns {Function} Unsubscribe-funktion
      */
-    on(eventName, callback, options: any = {}) {
+    on(eventName: string, callback: Function, options: any = {}) {
         if (typeof callback !== 'function') {
             throw new Error('Callback must be a function');
         }
@@ -135,7 +135,7 @@ class EventBus {
      * @param {Function} callback - Callback-funktion
      * @returns {Function} Unsubscribe-funktion
      */
-    once(eventName, callback) {
+    once(eventName: string, callback: Function) {
         return this.on(eventName, callback, { once: true });
     }
 
@@ -146,11 +146,11 @@ class EventBus {
      * @param {string|Function} callbackOrId - Callback-funktion eller wrapper ID
      * @returns {void}
      */
-    off(eventName, callbackOrId) {
-        const removeFromList = (list) => {
+    off(eventName: string, callbackOrId: string | Function) {
+        const removeFromList = (list: Record<string, Array<{fn: Function, priority: number, id: string}>>) => {
             if (!list[eventName]) {return;}
 
-            const index = list[eventName].findIndex(wrapper =>
+            const index = list[eventName].findIndex((wrapper) =>
                 wrapper.id === callbackOrId || wrapper.fn === callbackOrId
             );
 
@@ -172,7 +172,7 @@ class EventBus {
      * @param {string} eventName - Event namn
      * @returns {void}
      */
-    offAll(eventName) {
+    offAll(eventName: string) {
         delete this.listeners[eventName];
         delete this.onceListeners[eventName];
 
@@ -190,7 +190,7 @@ class EventBus {
      * @param {boolean} [options.async=false] - Kör callbacks asynkront
      * @returns {void}
      */
-    emit(eventName, data, options: any = {}) {
+    emit(eventName: string, data: any, options: any = {}) {
         this._validateEventName(eventName);
 
         const { async = false } = options;
@@ -240,7 +240,7 @@ class EventBus {
      * @param {*} [data] - Event data
      * @returns {void}
      */
-    emitAsync(eventName, data) {
+    emitAsync(eventName: string, data: any) {
         this.emit(eventName, data, { async: true });
     }
 
@@ -253,8 +253,8 @@ class EventBus {
      * @param {*} data - Event data
      * @returns {void}
      */
-    _executeCallbacks(listeners, eventName, data) {
-        listeners.forEach(wrapper => {
+    _executeCallbacks(listeners: Array<{fn: Function, priority: number, id: string}>, eventName: string, data: any) {
+        listeners.forEach((wrapper) => {
             try {
                 wrapper.fn(data, eventName);
             } catch (error) {
@@ -273,7 +273,7 @@ class EventBus {
      * @throws {Error} Om namnet är ogiltigt
      * @returns {void}
      */
-    _validateEventName(eventName) {
+    _validateEventName(eventName: string) {
         if (typeof eventName !== 'string' || !eventName.includes(':')) {
             throw new Error(`Invalid event name: '${eventName}'. Must be in format 'namespace:action'`);
         }
@@ -305,7 +305,7 @@ class EventBus {
      * @param {*} data - Event data
      * @returns {void}
      */
-    _addToHistory(eventName, data) {
+    _addToHistory(eventName: string, data: any) {
         this.eventHistory.push({
             eventName,
             data,
@@ -326,7 +326,7 @@ class EventBus {
      * @param {string} [eventPattern='*'] - Event pattern att replaya (t.ex. 'todo:*')
      * @returns {void}
      */
-    replay(callback, eventPattern = '*') {
+    replay(callback: Function, eventPattern = '*') {
         if (typeof callback !== 'function') {
             throw new Error('First parameter must be a callback function');
         }
@@ -353,7 +353,7 @@ class EventBus {
      * @param {string} pattern - Event pattern (t.ex. 'todo:*', '*', 'todo:created')
      * @returns {RegExp} Regex för matching
      */
-    _createPatternRegex(pattern) {
+    _createPatternRegex(pattern: string) {
         if (pattern === '*') {
             return /.*/;
         }
@@ -400,7 +400,7 @@ class EventBus {
      * @param {string} namespace - Namespace att registrera
      * @returns {void}
      */
-    registerNamespace(namespace) {
+    registerNamespace(namespace: string) {
         this.registeredNamespaces.add(namespace);
 
         if (this.debug) {
@@ -458,7 +458,7 @@ class EventBus {
      * @param {boolean} enabled - Om debug mode ska vara på
      * @returns {void}
      */
-    setDebugMode(enabled) {
+    setDebugMode(enabled: boolean) {
         this.debug = enabled;
         console.log(`[EventBus] Debug mode ${enabled ? 'enabled' : 'disabled'}`);
     }
