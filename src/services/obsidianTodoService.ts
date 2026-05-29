@@ -2,6 +2,7 @@ import { todos as todoConfig } from '../config/config.js';
 import stateManager from '../core/stateManager.js';
 import errorHandler, { ErrorCode } from '../core/errorHandler.js';
 import { logger } from '../utils/logger.js';
+import { networkPolicyService } from './networkPolicyService.js';
 
 /**
  * Service for syncing todos with Obsidian via bridge
@@ -26,12 +27,21 @@ export class ObsidianTodoService {
         this.lastSync = null;
     }
 
+    private canUseBridge() {
+        return networkPolicyService.shouldInitIntegration('obsidian') &&
+            networkPolicyService.isNetworkAllowed(this.bridgeUrl);
+    }
+
     /**
      * Load todos from Obsidian bridge
      * @returns {Promise<Array<Object>>} Processed todos from Obsidian
      * @throws {Error} If fetch fails or times out
      */
     async loadTodos() {
+        if (!this.canUseBridge()) {
+            throw new Error('Obsidian integration is disabled in current mode');
+        }
+
         try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), this.timeout);
@@ -256,6 +266,10 @@ export class ObsidianTodoService {
      * @returns {Promise<Object|null>} Stats or null
      */
     async getStats() {
+        if (!this.canUseBridge()) {
+            return null;
+        }
+
         try {
             const response = await fetch(this.bridgeUrl.replace('/todos', '/stats'));
             if (response.ok) {
