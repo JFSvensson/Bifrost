@@ -1,5 +1,6 @@
 import { weather as weatherConfig } from '../config/config.js';
 import errorHandler, { ErrorCode } from '../core/errorHandler.js';
+import { networkPolicyService } from './networkPolicyService.js';
 
 /**
  * Weather service using SMHI API
@@ -37,6 +38,14 @@ export class WeatherService {
             // SMHI Weather API endpoint
             const url = `https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geotype/point/lon/${this.longitude}/lat/${this.latitude}/data.json`;
 
+            if (!networkPolicyService.shouldInitIntegration('weather')) {
+                return this.createFallbackWeatherData();
+            }
+
+            if (!networkPolicyService.isNetworkAllowed(url)) {
+                return this.createFallbackWeatherData();
+            }
+
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
@@ -62,6 +71,32 @@ export class WeatherService {
             });
             throw new Error('Kunde inte hämta väderdata');
         }
+    }
+
+    /**
+     * Create deterministic local fallback weather data
+     * @returns {Object} Fallback weather payload
+     * @private
+     */
+    createFallbackWeatherData() {
+        const now = new Date();
+        return {
+            current: {
+                time: now,
+                temperature: null,
+                humidity: null,
+                windSpeed: null,
+                precipitation: null,
+                precipitationCategory: 0,
+                precipitationMedian: null,
+                cloudiness: null,
+                weatherSymbol: null
+            },
+            forecast: [],
+            location: this.locationName,
+            lastUpdated: now,
+            fallback: true
+        };
     }
 
     /**
